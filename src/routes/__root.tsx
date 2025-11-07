@@ -7,26 +7,12 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { createServerFn } from "@tanstack/react-start";
 import type * as React from "react";
+import { fetchUser } from "@/apis/user";
+import appCss from "@/styles/app.css?url";
+import { seo } from "@/utils/seo";
 import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
-import appCss from "../styles/app.css?url";
-import { seo } from "../utils/seo";
-import { getSupabaseServerClient } from "../utils/supabase";
-
-const fetchUser = createServerFn({ method: "GET" }).handler(async () => {
-  const supabase = getSupabaseServerClient();
-  const { data, error: _error } = await supabase.auth.getUser();
-
-  if (!data.user?.email) {
-    return null;
-  }
-
-  return {
-    email: data.user.email,
-  };
-});
 
 export const Route = createRootRoute({
   beforeLoad: async () => {

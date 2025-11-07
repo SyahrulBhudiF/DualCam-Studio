@@ -1,31 +1,8 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { createServerFn, useServerFn } from "@tanstack/react-start";
-import { Auth } from "../components/Auth";
-import { useMutation } from "../hooks/useMutation";
-import { getSupabaseServerClient } from "../utils/supabase";
-
-export const signupFn = createServerFn({ method: "POST" })
-  .inputValidator(
-    (d: { email: string; password: string; redirectUrl?: string }) => d,
-  )
-  .handler(async ({ data }) => {
-    const supabase = getSupabaseServerClient();
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-    });
-    if (error) {
-      return {
-        error: true,
-        message: error.message,
-      };
-    }
-
-    // Redirect to the prev page stored in the "redirect" search param
-    throw redirect({
-      href: data.redirectUrl || "/",
-    });
-  });
+import { createFileRoute } from "@tanstack/react-router";
+import { signupFn } from "@/apis/user";
+import { Auth } from "@/components/Auth";
+import { useMutation } from "@/libs/hooks/useMutation";
+import { getValidationErrorMessage } from "@/utils/utils";
 
 export const Route = createFileRoute("/signup")({
   component: SignupComp,
@@ -33,8 +10,15 @@ export const Route = createFileRoute("/signup")({
 
 function SignupComp() {
   const signupMutation = useMutation({
-    fn: useServerFn(signupFn),
+    fn: signupFn,
   });
+
+  const validationError = getValidationErrorMessage(signupMutation.error);
+  const handlerError = signupMutation.data?.error
+    ? signupMutation.data.message
+    : null;
+
+  const displayError = validationError || handlerError;
 
   return (
     <Auth
@@ -47,13 +31,12 @@ function SignupComp() {
           data: {
             email: formData.get("email") as string,
             password: formData.get("password") as string,
+            redirectUrl: "/",
           },
         });
       }}
       afterSubmit={
-        signupMutation.data?.error ? (
-          <div className="text-red-400">{signupMutation.data.message}</div>
-        ) : null
+        displayError ? <div className="text-red-400">{displayError}</div> : null
       }
     />
   );
