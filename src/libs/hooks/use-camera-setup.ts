@@ -133,7 +133,6 @@ export function useCameraSetup() {
 		startSec();
 		return () => sec.stream?.getTracks().forEach((t) => t.stop());
 	}, [sec.deviceId]);
-	// ... (Akhir Init Camera) ...
 
 	const startRecording = useCallback(
 		(options: RecordingOptions) => {
