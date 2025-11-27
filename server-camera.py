@@ -30,39 +30,44 @@ async def handle_commands(websocket):
 
                 if action == "START":
                     folder_name = data.get("folderName")
+                    mode = data.get("mode", "FULL")
+
                     target_dir = os.path.join(BASE_UPLOAD_DIR, folder_name)
 
-                    if not os.path.exists(target_dir):
-                        os.makedirs(target_dir)
+                    if mode == "SEGMENT":
+                        file_name = data.get("fileName")
+                    else:
+                        file_name = "recording_realsense.avi"
 
-                    filename = os.path.join(target_dir, "recording_realsense.avi")
+                    full_path = os.path.join(target_dir, file_name)
+
+                    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+
                     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-                    video_writer = cv2.VideoWriter(filename, fourcc, FPS, (WIDTH, HEIGHT))
+                    video_writer = cv2.VideoWriter(full_path, fourcc, FPS, (WIDTH, HEIGHT))
                     is_recording = True
-                    print(f"RECORDING STARTED: {filename}")
+                    print(f"REC START: {full_path}")
 
                 elif action == "STOP":
                     is_recording = False
                     if video_writer:
                         video_writer.release()
                         video_writer = None
-                    print("RECORDING STOPPED")
+                    print("REC STOP")
 
             except json.JSONDecodeError:
                 pass
-
-    except Exception as e:
-        print(f"Command Error: {e}")
+    except Exception:
+        pass
 
 async def camera_broadcast_task():
     global is_recording, video_writer
-
     pipeline = rs.pipeline()
     config = rs.config()
     config.enable_stream(rs.stream.color, WIDTH, HEIGHT, rs.format.bgr8, FPS)
 
     pipeline.start(config)
-    print("Camera Pipeline Started")
+    print(f"Camera Pipeline Started")
 
     try:
         while True:

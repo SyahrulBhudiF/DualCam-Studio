@@ -16,6 +16,7 @@ import { Route as AuthedRouteRouteImport } from './routes/_authed/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuccessIndexRouteImport } from './routes/success/index'
 import { Route as QuestionnaireIndexRouteImport } from './routes/questionnaire/index'
+import { Route as QuestionnaireSegmentedIndexRouteImport } from './routes/questionnaire/segmented/index'
 import { Route as AuthedPostPostsRouteImport } from './routes/_authed/post/posts'
 import { Route as AuthedPostPostsIndexRouteImport } from './routes/_authed/post/posts.index'
 
@@ -53,6 +54,12 @@ const QuestionnaireIndexRoute = QuestionnaireIndexRouteImport.update({
   path: '/questionnaire/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QuestionnaireSegmentedIndexRoute =
+  QuestionnaireSegmentedIndexRouteImport.update({
+    id: '/questionnaire/segmented/',
+    path: '/questionnaire/segmented/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthedPostPostsRoute = AuthedPostPostsRouteImport.update({
   id: '/post/posts',
   path: '/post/posts',
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/questionnaire': typeof QuestionnaireIndexRoute
   '/success': typeof SuccessIndexRoute
   '/post/posts': typeof AuthedPostPostsRouteWithChildren
+  '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
   '/post/posts/': typeof AuthedPostPostsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -81,6 +89,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/questionnaire': typeof QuestionnaireIndexRoute
   '/success': typeof SuccessIndexRoute
+  '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
   '/post/posts': typeof AuthedPostPostsIndexRoute
 }
 export interface FileRoutesById {
@@ -93,6 +102,7 @@ export interface FileRoutesById {
   '/questionnaire/': typeof QuestionnaireIndexRoute
   '/success/': typeof SuccessIndexRoute
   '/_authed/post/posts': typeof AuthedPostPostsRouteWithChildren
+  '/questionnaire/segmented/': typeof QuestionnaireSegmentedIndexRoute
   '/_authed/post/posts/': typeof AuthedPostPostsIndexRoute
 }
 export interface FileRouteTypes {
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/questionnaire'
     | '/success'
     | '/post/posts'
+    | '/questionnaire/segmented'
     | '/post/posts/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/questionnaire'
     | '/success'
+    | '/questionnaire/segmented'
     | '/post/posts'
   id:
     | '__root__'
@@ -125,6 +137,7 @@ export interface FileRouteTypes {
     | '/questionnaire/'
     | '/success/'
     | '/_authed/post/posts'
+    | '/questionnaire/segmented/'
     | '/_authed/post/posts/'
   fileRoutesById: FileRoutesById
 }
@@ -136,6 +149,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   QuestionnaireIndexRoute: typeof QuestionnaireIndexRoute
   SuccessIndexRoute: typeof SuccessIndexRoute
+  QuestionnaireSegmentedIndexRoute: typeof QuestionnaireSegmentedIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -189,6 +203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuestionnaireIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/questionnaire/segmented/': {
+      id: '/questionnaire/segmented/'
+      path: '/questionnaire/segmented'
+      fullPath: '/questionnaire/segmented'
+      preLoaderRoute: typeof QuestionnaireSegmentedIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/post/posts': {
       id: '/_authed/post/posts'
       path: '/post/posts'
@@ -238,6 +259,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   QuestionnaireIndexRoute: QuestionnaireIndexRoute,
   SuccessIndexRoute: SuccessIndexRoute,
+  QuestionnaireSegmentedIndexRoute: QuestionnaireSegmentedIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

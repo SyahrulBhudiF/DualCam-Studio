@@ -1,26 +1,42 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 
 export interface RealSenseHandle {
-  startRecording: (folderName: string) => void;
+  startRecording: (options: {
+    mode: string;
+    folderName: string;
+    fileName?: string;
+  }) => void;
   stopRecording: () => void;
 }
 
-export const RealSenseCanvas = forwardRef<RealSenseHandle>((props, ref) => {
+interface RealSenseCanvasProps {
+  onReady?: () => void;
+}
+
+export const RealSenseCanvas = forwardRef<
+  RealSenseHandle,
+  RealSenseCanvasProps
+>(({ onReady }, ref) => {
   const localCanvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const msgQueue = useRef<string[]>([]);
+
+  const sendMessage = (msg: string) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(msg);
+    } else {
+      msgQueue.current.push(msg);
+    }
+  };
 
   useImperativeHandle(ref, () => ({
-    startRecording: (folderName: string) => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        const payload = JSON.stringify({ action: "START", folderName });
-        wsRef.current.send(payload);
-      }
+    startRecording: (options) => {
+      const payload = JSON.stringify({ action: "START", ...options });
+      sendMessage(payload);
     },
     stopRecording: () => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        const payload = JSON.stringify({ action: "STOP" });
-        wsRef.current.send(payload);
-      }
+      const payload = JSON.stringify({ action: "STOP" });
+      sendMessage(payload);
     },
   }));
 
@@ -34,6 +50,14 @@ export const RealSenseCanvas = forwardRef<RealSenseHandle>((props, ref) => {
     wsRef.current = new WebSocket("ws://localhost:8080");
     const img = new Image();
 
+    wsRef.current.onopen = () => {
+      while (msgQueue.current.length > 0) {
+        const msg = msgQueue.current.shift();
+        if (msg) wsRef.current?.send(msg);
+      }
+      if (onReady) onReady();
+    };
+
     wsRef.current.onmessage = (event) => {
       const blob = event.data;
       const url = URL.createObjectURL(blob);
@@ -45,7 +69,9 @@ export const RealSenseCanvas = forwardRef<RealSenseHandle>((props, ref) => {
     };
 
     return () => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.close();
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
     };
   }, []);
 

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useUserStore } from "@/libs/store/UserStore";
 import { RealSenseCanvas, RealSenseHandle } from "@/components/RealSenseCanvas";
+import { Loader2 } from "lucide-react";
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -42,6 +43,9 @@ export function QuestionnairePage() {
   const [deviceIdMain, setDeviceIdMain] = useState<string>("");
   const [deviceIdSec, setDeviceIdSec] = useState<string>("ws-realsense");
   const [currentFolderName, setCurrentFolderName] = useState<string>("");
+
+  const [mainReady, setMainReady] = useState(false);
+  const [secReady, setSecReady] = useState(false);
 
   const videoRefMain = useRef<HTMLVideoElement>(null);
   const mediaRecorderRefMain = useRef<MediaRecorder | null>(null);
@@ -80,7 +84,7 @@ export function QuestionnairePage() {
     }
 
     if (deviceIdSec === "ws-realsense") {
-      realSenseRef.current?.startRecording(folderName);
+      realSenseRef.current?.startRecording({ folderName, mode: "FULL" });
     } else if (
       mediaRecorderRefSec.current &&
       mediaRecorderRefSec.current.state === "inactive"
@@ -153,15 +157,6 @@ export function QuestionnairePage() {
   });
 
   useEffect(() => {
-    if (deviceIdMain && !isRecording) {
-      const timer = setTimeout(() => {
-        startAllRecording();
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [deviceIdMain, deviceIdSec]);
-
-  useEffect(() => {
     const getDevices = async () => {
       try {
         await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -190,8 +185,12 @@ export function QuestionnairePage() {
           },
           audio: true,
         });
+
         streamRefMain.current = stream;
-        if (videoRefMain.current) videoRefMain.current.srcObject = stream;
+
+        if (videoRefMain.current) {
+          videoRefMain.current.srcObject = stream;
+        }
 
         const mediaRecorder = new MediaRecorder(stream);
         videoChunksRefMain.current = [];
@@ -199,6 +198,8 @@ export function QuestionnairePage() {
           if (event.data.size > 0) videoChunksRefMain.current.push(event.data);
         };
         mediaRecorderRefMain.current = mediaRecorder;
+
+        setMainReady(true);
       } catch (err) {
         console.error(err);
       }
@@ -208,7 +209,15 @@ export function QuestionnairePage() {
   }, [deviceIdMain]);
 
   useEffect(() => {
-    if (deviceIdSec === "ws-realsense") return;
+    if (videoRefMain.current && streamRefMain.current) {
+      videoRefMain.current.srcObject = streamRefMain.current;
+    }
+  });
+
+  useEffect(() => {
+    if (deviceIdSec === "ws-realsense") {
+      return;
+    }
 
     if (!deviceIdSec) {
       if (streamRefSec.current)
@@ -237,6 +246,7 @@ export function QuestionnairePage() {
           if (event.data.size > 0) videoChunksRefSec.current.push(event.data);
         };
         mediaRecorderRefSec.current = mediaRecorder;
+        setSecReady(true);
       } catch (err) {
         console.error(err);
       }
@@ -244,6 +254,34 @@ export function QuestionnairePage() {
     startSec();
     return () => streamRefSec.current?.getTracks().forEach((t) => t.stop());
   }, [deviceIdSec]);
+
+  const allSystemsReady =
+    mainReady && (deviceIdSec === "ws-realsense" ? secReady : secReady);
+
+  useEffect(() => {
+    if (allSystemsReady && !isRecording && deviceIdMain) {
+      startAllRecording();
+    }
+  }, [allSystemsReady, deviceIdMain, deviceIdSec]);
+
+  if (!allSystemsReady && deviceIdSec === "ws-realsense") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+        <div className="text-slate-600 font-medium">
+          Initializing Cameras...
+        </div>
+
+        <div className="fixed bottom-4 right-4 flex flex-row gap-4 opacity-0 pointer-events-none">
+          <video ref={videoRefMain} autoPlay muted />
+          <RealSenseCanvas
+            ref={realSenseRef}
+            onReady={() => setSecReady(true)}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 pb-48">
@@ -388,7 +426,10 @@ export function QuestionnairePage() {
           </select>
           <div className="w-48 h-36 bg-black rounded-lg overflow-hidden border-2 border-blue-500 shadow-xl relative group">
             {deviceIdSec === "ws-realsense" ? (
-              <RealSenseCanvas ref={realSenseRef} />
+              <RealSenseCanvas
+                ref={realSenseRef}
+                onReady={() => setSecReady(true)}
+              />
             ) : (
               <video
                 ref={videoRefSec}
