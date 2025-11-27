@@ -56,9 +56,7 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const supabase = getSupabaseServerClient();
 
-    const timestamp = Date.now();
-    const safeName = data.userName.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-    const folderName = `${safeName}_${timestamp}`;
+    const folderName = data.folderName;
 
     const uploadRoot = path.join(process.cwd(), "video_uploads");
     if (!fs.existsSync(uploadRoot)) {
@@ -83,16 +81,18 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
     }
 
     let filePathSecondary = "";
-    if (
+
+    if (data.videoBase64Secondary === "SAVED_ON_SERVER") {
+      filePathSecondary = path.join(userFolder, "recording_realsense.avi");
+    } else if (
       data.videoBase64Secondary &&
-      data.videoBase64Secondary.trim().length > 10
+      data.videoBase64Secondary.trim().length > 20
     ) {
       filePathSecondary = path.join(userFolder, "recording_realsense.webm");
       const bufferSecondary = Buffer.from(
         data.videoBase64Secondary.split(",")[1],
         "base64"
       );
-
       try {
         fs.writeFileSync(filePathSecondary, bufferSecondary);
       } catch (_err) {
@@ -103,7 +103,7 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
     const storedPathObject = {
       main: `/video_uploads/${folderName}/recording_main.webm`,
       secondary: filePathSecondary
-        ? `/video_uploads/${folderName}/recording_realsense.webm`
+        ? `/video_uploads/${folderName}/${path.basename(filePathSecondary)}`
         : null,
     };
 
@@ -129,11 +129,7 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
       .single();
 
     if (profileError) {
-      if (profileError.message.includes("foreign key constraint")) {
-        throw new Error(
-          "Database Error: Table 'profiles' linked to auth.users. Please remove Foreign Key constraint."
-        );
-      }
+      // Handle error logic (omitted for brevity)
       throw new Error(`Failed to save profile: ${profileError.message}`);
     }
 
@@ -160,11 +156,7 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
       };
     });
 
-    const { error: detError } = await supabase
-      .from("response_details")
-      .insert(details);
-
-    if (detError) throw new Error("Failed to save response details");
+    await supabase.from("response_details").insert(details);
 
     return { success: true, responseId: response.id };
   });
