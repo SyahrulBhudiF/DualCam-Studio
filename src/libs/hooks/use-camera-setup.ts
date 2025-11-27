@@ -27,7 +27,7 @@ function useCameraUnit(defaultDeviceId = "") {
 	const recorderRef = useRef<MediaRecorder | null>(null);
 	const chunksRef = useRef<Blob[]>([]);
 
-	// Auto-attach stream ke video element
+	// Auto-attach stream to video element
 	useEffect(() => {
 		if (videoRef.current && stream) {
 			videoRef.current.srcObject = stream;
