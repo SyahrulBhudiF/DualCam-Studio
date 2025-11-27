@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { useLoaderData, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { submitQuestionnaire } from "@/apis/questionnaire";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,6 +66,7 @@ export function QuestionnairePage() {
 			}
 
 			const { blobMain, blobSec } = await stopRecording();
+
 			await new Promise((r) => setTimeout(r, 1500));
 
 			let base64Main = "";
@@ -74,6 +75,7 @@ export function QuestionnairePage() {
 			}
 
 			let base64Sec = "";
+
 			if (deviceIdSec !== "ws-realsense" && blobSec && blobSec.size > 0) {
 				base64Sec = await blobToBase64(blobSec);
 			} else if (deviceIdSec === "ws-realsense") {
@@ -98,15 +100,25 @@ export function QuestionnairePage() {
 		if (user?.name && !currentFolderName) {
 			const timestamp = Date.now();
 			const safeName = user.name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-			setCurrentFolderName(`${safeName}_${timestamp}`);
+
+			setCurrentFolderName(`full/${safeName}_${timestamp}`);
 		}
 	}, [user?.name, currentFolderName]);
 
+	const hasStartedRef = useRef(false);
+
 	useEffect(() => {
-		if (allReady && !isRecording && currentFolderName) {
+		if (
+			allReady &&
+			!isRecording &&
+			currentFolderName &&
+			!hasStartedRef.current
+		) {
 			const timer = setTimeout(() => {
 				startRecording({ folderName: currentFolderName, mode: "FULL" });
+				hasStartedRef.current = true;
 			}, 1000);
+
 			return () => clearTimeout(timer);
 		}
 	}, [allReady, isRecording, startRecording, currentFolderName]);

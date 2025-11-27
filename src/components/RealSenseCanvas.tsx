@@ -73,7 +73,7 @@ export const RealSenseCanvas = forwardRef<
 				wsRef.current.close();
 			}
 		};
-	}, []);
+	}, [onReady]);
 
 	return (
 		<canvas

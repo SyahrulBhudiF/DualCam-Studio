@@ -1,4 +1,7 @@
-import { RealSenseCanvas, type RealSenseHandle } from "@/components/RealSenseCanvas";
+import {
+	RealSenseCanvas,
+	type RealSenseHandle,
+} from "@/components/RealSenseCanvas";
 import type React from "react";
 
 interface CameraControlPanelProps {

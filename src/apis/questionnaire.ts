@@ -1,7 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createServerFn } from "@tanstack/react-start";
-import { type submission, submissionSchema } from "@/libs/schemas/questionnaire";
+import {
+	type submission,
+	submissionSchema,
+} from "@/libs/schemas/questionnaire";
 import { getSupabaseServerClient } from "@/utils/supabase";
 
 export const getActiveQuestionnaire = createServerFn({ method: "GET" }).handler(

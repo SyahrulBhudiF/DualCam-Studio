@@ -21,37 +21,37 @@ export interface RecordingOptions {
 function useCameraUnit(defaultDeviceId = "") {
 	const [deviceId, setDeviceId] = useState(defaultDeviceId);
 	const [isReady, setReady] = useState(false);
+	const [stream, setStream] = useState<MediaStream | null>(null);
 
 	const videoRef = useRef<HTMLVideoElement | null>(null);
 	const recorderRef = useRef<MediaRecorder | null>(null);
 	const chunksRef = useRef<Blob[]>([]);
-	const streamRef = useRef<MediaStream | null>(null);
 
+	// Auto-attach stream ke video element
 	useEffect(() => {
-		if (
-			videoRef.current &&
-			streamRef.current &&
-			videoRef.current.srcObject !== streamRef.current
-		) {
-			videoRef.current.srcObject = streamRef.current;
+		if (videoRef.current && stream) {
+			videoRef.current.srcObject = stream;
 		}
-	});
+	}, [stream]);
 
 	return {
 		deviceId,
 		setDeviceId,
 		isReady,
 		setReady,
+		stream,
+		setStream,
 		videoRef,
 		recorderRef,
 		chunksRef,
-		streamRef,
 	};
 }
 
 export function useCameraSetup() {
 	const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
 	const [isRecording, setIsRecording] = useState(false);
+
+	const isStartingRef = useRef(false);
 
 	const main = useCameraUnit("");
 	const sec = useCameraUnit("ws-realsense");
@@ -75,9 +75,6 @@ export function useCameraSetup() {
 	useEffect(() => {
 		if (!main.deviceId) return;
 		const startMain = async () => {
-			if (main.streamRef.current) {
-				main.streamRef.current.getTracks().forEach((t) => t.stop());
-			}
 			try {
 				const stream = await navigator.mediaDevices.getUserMedia({
 					video: {
@@ -87,10 +84,7 @@ export function useCameraSetup() {
 					},
 					audio: true,
 				});
-
-				main.streamRef.current = stream;
-				if (main.videoRef.current) main.videoRef.current.srcObject = stream;
-
+				main.setStream(stream);
 				const mediaRecorder = new MediaRecorder(stream);
 				main.chunksRef.current = [];
 				mediaRecorder.ondataavailable = (event) => {
@@ -103,19 +97,15 @@ export function useCameraSetup() {
 			}
 		};
 		startMain();
-		return () => main.streamRef.current?.getTracks().forEach((t) => t.stop());
+		return () => main.stream?.getTracks().forEach((t) => t.stop());
 	}, [main.deviceId]);
 
 	useEffect(() => {
-		if (sec.deviceId === "ws-realsense") return;
-
-		if (!sec.deviceId) {
-			if (sec.streamRef.current) {
-				sec.streamRef.current.getTracks().forEach((t) => t.stop());
-			}
+		if (sec.deviceId === "ws-realsense") {
+			sec.setReady(true);
 			return;
 		}
-
+		if (!sec.deviceId) return;
 		const startSec = async () => {
 			try {
 				const stream = await navigator.mediaDevices.getUserMedia({
@@ -126,9 +116,7 @@ export function useCameraSetup() {
 					},
 					audio: false,
 				});
-				sec.streamRef.current = stream;
-				if (sec.videoRef.current) sec.videoRef.current.srcObject = stream;
-
+				sec.setStream(stream);
 				const mediaRecorder = new MediaRecorder(stream, {
 					mimeType: "video/webm",
 				});
@@ -143,11 +131,16 @@ export function useCameraSetup() {
 			}
 		};
 		startSec();
-		return () => sec.streamRef.current?.getTracks().forEach((t) => t.stop());
+		return () => sec.stream?.getTracks().forEach((t) => t.stop());
 	}, [sec.deviceId]);
+	// ... (Akhir Init Camera) ...
 
 	const startRecording = useCallback(
 		(options: RecordingOptions) => {
+			// Cegah double start jika state belum update tapi tombol ditekan lagi
+			if (isStartingRef.current) return;
+			isStartingRef.current = true;
+
 			if (
 				main.recorderRef.current &&
 				main.recorderRef.current.state === "inactive"
@@ -167,6 +160,10 @@ export function useCameraSetup() {
 			}
 
 			setIsRecording(true);
+
+			setTimeout(() => {
+				isStartingRef.current = false;
+			}, 500);
 		},
 		[sec.deviceId],
 	);
@@ -181,6 +178,7 @@ export function useCameraSetup() {
 		}
 
 		setIsRecording(false);
+		isStartingRef.current = false;
 
 		return {
 			blobMain: new Blob(main.chunksRef.current, { type: "video/webm" }),
@@ -205,10 +203,12 @@ export function useCameraSetup() {
 		deviceIdMain: main.deviceId,
 		setDeviceIdMain: main.setDeviceId,
 		videoRefMain: main.videoRef,
+		streamMain: main.stream,
 
 		deviceIdSec: sec.deviceId,
 		setDeviceIdSec: sec.setDeviceId,
 		videoRefSec: sec.videoRef,
+		streamSec: sec.stream,
 		secReady: sec.isReady,
 		setSecReady: sec.setReady,
 

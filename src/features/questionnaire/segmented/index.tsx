@@ -83,7 +83,7 @@ export function SegmentedPage() {
 			const base64Main = blobMain.size > 0 ? await blobToBase64(blobMain) : "";
 
 			const subFolder = `q${currentIndex + 1}`;
-			const mainFileName = `${subFolder}/answer_${currentIndex + 1}_${currentQ.id}_main.webm`;
+			const mainFileName = `/${subFolder}/answer_${currentIndex + 1}_${currentQ.id}_main.webm`;
 
 			let uploadPath = "";
 			if (base64Main) {
@@ -125,9 +125,9 @@ export function SegmentedPage() {
 	useEffect(() => {
 		if (user?.name && !store.folderName) {
 			const safeName = user.name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-			store.setFolderName(`${safeName}_${Date.now()}`);
+			store.setFolderName(`segmented/${safeName}_${Date.now()}`);
 		}
-	}, [user, store.folderName]);
+	}, [user, store.folderName, store.setFolderName]);
 
 	useEffect(() => {
 		if (!allReady || isProcessing || !questions) return;
