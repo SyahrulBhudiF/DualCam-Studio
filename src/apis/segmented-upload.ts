@@ -33,8 +33,8 @@ export const uploadVideoChunk = createServerFn({ method: "POST" })
 				success: true,
 				path: `/video_uploads/${data.folderName}/${data.fileName}`,
 			};
-		} catch (_e) {
-			throw new Error("Failed to save chunk");
+		} catch (e) {
+			throw new Error(`Failed to save chunk: ${e instanceof Error ? e.message : String(e)}`);
 		}
 	});
 
