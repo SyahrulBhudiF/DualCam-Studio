@@ -137,7 +137,7 @@ export function useCameraSetup() {
 
 	const startRecording = useCallback(
 		(options: RecordingOptions) => {
-			// Cegah double start jika state belum update tapi tombol ditekan lagi
+			// Prevent double start if state hasn't updated but button is pressed again
 			if (isStartingRef.current) return;
 			isStartingRef.current = true;
 
