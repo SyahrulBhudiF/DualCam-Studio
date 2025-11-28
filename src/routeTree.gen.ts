@@ -16,9 +16,15 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuccessIndexRouteImport } from './routes/success/index'
 import { Route as QuestionnaireIndexRouteImport } from './routes/questionnaire/index'
+<<<<<<< HEAD
 import { Route as AdminDashboardIndexRouteImport } from './routes/admin/dashboard/index'
 import { Route as AdminPostPostsRouteImport } from './routes/admin/post/posts'
 import { Route as AdminPostPostsIndexRouteImport } from './routes/admin/post/posts.index'
+=======
+import { Route as QuestionnaireSegmentedIndexRouteImport } from './routes/questionnaire/segmented/index'
+import { Route as AuthedPostPostsRouteImport } from './routes/_authed/post/posts'
+import { Route as AuthedPostPostsIndexRouteImport } from './routes/_authed/post/posts.index'
+>>>>>>> 4bc6defafec6f7a5b40d3e276d0da4e09cc162ad
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -55,12 +61,22 @@ const QuestionnaireIndexRoute = QuestionnaireIndexRouteImport.update({
   path: '/questionnaire/',
   getParentRoute: () => rootRouteImport,
 } as any)
+<<<<<<< HEAD
 const AdminDashboardIndexRoute = AdminDashboardIndexRouteImport.update({
   id: '/dashboard/',
   path: '/dashboard/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminPostPostsRoute = AdminPostPostsRouteImport.update({
+=======
+const QuestionnaireSegmentedIndexRoute =
+  QuestionnaireSegmentedIndexRouteImport.update({
+    id: '/questionnaire/segmented/',
+    path: '/questionnaire/segmented/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthedPostPostsRoute = AuthedPostPostsRouteImport.update({
+>>>>>>> 4bc6defafec6f7a5b40d3e276d0da4e09cc162ad
   id: '/post/posts',
   path: '/post/posts',
   getParentRoute: () => AdminRouteRoute,
@@ -79,9 +95,15 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/questionnaire': typeof QuestionnaireIndexRoute
   '/success': typeof SuccessIndexRoute
+<<<<<<< HEAD
   '/admin/post/posts': typeof AdminPostPostsRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardIndexRoute
   '/admin/post/posts/': typeof AdminPostPostsIndexRoute
+=======
+  '/post/posts': typeof AuthedPostPostsRouteWithChildren
+  '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
+  '/post/posts/': typeof AuthedPostPostsIndexRoute
+>>>>>>> 4bc6defafec6f7a5b40d3e276d0da4e09cc162ad
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,8 +113,13 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/questionnaire': typeof QuestionnaireIndexRoute
   '/success': typeof SuccessIndexRoute
+<<<<<<< HEAD
   '/admin/dashboard': typeof AdminDashboardIndexRoute
   '/admin/post/posts': typeof AdminPostPostsIndexRoute
+=======
+  '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
+  '/post/posts': typeof AuthedPostPostsIndexRoute
+>>>>>>> 4bc6defafec6f7a5b40d3e276d0da4e09cc162ad
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -103,9 +130,15 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/questionnaire/': typeof QuestionnaireIndexRoute
   '/success/': typeof SuccessIndexRoute
+<<<<<<< HEAD
   '/admin/post/posts': typeof AdminPostPostsRouteWithChildren
   '/admin/dashboard/': typeof AdminDashboardIndexRoute
   '/admin/post/posts/': typeof AdminPostPostsIndexRoute
+=======
+  '/_authed/post/posts': typeof AuthedPostPostsRouteWithChildren
+  '/questionnaire/segmented/': typeof QuestionnaireSegmentedIndexRoute
+  '/_authed/post/posts/': typeof AuthedPostPostsIndexRoute
+>>>>>>> 4bc6defafec6f7a5b40d3e276d0da4e09cc162ad
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,9 +150,15 @@ export interface FileRouteTypes {
     | '/signup'
     | '/questionnaire'
     | '/success'
+<<<<<<< HEAD
     | '/admin/post/posts'
     | '/admin/dashboard'
     | '/admin/post/posts/'
+=======
+    | '/post/posts'
+    | '/questionnaire/segmented'
+    | '/post/posts/'
+>>>>>>> 4bc6defafec6f7a5b40d3e276d0da4e09cc162ad
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,8 +168,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/questionnaire'
     | '/success'
+<<<<<<< HEAD
     | '/admin/dashboard'
     | '/admin/post/posts'
+=======
+    | '/questionnaire/segmented'
+    | '/post/posts'
+>>>>>>> 4bc6defafec6f7a5b40d3e276d0da4e09cc162ad
   id:
     | '__root__'
     | '/'
@@ -140,9 +184,15 @@ export interface FileRouteTypes {
     | '/signup'
     | '/questionnaire/'
     | '/success/'
+<<<<<<< HEAD
     | '/admin/post/posts'
     | '/admin/dashboard/'
     | '/admin/post/posts/'
+=======
+    | '/_authed/post/posts'
+    | '/questionnaire/segmented/'
+    | '/_authed/post/posts/'
+>>>>>>> 4bc6defafec6f7a5b40d3e276d0da4e09cc162ad
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -153,6 +203,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   QuestionnaireIndexRoute: typeof QuestionnaireIndexRoute
   SuccessIndexRoute: typeof SuccessIndexRoute
+  QuestionnaireSegmentedIndexRoute: typeof QuestionnaireSegmentedIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -206,12 +257,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuestionnaireIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+<<<<<<< HEAD
     '/admin/dashboard/': {
       id: '/admin/dashboard/'
       path: '/dashboard'
       fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminDashboardIndexRouteImport
       parentRoute: typeof AdminRouteRoute
+=======
+    '/questionnaire/segmented/': {
+      id: '/questionnaire/segmented/'
+      path: '/questionnaire/segmented'
+      fullPath: '/questionnaire/segmented'
+      preLoaderRoute: typeof QuestionnaireSegmentedIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authed/post/posts': {
+      id: '/_authed/post/posts'
+      path: '/post/posts'
+      fullPath: '/post/posts'
+      preLoaderRoute: typeof AuthedPostPostsRouteImport
+      parentRoute: typeof AuthedRouteRoute
+>>>>>>> 4bc6defafec6f7a5b40d3e276d0da4e09cc162ad
     }
     '/admin/post/posts': {
       id: '/admin/post/posts'
@@ -264,6 +331,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   QuestionnaireIndexRoute: QuestionnaireIndexRoute,
   SuccessIndexRoute: SuccessIndexRoute,
+  QuestionnaireSegmentedIndexRoute: QuestionnaireSegmentedIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

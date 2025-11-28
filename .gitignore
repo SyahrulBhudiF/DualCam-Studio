@@ -22,5 +22,7 @@ yarn.lock
 .idea
 .tanstack
 .vscode
+.venv
+__pycache__/
 
 video_uploads

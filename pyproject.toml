@@ -1,0 +1,11 @@
+[project]
+name = "camera-server"
+version = "0.1.0"
+description = "RealSense WebSocket Server"
+requires-python = ">=3.10"
+dependencies = [
+    "pyrealsense2",
+    "websockets",
+    "numpy",
+    "opencv-python>=4.11.0.86",
+]
