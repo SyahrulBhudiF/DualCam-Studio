@@ -2,44 +2,70 @@ import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { profileSchema } from "@/libs/schemas/user";
 import { useUserStore } from "@/libs/store/UserStore";
+import { useQuestionnaireStore } from "@/libs/store/QuestionnaireStore";
 
 export function Profile() {
-  const navigate = useNavigate();
-  const store = useUserStore();
+	const navigate = useNavigate();
+	const store = useUserStore();
+	const questionnaireStore = useQuestionnaireStore();
 
-  const form = useForm({
-    defaultValues: {
-      name: "",
-      class: "",
-    },
-    validators: {
-      onSubmit: profileSchema,
-    },
-    onSubmit: async ({ value }) => {
-      store.setUser(value);
+	const form = useForm({
+		defaultValues: {
+			name: "",
+			class: "",
+			mode: "full",
+		},
+		validators: {
+			onSubmit: ({ value }) => {
+				const result = profileSchema.safeParse({
+					name: value.name,
+					class: value.class,
+				});
 
-      navigate({
-        to: "/questionnaire",
-      });
-    },
-  });
+				if (!result.success) {
+					return result.error.issues.reduce(
+						(acc, issue) => {
+							const path = issue.path[0] as string;
+							acc[path] = issue.message;
+							return acc;
+						},
+						{} as Record<string, string>,
+					);
+				}
+
+				return undefined;
+			},
+		},
+		onSubmit: async ({ value }) => {
+			store.setUser({ name: value.name, class: value.class });
+
+			questionnaireStore.reset();
+
+			if (value.mode === "segmented") {
+				navigate({ to: "/questionnaire/segmented" });
+			} else {
+				navigate({ to: "/questionnaire" });
+			}
+		},
+	});
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-black p-4">
-      <Card className="w-full shadow-sm shadow-black dark:shadow-gray-500 bg-black dark:bg-white border border-gray-900 dark:border-b-gray-100 sm:max-w-full md:max-w-1/2 lg:max-w-1/3">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-white dark:text-black">Student Profile</CardTitle>
-          <CardDescription className="text-gray-400 dark:text-gray-600">
+          <CardTitle className="text-2xl font-bold">Student Profile</CardTitle>
+          <CardDescription>
             Enter your details to start the questionnaire.
           </CardDescription>
         </CardHeader>
@@ -56,10 +82,9 @@ export function Profile() {
             <form.Field name="name">
               {(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-white dark:text-black text-md">Full Name</Label>
+                  <Label htmlFor="name">Full Name</Label>
                   <Input
                     id="name"
-                    className="bg-gray-950 dark:bg-white text-white dark:text-black border-gray-500/20"
                     placeholder="Ahmad"
                     value={field.state.value}
                     onBlur={field.handleBlur}
@@ -77,10 +102,9 @@ export function Profile() {
             <form.Field name="class">
               {(field) => (
                 <div className="space-y-2">
-                  <Label htmlFor="class" className="text-white dark:text-black text-md">Class / Group</Label>
+                  <Label htmlFor="class">Class / Group</Label>
                   <Input
                     id="class"
-                    className="bg-gray-950 dark:bg-white text-white dark:text-black border-gray-500/20"
                     placeholder="e.g. D4 TI 4G"
                     value={field.state.value}
                     onBlur={field.handleBlur}
@@ -95,7 +119,7 @@ export function Profile() {
               )}
             </form.Field>
 
-            <Button type="submit" className="w-full bg-white dark:bg-black text-black dark:text-white" size="lg">
+            <Button type="submit" className="w-full" size="lg">
               Next Step
             </Button>
           </form>

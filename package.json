@@ -13,7 +13,8 @@
 		"format": "bunx biome format .",
 		"format:fix": "bunx biome format --write .",
 		"check": "bunx biome check .",
-		"check:fix": "bunx biome check --write ."
+		"check:fix": "bunx biome check --write .",
+		"camera": "uv run server-camera.py"
 	},
 	"keywords": [],
 	"author": "",
