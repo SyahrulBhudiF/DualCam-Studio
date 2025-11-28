@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Login } from "@/components/Login";
 import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
 
-export const Route = createFileRoute("/_authed")({
+export const Route = createFileRoute("/admin")({
 	beforeLoad: ({ context }) => {
 		if (!context.user) {
 			throw new Error("Not authenticated");

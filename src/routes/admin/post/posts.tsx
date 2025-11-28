@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { fetchPosts } from "../../../utils/posts";
 
-export const Route = createFileRoute("/_authed/post/posts")({
+export const Route = createFileRoute("/admin/post/posts")({
 	loader: () => fetchPosts(),
 	component: PostsComponent,
 });
@@ -18,12 +18,12 @@ function PostsComponent() {
 							<li key={post.id} className="whitespace-nowrap">
 								<div>{post.title.substring(0, 20)}</div>
 							</li>
-						);
+						)
 					},
 				)}
 			</ul>
 			<hr />
 			<Outlet />
 		</div>
-	);
+	)
 }
