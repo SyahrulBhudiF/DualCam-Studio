@@ -18,8 +18,6 @@ import { Route as SuccessIndexRouteImport } from './routes/success/index'
 import { Route as QuestionnaireIndexRouteImport } from './routes/questionnaire/index'
 import { Route as QuestionnaireSegmentedIndexRouteImport } from './routes/questionnaire/segmented/index'
 import { Route as AdminDashboardIndexRouteImport } from './routes/admin/dashboard/index'
-import { Route as AdminPostPostsRouteImport } from './routes/admin/post/posts'
-import { Route as AdminPostPostsIndexRouteImport } from './routes/admin/post/posts.index'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -67,16 +65,6 @@ const AdminDashboardIndexRoute = AdminDashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AdminPostPostsRoute = AdminPostPostsRouteImport.update({
-  id: '/post/posts',
-  path: '/post/posts',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminPostPostsIndexRoute = AdminPostPostsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminPostPostsRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -86,10 +74,8 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/questionnaire': typeof QuestionnaireIndexRoute
   '/success': typeof SuccessIndexRoute
-  '/admin/post/posts': typeof AdminPostPostsRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardIndexRoute
   '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
-  '/admin/post/posts/': typeof AdminPostPostsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,7 +87,6 @@ export interface FileRoutesByTo {
   '/success': typeof SuccessIndexRoute
   '/admin/dashboard': typeof AdminDashboardIndexRoute
   '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
-  '/admin/post/posts': typeof AdminPostPostsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -112,10 +97,8 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/questionnaire/': typeof QuestionnaireIndexRoute
   '/success/': typeof SuccessIndexRoute
-  '/admin/post/posts': typeof AdminPostPostsRouteWithChildren
   '/admin/dashboard/': typeof AdminDashboardIndexRoute
   '/questionnaire/segmented/': typeof QuestionnaireSegmentedIndexRoute
-  '/admin/post/posts/': typeof AdminPostPostsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -127,10 +110,8 @@ export interface FileRouteTypes {
     | '/signup'
     | '/questionnaire'
     | '/success'
-    | '/admin/post/posts'
     | '/admin/dashboard'
     | '/questionnaire/segmented'
-    | '/admin/post/posts/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -142,7 +123,6 @@ export interface FileRouteTypes {
     | '/success'
     | '/admin/dashboard'
     | '/questionnaire/segmented'
-    | '/admin/post/posts'
   id:
     | '__root__'
     | '/'
@@ -152,10 +132,8 @@ export interface FileRouteTypes {
     | '/signup'
     | '/questionnaire/'
     | '/success/'
-    | '/admin/post/posts'
     | '/admin/dashboard/'
     | '/questionnaire/segmented/'
-    | '/admin/post/posts/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -234,42 +212,14 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/admin/post/posts': {
-      id: '/admin/post/posts'
-      path: '/post/posts'
-      fullPath: '/admin/post/posts'
-      preLoaderRoute: typeof AdminPostPostsRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
-    '/admin/post/posts/': {
-      id: '/admin/post/posts/'
-      path: '/'
-      fullPath: '/admin/post/posts/'
-      preLoaderRoute: typeof AdminPostPostsIndexRouteImport
-      parentRoute: typeof AdminPostPostsRoute
-    }
   }
 }
 
-interface AdminPostPostsRouteChildren {
-  AdminPostPostsIndexRoute: typeof AdminPostPostsIndexRoute
-}
-
-const AdminPostPostsRouteChildren: AdminPostPostsRouteChildren = {
-  AdminPostPostsIndexRoute: AdminPostPostsIndexRoute,
-}
-
-const AdminPostPostsRouteWithChildren = AdminPostPostsRoute._addFileChildren(
-  AdminPostPostsRouteChildren,
-)
-
 interface AdminRouteRouteChildren {
-  AdminPostPostsRoute: typeof AdminPostPostsRouteWithChildren
   AdminDashboardIndexRoute: typeof AdminDashboardIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
-  AdminPostPostsRoute: AdminPostPostsRouteWithChildren,
   AdminDashboardIndexRoute: AdminDashboardIndexRoute,
 }
 
