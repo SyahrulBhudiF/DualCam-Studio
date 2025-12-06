@@ -1,16 +1,17 @@
-import pyrealsense2 as rs
 import asyncio
-import websockets
+import json
+import os
+
 import cv2
 import numpy as np
-import os
-import json
+import pyrealsense2 as rs
+import websockets
 from websockets.exceptions import ConnectionClosed
 
 PORT = 8080
 WIDTH = 640
 HEIGHT = 480
-FPS = 30
+FPS = 60
 BASE_UPLOAD_DIR = "video_uploads"
 
 if not os.path.exists(BASE_UPLOAD_DIR):
@@ -19,6 +20,7 @@ if not os.path.exists(BASE_UPLOAD_DIR):
 is_recording = False
 video_writer = None
 connected_clients = set()
+
 
 async def handle_commands(websocket):
     global is_recording, video_writer
@@ -43,8 +45,10 @@ async def handle_commands(websocket):
 
                     os.makedirs(os.path.dirname(full_path), exist_ok=True)
 
-                    fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-                    video_writer = cv2.VideoWriter(full_path, fourcc, FPS, (WIDTH, HEIGHT))
+                    fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+                    video_writer = cv2.VideoWriter(
+                        full_path, fourcc, FPS, (WIDTH, HEIGHT)
+                    )
                     is_recording = True
                     print(f"REC START: {full_path}")
 
@@ -59,6 +63,7 @@ async def handle_commands(websocket):
                 pass
     except Exception:
         pass
+
 
 async def camera_broadcast_task():
     global is_recording, video_writer
@@ -82,7 +87,9 @@ async def camera_broadcast_task():
                 video_writer.write(frame_data)
 
             if connected_clients:
-                ret, buffer = cv2.imencode('.jpg', frame_data, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                ret, buffer = cv2.imencode(
+                    ".jpg", frame_data, [int(cv2.IMWRITE_JPEG_QUALITY), 80]
+                )
                 if ret:
                     websockets.broadcast(connected_clients, buffer.tobytes())
 
@@ -95,6 +102,7 @@ async def camera_broadcast_task():
             video_writer.release()
         pipeline.stop()
 
+
 async def handler(websocket):
     connected_clients.add(websocket)
     command_task = asyncio.create_task(handle_commands(websocket))
@@ -104,11 +112,13 @@ async def handler(websocket):
         connected_clients.remove(websocket)
         command_task.cancel()
 
+
 async def main():
     print(f"Server STANDBY at ws://localhost:{PORT}")
     server_task = websockets.serve(handler, "localhost", PORT)
     camera_task = asyncio.create_task(camera_broadcast_task())
     await asyncio.gather(server_task, camera_task)
+
 
 if __name__ == "__main__":
     try:
