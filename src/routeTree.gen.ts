@@ -17,8 +17,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuccessIndexRouteImport } from './routes/success/index'
 import { Route as QuestionnaireIndexRouteImport } from './routes/questionnaire/index'
 import { Route as QuestionnaireSegmentedIndexRouteImport } from './routes/questionnaire/segmented/index'
+import { Route as AdminResponsesIndexRouteImport } from './routes/admin/responses/index'
 import { Route as AdminQuestionnairesIndexRouteImport } from './routes/admin/questionnaires/index'
 import { Route as AdminDashboardIndexRouteImport } from './routes/admin/dashboard/index'
+import { Route as ApiVideoSplatRouteImport } from './routes/api/video/$'
+import { Route as AdminResponsesResponseIdIndexRouteImport } from './routes/admin/responses/$responseId/index'
 import { Route as AdminQuestionnairesQuestionnaireIdIndexRouteImport } from './routes/admin/questionnaires/$questionnaireId/index'
 import { Route as AdminQuestionnairesQuestionnaireIdQuestionIdIndexRouteImport } from './routes/admin/questionnaires/$questionnaireId/$questionId/index'
 
@@ -63,6 +66,11 @@ const QuestionnaireSegmentedIndexRoute =
     path: '/questionnaire/segmented/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminResponsesIndexRoute = AdminResponsesIndexRouteImport.update({
+  id: '/responses/',
+  path: '/responses/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminQuestionnairesIndexRoute =
   AdminQuestionnairesIndexRouteImport.update({
     id: '/questionnaires/',
@@ -74,6 +82,17 @@ const AdminDashboardIndexRoute = AdminDashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const ApiVideoSplatRoute = ApiVideoSplatRouteImport.update({
+  id: '/api/video/$',
+  path: '/api/video/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminResponsesResponseIdIndexRoute =
+  AdminResponsesResponseIdIndexRouteImport.update({
+    id: '/responses/$responseId/',
+    path: '/responses/$responseId/',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 const AdminQuestionnairesQuestionnaireIdIndexRoute =
   AdminQuestionnairesQuestionnaireIdIndexRouteImport.update({
     id: '/questionnaires/$questionnaireId/',
@@ -95,10 +114,13 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/questionnaire': typeof QuestionnaireIndexRoute
   '/success': typeof SuccessIndexRoute
+  '/api/video/$': typeof ApiVideoSplatRoute
   '/admin/dashboard': typeof AdminDashboardIndexRoute
   '/admin/questionnaires': typeof AdminQuestionnairesIndexRoute
+  '/admin/responses': typeof AdminResponsesIndexRoute
   '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
   '/admin/questionnaires/$questionnaireId': typeof AdminQuestionnairesQuestionnaireIdIndexRoute
+  '/admin/responses/$responseId': typeof AdminResponsesResponseIdIndexRoute
   '/admin/questionnaires/$questionnaireId/$questionId': typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -109,10 +131,13 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/questionnaire': typeof QuestionnaireIndexRoute
   '/success': typeof SuccessIndexRoute
+  '/api/video/$': typeof ApiVideoSplatRoute
   '/admin/dashboard': typeof AdminDashboardIndexRoute
   '/admin/questionnaires': typeof AdminQuestionnairesIndexRoute
+  '/admin/responses': typeof AdminResponsesIndexRoute
   '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
   '/admin/questionnaires/$questionnaireId': typeof AdminQuestionnairesQuestionnaireIdIndexRoute
+  '/admin/responses/$responseId': typeof AdminResponsesResponseIdIndexRoute
   '/admin/questionnaires/$questionnaireId/$questionId': typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
 }
 export interface FileRoutesById {
@@ -124,10 +149,13 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/questionnaire/': typeof QuestionnaireIndexRoute
   '/success/': typeof SuccessIndexRoute
+  '/api/video/$': typeof ApiVideoSplatRoute
   '/admin/dashboard/': typeof AdminDashboardIndexRoute
   '/admin/questionnaires/': typeof AdminQuestionnairesIndexRoute
+  '/admin/responses/': typeof AdminResponsesIndexRoute
   '/questionnaire/segmented/': typeof QuestionnaireSegmentedIndexRoute
   '/admin/questionnaires/$questionnaireId/': typeof AdminQuestionnairesQuestionnaireIdIndexRoute
+  '/admin/responses/$responseId/': typeof AdminResponsesResponseIdIndexRoute
   '/admin/questionnaires/$questionnaireId/$questionId/': typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -140,10 +168,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/questionnaire'
     | '/success'
+    | '/api/video/$'
     | '/admin/dashboard'
     | '/admin/questionnaires'
+    | '/admin/responses'
     | '/questionnaire/segmented'
     | '/admin/questionnaires/$questionnaireId'
+    | '/admin/responses/$responseId'
     | '/admin/questionnaires/$questionnaireId/$questionId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,10 +185,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/questionnaire'
     | '/success'
+    | '/api/video/$'
     | '/admin/dashboard'
     | '/admin/questionnaires'
+    | '/admin/responses'
     | '/questionnaire/segmented'
     | '/admin/questionnaires/$questionnaireId'
+    | '/admin/responses/$responseId'
     | '/admin/questionnaires/$questionnaireId/$questionId'
   id:
     | '__root__'
@@ -168,10 +202,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/questionnaire/'
     | '/success/'
+    | '/api/video/$'
     | '/admin/dashboard/'
     | '/admin/questionnaires/'
+    | '/admin/responses/'
     | '/questionnaire/segmented/'
     | '/admin/questionnaires/$questionnaireId/'
+    | '/admin/responses/$responseId/'
     | '/admin/questionnaires/$questionnaireId/$questionId/'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +220,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   QuestionnaireIndexRoute: typeof QuestionnaireIndexRoute
   SuccessIndexRoute: typeof SuccessIndexRoute
+  ApiVideoSplatRoute: typeof ApiVideoSplatRoute
   QuestionnaireSegmentedIndexRoute: typeof QuestionnaireSegmentedIndexRoute
 }
 
@@ -244,6 +282,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuestionnaireSegmentedIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/responses/': {
+      id: '/admin/responses/'
+      path: '/responses'
+      fullPath: '/admin/responses'
+      preLoaderRoute: typeof AdminResponsesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/admin/questionnaires/': {
       id: '/admin/questionnaires/'
       path: '/questionnaires'
@@ -256,6 +301,20 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminDashboardIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/api/video/$': {
+      id: '/api/video/$'
+      path: '/api/video/$'
+      fullPath: '/api/video/$'
+      preLoaderRoute: typeof ApiVideoSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/responses/$responseId/': {
+      id: '/admin/responses/$responseId/'
+      path: '/responses/$responseId'
+      fullPath: '/admin/responses/$responseId'
+      preLoaderRoute: typeof AdminResponsesResponseIdIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/questionnaires/$questionnaireId/': {
@@ -278,15 +337,19 @@ declare module '@tanstack/react-router' {
 interface AdminRouteRouteChildren {
   AdminDashboardIndexRoute: typeof AdminDashboardIndexRoute
   AdminQuestionnairesIndexRoute: typeof AdminQuestionnairesIndexRoute
+  AdminResponsesIndexRoute: typeof AdminResponsesIndexRoute
   AdminQuestionnairesQuestionnaireIdIndexRoute: typeof AdminQuestionnairesQuestionnaireIdIndexRoute
+  AdminResponsesResponseIdIndexRoute: typeof AdminResponsesResponseIdIndexRoute
   AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute: typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminDashboardIndexRoute: AdminDashboardIndexRoute,
   AdminQuestionnairesIndexRoute: AdminQuestionnairesIndexRoute,
+  AdminResponsesIndexRoute: AdminResponsesIndexRoute,
   AdminQuestionnairesQuestionnaireIdIndexRoute:
     AdminQuestionnairesQuestionnaireIdIndexRoute,
+  AdminResponsesResponseIdIndexRoute: AdminResponsesResponseIdIndexRoute,
   AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute:
     AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute,
 }
@@ -303,6 +366,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   QuestionnaireIndexRoute: QuestionnaireIndexRoute,
   SuccessIndexRoute: SuccessIndexRoute,
+  ApiVideoSplatRoute: ApiVideoSplatRoute,
   QuestionnaireSegmentedIndexRoute: QuestionnaireSegmentedIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -1,0 +1,1 @@
+import{j as o}from"./main-DZWvjlLQ.js";import{L as r}from"./Login-CxaXTcKT.js";import"./useMutation-D6MBcEm7.js";import"./utils-CwvXAYlB.js";import"./Auth-CDGuL-lf.js";function s(){return o.jsx(r,{})}export{s as component};

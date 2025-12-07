@@ -1,0 +1,1 @@
+import{j as t}from"./main-DZWvjlLQ.js";import{L as r}from"./Login-CxaXTcKT.js";import"./useMutation-D6MBcEm7.js";import"./utils-CwvXAYlB.js";import"./Auth-CDGuL-lf.js";const s=({error:o})=>{if(o.message==="Not authenticated")return t.jsx(r,{});throw o};export{s as errorComponent};

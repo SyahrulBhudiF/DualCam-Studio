@@ -2,10 +2,10 @@
 
 import type { QueryClient } from "@tanstack/react-query";
 import {
-  createRootRouteWithContext,
-  HeadContent,
-  Outlet,
-  Scripts,
+	createRootRouteWithContext,
+	HeadContent,
+	Outlet,
+	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type * as React from "react";
@@ -19,88 +19,88 @@ import appCss from "@/styles/app.css?url";
 import { seo } from "@/utils/seo";
 
 export const Route = createRootRouteWithContext<{
-  queryClient: QueryClient;
+	queryClient: QueryClient;
 }>()({
-  beforeLoad: async () => {
-    const user = await fetchUser();
+	beforeLoad: async () => {
+		const user = await fetchUser();
 
-    return {
-      user,
-    };
-  },
-  head: () => ({
-    meta: [
-      {
-        charSet: "utf-8",
-      },
-      {
-        name: "viewport",
-        content: "width=device-width, initial-scale=1",
-      },
-      ...seo({
-        title: "DualCam Studio",
-        description: `DualCam Studio is a general‑purpose, dataset‑oriented platform for dual‑camera microexpression recording and questionnaire management, suitable both for research and for more traditional online exam and survey use cases.`,
-      }),
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      {
-        rel: "apple-touch-icon",
-        sizes: "180x180",
-        href: "/apple-touch-icon.png",
-      },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "32x32",
-        href: "/favicon-32x32.png",
-      },
-      {
-        rel: "icon",
-        type: "image/png",
-        sizes: "16x16",
-        href: "/favicon-16x16.png",
-      },
-      { rel: "manifest", href: "/site.webmanifest", color: "#fffff" },
-      { rel: "icon", href: "/favicon.ico" },
-    ],
-  }),
-  errorComponent: (props) => {
-    return (
-      <RootDocument>
-        <DefaultCatchBoundary {...props} />
-      </RootDocument>
-    );
-  },
-  notFoundComponent: () => <NotFound />,
-  component: RootComponent,
+		return {
+			user,
+		};
+	},
+	head: () => ({
+		meta: [
+			{
+				charSet: "utf-8",
+			},
+			{
+				name: "viewport",
+				content: "width=device-width, initial-scale=1",
+			},
+			...seo({
+				title: "DualCam Studio",
+				description: `DualCam Studio is a general‑purpose, dataset‑oriented platform for dual‑camera microexpression recording and questionnaire management, suitable both for research and for more traditional online exam and survey use cases.`,
+			}),
+		],
+		links: [
+			{ rel: "stylesheet", href: appCss },
+			{
+				rel: "apple-touch-icon",
+				sizes: "180x180",
+				href: "/apple-touch-icon.png",
+			},
+			{
+				rel: "icon",
+				type: "image/png",
+				sizes: "32x32",
+				href: "/favicon-32x32.png",
+			},
+			{
+				rel: "icon",
+				type: "image/png",
+				sizes: "16x16",
+				href: "/favicon-16x16.png",
+			},
+			{ rel: "manifest", href: "/site.webmanifest", color: "#fffff" },
+			{ rel: "icon", href: "/favicon.ico" },
+		],
+	}),
+	errorComponent: (props) => {
+		return (
+			<RootDocument>
+				<DefaultCatchBoundary {...props} />
+			</RootDocument>
+		);
+	},
+	notFoundComponent: () => <NotFound />,
+	component: RootComponent,
 });
 
 function RootComponent() {
-  return (
-    <RootDocument>
-      <ThemeProvider>
-        <DirectionProvider>
-          <Outlet />
-        </DirectionProvider>
-      </ThemeProvider>
-    </RootDocument>
-  );
+	return (
+		<RootDocument>
+			<ThemeProvider>
+				<DirectionProvider>
+					<Outlet />
+				</DirectionProvider>
+			</ThemeProvider>
+		</RootDocument>
+	);
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-        <title></title>
-      </head>
-      <body>
-        {children}
-        <Toaster />
-        <TanStackRouterDevtools position="bottom-left" />
-        <Scripts />
-      </body>
-    </html>
-  );
+	return (
+		<html lang="en">
+			<head>
+				<HeadContent />
+				<title></title>
+			</head>
+			<body>
+				{children}
+				<Toaster />
+				<TanStackRouterDevtools position="bottom-left" />
+				<Scripts />
+			</body>
+		</html>
+	);
 }
