@@ -12,13 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AuthedRouteRouteImport } from './routes/_authed/route'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuccessIndexRouteImport } from './routes/success/index'
 import { Route as QuestionnaireIndexRouteImport } from './routes/questionnaire/index'
 import { Route as QuestionnaireSegmentedIndexRouteImport } from './routes/questionnaire/segmented/index'
-import { Route as AuthedPostPostsRouteImport } from './routes/_authed/post/posts'
-import { Route as AuthedPostPostsIndexRouteImport } from './routes/_authed/post/posts.index'
+import { Route as AdminResponsesIndexRouteImport } from './routes/admin/responses/index'
+import { Route as AdminQuestionnairesIndexRouteImport } from './routes/admin/questionnaires/index'
+import { Route as AdminDashboardIndexRouteImport } from './routes/admin/dashboard/index'
+import { Route as ApiVideoSplatRouteImport } from './routes/api/video/$'
+import { Route as AdminResponsesResponseIdIndexRouteImport } from './routes/admin/responses/$responseId/index'
+import { Route as AdminQuestionnairesQuestionnaireIdIndexRouteImport } from './routes/admin/questionnaires/$questionnaireId/index'
+import { Route as AdminQuestionnairesQuestionnaireIdQuestionIdIndexRouteImport } from './routes/admin/questionnaires/$questionnaireId/$questionId/index'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -35,8 +40,9 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedRouteRoute = AuthedRouteRouteImport.update({
-  id: '/_authed',
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -60,95 +66,161 @@ const QuestionnaireSegmentedIndexRoute =
     path: '/questionnaire/segmented/',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AuthedPostPostsRoute = AuthedPostPostsRouteImport.update({
-  id: '/post/posts',
-  path: '/post/posts',
-  getParentRoute: () => AuthedRouteRoute,
+const AdminResponsesIndexRoute = AdminResponsesIndexRouteImport.update({
+  id: '/responses/',
+  path: '/responses/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
-const AuthedPostPostsIndexRoute = AuthedPostPostsIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthedPostPostsRoute,
+const AdminQuestionnairesIndexRoute =
+  AdminQuestionnairesIndexRouteImport.update({
+    id: '/questionnaires/',
+    path: '/questionnaires/',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
+const AdminDashboardIndexRoute = AdminDashboardIndexRouteImport.update({
+  id: '/dashboard/',
+  path: '/dashboard/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
+const ApiVideoSplatRoute = ApiVideoSplatRouteImport.update({
+  id: '/api/video/$',
+  path: '/api/video/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminResponsesResponseIdIndexRoute =
+  AdminResponsesResponseIdIndexRouteImport.update({
+    id: '/responses/$responseId/',
+    path: '/responses/$responseId/',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
+const AdminQuestionnairesQuestionnaireIdIndexRoute =
+  AdminQuestionnairesQuestionnaireIdIndexRouteImport.update({
+    id: '/questionnaires/$questionnaireId/',
+    path: '/questionnaires/$questionnaireId/',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
+const AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute =
+  AdminQuestionnairesQuestionnaireIdQuestionIdIndexRouteImport.update({
+    id: '/questionnaires/$questionnaireId/$questionId/',
+    path: '/questionnaires/$questionnaireId/$questionId/',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
   '/questionnaire': typeof QuestionnaireIndexRoute
   '/success': typeof SuccessIndexRoute
-  '/post/posts': typeof AuthedPostPostsRouteWithChildren
+  '/api/video/$': typeof ApiVideoSplatRoute
+  '/admin/dashboard': typeof AdminDashboardIndexRoute
+  '/admin/questionnaires': typeof AdminQuestionnairesIndexRoute
+  '/admin/responses': typeof AdminResponsesIndexRoute
   '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
-  '/post/posts/': typeof AuthedPostPostsIndexRoute
+  '/admin/questionnaires/$questionnaireId': typeof AdminQuestionnairesQuestionnaireIdIndexRoute
+  '/admin/responses/$responseId': typeof AdminResponsesResponseIdIndexRoute
+  '/admin/questionnaires/$questionnaireId/$questionId': typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
   '/questionnaire': typeof QuestionnaireIndexRoute
   '/success': typeof SuccessIndexRoute
+  '/api/video/$': typeof ApiVideoSplatRoute
+  '/admin/dashboard': typeof AdminDashboardIndexRoute
+  '/admin/questionnaires': typeof AdminQuestionnairesIndexRoute
+  '/admin/responses': typeof AdminResponsesIndexRoute
   '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
-  '/post/posts': typeof AuthedPostPostsIndexRoute
+  '/admin/questionnaires/$questionnaireId': typeof AdminQuestionnairesQuestionnaireIdIndexRoute
+  '/admin/responses/$responseId': typeof AdminResponsesResponseIdIndexRoute
+  '/admin/questionnaires/$questionnaireId/$questionId': typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_authed': typeof AuthedRouteRouteWithChildren
+  '/admin': typeof AdminRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
   '/questionnaire/': typeof QuestionnaireIndexRoute
   '/success/': typeof SuccessIndexRoute
-  '/_authed/post/posts': typeof AuthedPostPostsRouteWithChildren
+  '/api/video/$': typeof ApiVideoSplatRoute
+  '/admin/dashboard/': typeof AdminDashboardIndexRoute
+  '/admin/questionnaires/': typeof AdminQuestionnairesIndexRoute
+  '/admin/responses/': typeof AdminResponsesIndexRoute
   '/questionnaire/segmented/': typeof QuestionnaireSegmentedIndexRoute
-  '/_authed/post/posts/': typeof AuthedPostPostsIndexRoute
+  '/admin/questionnaires/$questionnaireId/': typeof AdminQuestionnairesQuestionnaireIdIndexRoute
+  '/admin/responses/$responseId/': typeof AdminResponsesResponseIdIndexRoute
+  '/admin/questionnaires/$questionnaireId/$questionId/': typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/login'
     | '/logout'
     | '/signup'
     | '/questionnaire'
     | '/success'
-    | '/post/posts'
+    | '/api/video/$'
+    | '/admin/dashboard'
+    | '/admin/questionnaires'
+    | '/admin/responses'
     | '/questionnaire/segmented'
-    | '/post/posts/'
+    | '/admin/questionnaires/$questionnaireId'
+    | '/admin/responses/$responseId'
+    | '/admin/questionnaires/$questionnaireId/$questionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/login'
     | '/logout'
     | '/signup'
     | '/questionnaire'
     | '/success'
+    | '/api/video/$'
+    | '/admin/dashboard'
+    | '/admin/questionnaires'
+    | '/admin/responses'
     | '/questionnaire/segmented'
-    | '/post/posts'
+    | '/admin/questionnaires/$questionnaireId'
+    | '/admin/responses/$responseId'
+    | '/admin/questionnaires/$questionnaireId/$questionId'
   id:
     | '__root__'
     | '/'
-    | '/_authed'
+    | '/admin'
     | '/login'
     | '/logout'
     | '/signup'
     | '/questionnaire/'
     | '/success/'
-    | '/_authed/post/posts'
+    | '/api/video/$'
+    | '/admin/dashboard/'
+    | '/admin/questionnaires/'
+    | '/admin/responses/'
     | '/questionnaire/segmented/'
-    | '/_authed/post/posts/'
+    | '/admin/questionnaires/$questionnaireId/'
+    | '/admin/responses/$responseId/'
+    | '/admin/questionnaires/$questionnaireId/$questionId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   SignupRoute: typeof SignupRoute
   QuestionnaireIndexRoute: typeof QuestionnaireIndexRoute
   SuccessIndexRoute: typeof SuccessIndexRoute
+  ApiVideoSplatRoute: typeof ApiVideoSplatRoute
   QuestionnaireSegmentedIndexRoute: typeof QuestionnaireSegmentedIndexRoute
 }
 
@@ -175,11 +247,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed': {
-      id: '/_authed'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthedRouteRouteImport
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -210,55 +282,91 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuestionnaireSegmentedIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed/post/posts': {
-      id: '/_authed/post/posts'
-      path: '/post/posts'
-      fullPath: '/post/posts'
-      preLoaderRoute: typeof AuthedPostPostsRouteImport
-      parentRoute: typeof AuthedRouteRoute
+    '/admin/responses/': {
+      id: '/admin/responses/'
+      path: '/responses'
+      fullPath: '/admin/responses'
+      preLoaderRoute: typeof AdminResponsesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/_authed/post/posts/': {
-      id: '/_authed/post/posts/'
-      path: '/'
-      fullPath: '/post/posts/'
-      preLoaderRoute: typeof AuthedPostPostsIndexRouteImport
-      parentRoute: typeof AuthedPostPostsRoute
+    '/admin/questionnaires/': {
+      id: '/admin/questionnaires/'
+      path: '/questionnaires'
+      fullPath: '/admin/questionnaires'
+      preLoaderRoute: typeof AdminQuestionnairesIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/dashboard/': {
+      id: '/admin/dashboard/'
+      path: '/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AdminDashboardIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/api/video/$': {
+      id: '/api/video/$'
+      path: '/api/video/$'
+      fullPath: '/api/video/$'
+      preLoaderRoute: typeof ApiVideoSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/responses/$responseId/': {
+      id: '/admin/responses/$responseId/'
+      path: '/responses/$responseId'
+      fullPath: '/admin/responses/$responseId'
+      preLoaderRoute: typeof AdminResponsesResponseIdIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/questionnaires/$questionnaireId/': {
+      id: '/admin/questionnaires/$questionnaireId/'
+      path: '/questionnaires/$questionnaireId'
+      fullPath: '/admin/questionnaires/$questionnaireId'
+      preLoaderRoute: typeof AdminQuestionnairesQuestionnaireIdIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/questionnaires/$questionnaireId/$questionId/': {
+      id: '/admin/questionnaires/$questionnaireId/$questionId/'
+      path: '/questionnaires/$questionnaireId/$questionId'
+      fullPath: '/admin/questionnaires/$questionnaireId/$questionId'
+      preLoaderRoute: typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
   }
 }
 
-interface AuthedPostPostsRouteChildren {
-  AuthedPostPostsIndexRoute: typeof AuthedPostPostsIndexRoute
+interface AdminRouteRouteChildren {
+  AdminDashboardIndexRoute: typeof AdminDashboardIndexRoute
+  AdminQuestionnairesIndexRoute: typeof AdminQuestionnairesIndexRoute
+  AdminResponsesIndexRoute: typeof AdminResponsesIndexRoute
+  AdminQuestionnairesQuestionnaireIdIndexRoute: typeof AdminQuestionnairesQuestionnaireIdIndexRoute
+  AdminResponsesResponseIdIndexRoute: typeof AdminResponsesResponseIdIndexRoute
+  AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute: typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
 }
 
-const AuthedPostPostsRouteChildren: AuthedPostPostsRouteChildren = {
-  AuthedPostPostsIndexRoute: AuthedPostPostsIndexRoute,
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminDashboardIndexRoute: AdminDashboardIndexRoute,
+  AdminQuestionnairesIndexRoute: AdminQuestionnairesIndexRoute,
+  AdminResponsesIndexRoute: AdminResponsesIndexRoute,
+  AdminQuestionnairesQuestionnaireIdIndexRoute:
+    AdminQuestionnairesQuestionnaireIdIndexRoute,
+  AdminResponsesResponseIdIndexRoute: AdminResponsesResponseIdIndexRoute,
+  AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute:
+    AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute,
 }
 
-const AuthedPostPostsRouteWithChildren = AuthedPostPostsRoute._addFileChildren(
-  AuthedPostPostsRouteChildren,
-)
-
-interface AuthedRouteRouteChildren {
-  AuthedPostPostsRoute: typeof AuthedPostPostsRouteWithChildren
-}
-
-const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
-  AuthedPostPostsRoute: AuthedPostPostsRouteWithChildren,
-}
-
-const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
-  AuthedRouteRouteChildren,
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
 )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthedRouteRoute: AuthedRouteRouteWithChildren,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   SignupRoute: SignupRoute,
   QuestionnaireIndexRoute: QuestionnaireIndexRoute,
   SuccessIndexRoute: SuccessIndexRoute,
+  ApiVideoSplatRoute: ApiVideoSplatRoute,
   QuestionnaireSegmentedIndexRoute: QuestionnaireSegmentedIndexRoute,
 }
 export const routeTree = rootRouteImport

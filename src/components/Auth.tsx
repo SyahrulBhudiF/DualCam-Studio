@@ -10,9 +10,11 @@ export function Auth({
 	afterSubmit?: React.ReactNode;
 }) {
 	return (
-		<div className="fixed inset-0 bg-white dark:bg-black flex items-start justify-center p-8">
-			<div className="bg-white dark:bg-gray-900 p-8 rounded-lg shadow-lg">
-				<h1 className="text-2xl font-bold mb-4">{actionText}</h1>
+		<div className="fixed inset-0 bg-white dark:bg-black flex items-center justify-center p-8">
+			<div className="bg-black dark:bg-white p-8 rounded-lg shadow-md shadow-black dark:shadow-gray-500 items-center w-full h-fit sm:max-w-full md:max-w-1/2 lg:max-w-1/3">
+				<h1 className="text-2xl font-bold mb-4 text-white dark:text-black text-center">
+					{actionText}
+				</h1>
 				<form
 					onSubmit={(e) => {
 						e.preventDefault();
@@ -21,30 +23,38 @@ export function Auth({
 					className="space-y-4"
 				>
 					<div>
-						<label htmlFor="email" className="block text-xs">
+						<label
+							htmlFor="email"
+							className="block text-md text-white dark:text-black py-1"
+						>
 							Email
 						</label>
 						<input
 							type="email"
 							name="email"
 							id="email"
-							className="px-2 py-1 w-full rounded-sm border border-gray-500/20 bg-white dark:bg-gray-800"
+							placeholder="example@gmail.com"
+							className="px-2 py-2 w-full rounded-sm border border-gray-500/20 bg-gray-950 dark:bg-white text-white dark:text-black text-sm"
 						/>
 					</div>
 					<div>
-						<label htmlFor="password" className="block text-xs">
+						<label
+							htmlFor="password"
+							className="block text-md text-white dark:text-black py-1"
+						>
 							Password
 						</label>
 						<input
 							type="password"
 							name="password"
 							id="password"
-							className="px-2 py-1 w-full rounded-sm border border-gray-500/20 bg-white dark:bg-gray-800"
+							placeholder="password123"
+							className="px-2 py-2 w-full rounded-sm border border-gray-500/20 bg-gray-950 dark:bg-white text-white dark:text-black text-sm"
 						/>
 					</div>
 					<button
 						type="submit"
-						className="w-full bg-cyan-600 text-white rounded-sm py-2 font-black uppercase"
+						className="w-full bg-white dark:bg-black text-black dark:text-white rounded-sm py-2 font-bold uppercase"
 						disabled={status === "pending"}
 					>
 						{status === "pending" ? "..." : actionText}

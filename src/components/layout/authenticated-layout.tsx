@@ -1,12 +1,17 @@
 import { Outlet } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { Header } from "@/components/layout/header";
+import { ProfileDropdown } from "@/components/profile-dropdown";
+import { Search } from "@/components/search";
 import { SkipToMain } from "@/components/skip-to-main";
+import { ThemeSwitch } from "@/components/theme-switch";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { LayoutProvider } from "@/libs/context/layout-provider";
 import { SearchProvider } from "@/libs/context/search-provider";
 import { getCookie } from "@/libs/cookie";
 import { cn } from "@/utils/utils";
-import type { ReactNode } from "react";
+import { ConfigDrawer } from "../config-drawer";
 
 type AuthenticatedLayoutProps = {
 	children?: ReactNode;
@@ -34,7 +39,17 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
 							"peer-data-[variant=inset]:has-data-[layout=fixed]:h-[calc(100svh-(var(--spacing)*4))]",
 						)}
 					>
-						{children ?? <Outlet />}
+						<div>
+							<Header>
+								<div className="ms-auto flex items-center space-x-4">
+									<Search />
+									<ThemeSwitch />
+									<ConfigDrawer />
+									<ProfileDropdown />
+								</div>
+							</Header>
+							{children ?? <Outlet />}
+						</div>
 					</SidebarInset>
 				</SidebarProvider>
 			</LayoutProvider>

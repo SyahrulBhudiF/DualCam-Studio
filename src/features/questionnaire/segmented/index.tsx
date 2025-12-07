@@ -1,312 +1,266 @@
-import { useEffect, useRef, useState } from "react";
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useLoaderData, useNavigate } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
-  uploadVideoChunk,
-  submitSegmentedResponse,
+	submitSegmentedResponse,
+	uploadVideoChunk,
 } from "@/apis/segmented-upload";
+import { CameraControlPanel } from "@/components/CameraControlPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useUserStore } from "@/libs/store/UserStore";
+import { useCameraSetup } from "@/libs/hooks/use-camera-setup";
 import { useQuestionnaireStore } from "@/libs/store/QuestionnaireStore";
-import { RealSenseCanvas, RealSenseHandle } from "@/components/RealSenseCanvas";
-import { Loader2 } from "lucide-react";
-import { useLoaderData } from "@tanstack/react-router";
+import { useUserStore } from "@/libs/store/UserStore";
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.readAsDataURL(blob);
-  });
-};
-
-const stopRecorderSafe = (recorder: MediaRecorder | null): Promise<void> => {
-  return new Promise((resolve) => {
-    if (!recorder || recorder.state === "inactive") {
-      resolve();
-    } else {
-      recorder.onstop = () => resolve();
-      recorder.stop();
-    }
-  });
+	return new Promise((resolve) => {
+		const reader = new FileReader();
+		reader.onloadend = () => resolve(reader.result as string);
+		reader.readAsDataURL(blob);
+	});
 };
 
 interface Answer {
-  id: string;
-  answer_text: string;
+	id: string;
+	answer_text: string;
 }
 
 export function SegmentedPage() {
-  const { questionnaire, questions } = useLoaderData({
-    from: "/questionnaire/segmented/",
-  });
-  const user = useUserStore().user;
-  const {
-    folderName,
-    setFolderName,
-    addAnswer,
-    reset,
-    answers: storeAnswers,
-  } = useQuestionnaireStore();
-  const navigate = useNavigate();
+	const { questionnaire, questions } = useLoaderData({
+		from: "/questionnaire/segmented/",
+	});
+	const user = useUserStore().user;
+	const store = useQuestionnaireStore();
+	const navigate = useNavigate();
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
+	const [currentIndex, setCurrentIndex] = useState(0);
+	const [isProcessing, setIsProcessing] = useState(false);
 
-  const [mainReady, setMainReady] = useState(false);
-  const [secReady, setSecReady] = useState(false);
+	const {
+		videoDevices,
+		deviceIdMain,
+		setDeviceIdMain,
+		deviceIdSec,
+		setDeviceIdSec,
+		videoRefMain,
+		videoRefSec,
+		realSenseRef,
+		isRecording,
+		allReady,
+		setSecReady,
+		startRecording,
+		stopRecording,
+	} = useCameraSetup();
 
-  const videoRefMain = useRef<HTMLVideoElement>(null);
-  const mediaRecorderMain = useRef<MediaRecorder | null>(null);
-  const chunksMain = useRef<Blob[]>([]);
-  const realSenseRef = useRef<RealSenseHandle>(null);
+	const uploadMutation = useMutation({
+		mutationFn: uploadVideoChunk,
+	});
 
-  const uploadMutation = useMutation({
-    mutationFn: uploadVideoChunk,
-  });
+	const submitMutation = useMutation({
+		mutationFn: submitSegmentedResponse,
+		onSuccess: () => {
+			store.reset();
+			navigate({ to: "/success" });
+		},
+	});
 
-  const submitMutation = useMutation({
-    mutationFn: submitSegmentedResponse,
-    onSuccess: () => {
-      reset();
-      navigate({ to: "/success" });
-    },
-  });
+	const form = useForm({
+		defaultValues: {
+			answerId: "",
+		},
+		onSubmit: async ({ value }) => {
+			setIsProcessing(true);
+			const currentQ = questions[currentIndex];
 
-  const handleSubmitFinal = async () => {
-    const finalData = {
-      userName: user?.name || "Anon",
-      userClass: user?.class || "-",
-      questionnaireId: questionnaire.id,
-      folderName: folderName,
-      answers: Object.values(useQuestionnaireStore.getState().answers),
-    };
+			realSenseRef.current?.stopRecording();
+			const { blobMain } = await stopRecording();
 
-    await submitMutation.mutateAsync({ data: finalData });
-  };
+			const base64Main = blobMain.size > 0 ? await blobToBase64(blobMain) : "";
 
-  const form = useForm({
-    defaultValues: {
-      answerId: "",
-    },
-    onSubmit: async ({ value }) => {
-      setIsProcessing(true);
-      const currentQ = questions[currentIndex];
+			const subFolder = `q${currentIndex + 1}`;
+			const mainFileName = `/${subFolder}/${user?.name ?? "Anon"}_${currentIndex + 1}_${currentQ.id}_main.webm`;
 
-      realSenseRef.current?.stopRecording();
-      await stopRecorderSafe(mediaRecorderMain.current);
+			let uploadPath = "";
+			if (base64Main) {
+				const uploadRes = await uploadMutation.mutateAsync({
+					data: {
+						folderName: store.folderName,
+						fileName: mainFileName,
+						fileBase64: base64Main,
+					},
+				});
+				uploadPath = uploadRes.path;
+			}
 
-      const blob = new Blob(chunksMain.current, { type: "video/webm" });
-      const base64Main =
-        chunksMain.current.length > 0 ? await blobToBase64(blob) : "";
+			store.addAnswer(currentQ.id, {
+				questionId: currentQ.id,
+				answerId: value.answerId,
+				videoMainPath: uploadPath,
+				videoSecPath: `/video_uploads/${store.folderName}/${subFolder}/${user?.name ?? "Anon"}_${currentIndex + 1}_${currentQ.id}_sec.avi`,
+			});
 
-      const subFolder = `q${currentIndex + 1}`;
-      const mainFileName = `${subFolder}/answer_${currentIndex + 1}_${currentQ.id}_main.webm`;
+			form.reset();
 
-      let uploadPath = "";
-      if (base64Main) {
-        const uploadRes = await uploadMutation.mutateAsync({
-          data: {
-            folderName: folderName,
-            fileName: mainFileName,
-            fileBase64: base64Main,
-          },
-        });
-        uploadPath = uploadRes.path;
-      }
+			if (currentIndex < questions.length - 1) {
+				setCurrentIndex((prev) => prev + 1);
+				setIsProcessing(false);
+			} else {
+				const finalData = {
+					userEmail: user?.email || "anon@example.com",
+					userName: user?.name || "Anon",
+					userClass: user?.class || "-",
+					userGender: user?.gender || "-",
+					userAge: user?.age || 0,
+					userNim: user?.nim || "-",
+					userSemester: user?.semester || "-",
+					questionnaireId: questionnaire.id,
+					folderName: store.folderName,
+					answers: Object.values(useQuestionnaireStore.getState().answers),
+				};
+				await submitMutation.mutateAsync({ data: finalData });
+			}
+		},
+	});
 
-      addAnswer(currentQ.id, {
-        questionId: currentQ.id,
-        answerId: value.answerId,
-        videoMainPath: uploadPath,
-        videoSecPath: `/video_uploads/${folderName}/${subFolder}/answer_${currentIndex + 1}_${currentQ.id}_sec.avi`,
-      });
+	useEffect(() => {
+		if (user?.name && !store.folderName) {
+			const safeName = user.name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+			store.setFolderName(`segmented/${safeName}_${Date.now()}`);
+		}
+	}, [user, store.folderName, store.setFolderName]);
 
-      form.reset();
+	useEffect(() => {
+		if (!allReady || isProcessing || !questions) return;
 
-      if (currentIndex < questions.length - 1) {
-        setCurrentIndex((prev) => prev + 1);
-        setIsProcessing(false);
-      } else {
-        await handleSubmitFinal();
-      }
-    },
-  });
+		const timer = setTimeout(() => {
+			const currentQ = questions[currentIndex];
+			const subFolder = `q${currentIndex + 1}`;
+			const secFileName = `${subFolder}/answer_${currentIndex + 1}_${currentQ.id}_sec.avi`;
 
-  useEffect(() => {
-    if (user?.name && !folderName) {
-      const safeName = user.name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-      setFolderName(`${safeName}_${Date.now()}`);
-    }
-  }, [user, folderName]);
+			startRecording({
+				mode: "SEGMENT",
+				folderName: store.folderName,
+				fileName: secFileName,
+			});
+		}, 500);
 
-  useEffect(() => {
-    const initMainCam = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480 },
-          audio: true,
-        });
+		return () => clearTimeout(timer);
+	}, [
+		currentIndex,
+		allReady,
+		isProcessing,
+		questions,
+		store.folderName,
+		startRecording,
+	]);
 
-        if (videoRefMain.current) {
-          videoRefMain.current.srcObject = stream;
-        }
+	const currentQ = questions?.[currentIndex];
 
-        const rec = new MediaRecorder(stream);
-        rec.ondataavailable = (e) => {
-          if (e.data.size > 0) chunksMain.current.push(e.data);
-        };
-        mediaRecorderMain.current = rec;
+	if (!allReady) {
+		return (
+			<div className="min-h-screen flex flex-col items-center justify-center bg-muted/40 gap-4">
+				<Loader2 className="w-10 h-10 animate-spin" />
+				<div className="text-slate-600 font-medium">
+					Initializing Cameras...
+				</div>
+				<div className="fixed opacity-0 pointer-events-none">
+					<CameraControlPanel
+						videoDevices={videoDevices}
+						deviceIdMain={deviceIdMain}
+						setDeviceIdMain={setDeviceIdMain}
+						deviceIdSec={deviceIdSec}
+						setDeviceIdSec={setDeviceIdSec}
+						videoRefMain={videoRefMain}
+						videoRefSec={videoRefSec}
+						realSenseRef={realSenseRef}
+						isRecording={false}
+						onSecReady={() => setSecReady(true)}
+					/>
+				</div>
+			</div>
+		);
+	}
 
-        setMainReady(true);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    initMainCam();
-  }, []);
+	return (
+		<div className="min-h-screen bg-muted/40 p-4 pb-48">
+			<div className="max-w-3xl mx-auto mb-6">
+				<h1 className="text-2xl font-bold">
+					Question {currentIndex + 1} / {questions?.length}
+				</h1>
+			</div>
 
-  const allSystemsReady = mainReady && secReady && !!folderName;
+			<div className="max-w-3xl mx-auto mb-8">
+				<form
+					onSubmit={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						form.handleSubmit();
+					}}
+				>
+					{currentQ && (
+						<Card>
+							<CardHeader>
+								<CardTitle>{currentQ.question_text}</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<form.Field name="answerId">
+									{(field) => (
+										<RadioGroup
+											value={field.state.value}
+											onValueChange={(val) => field.handleChange(val)}
+										>
+											{currentQ.answers.map((ans: Answer) => (
+												<div
+													key={ans.id}
+													className="flex items-center space-x-2 mb-2 cursor-pointer"
+												>
+													<RadioGroupItem value={ans.id} id={ans.id} />
+													<Label htmlFor={ans.id}>{ans.answer_text}</Label>
+												</div>
+											))}
+										</RadioGroup>
+									)}
+								</form.Field>
+							</CardContent>
+						</Card>
+					)}
 
-  useEffect(() => {
-    if (!allSystemsReady || isProcessing || !questions) return;
+					<form.Subscribe
+						selector={(state) => [state.values.answerId, state.isSubmitting]}
+					>
+						{([answerId, isSubmitting]) => (
+							<Button
+								type="submit"
+								className="w-full mt-4 dark:bg-blend-saturation cursor-pointer"
+								disabled={!answerId || !!isSubmitting || isProcessing}
+							>
+								{isSubmitting || isProcessing
+									? "Saving & Uploading..."
+									: currentIndex === questions.length - 1
+										? "Finish"
+										: "Next Question"}
+							</Button>
+						)}
+					</form.Subscribe>
+				</form>
+			</div>
 
-    const currentQ = questions[currentIndex];
-
-    if (mediaRecorderMain.current?.state === "inactive") {
-      chunksMain.current = [];
-      mediaRecorderMain.current.start(1000);
-    }
-
-    const subFolder = `q${currentIndex + 1}`;
-    const secFileName = `${subFolder}/answer_${currentIndex + 1}_${currentQ.id}_sec.avi`;
-
-    realSenseRef.current?.startRecording({
-      mode: "SEGMENT",
-      folderName: folderName,
-      fileName: secFileName,
-    });
-  }, [currentIndex, allSystemsReady, isProcessing, questions, folderName]);
-
-  const currentQ = questions?.[currentIndex];
-
-  if (!allSystemsReady) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-        <div className="text-slate-600 font-medium">
-          Initializing Cameras & Server...
-        </div>
-
-        <div className="fixed bottom-4 right-4 flex flex-row gap-4 opacity-0 pointer-events-none">
-          <video ref={videoRefMain} autoPlay muted />
-          <RealSenseCanvas
-            ref={realSenseRef}
-            onReady={() => setSecReady(true)}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-slate-50 p-4 pb-48">
-      <div className="max-w-3xl mx-auto mb-6">
-        <h1 className="text-2xl font-bold">
-          Question {currentIndex + 1} / {questions?.length}
-        </h1>
-      </div>
-
-      <div className="max-w-3xl mx-auto mb-8">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            form.handleSubmit();
-          }}
-        >
-          {currentQ && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{currentQ.question_text}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form.Field name="answerId">
-                  {(field) => (
-                    <RadioGroup
-                      value={field.state.value}
-                      onValueChange={(val) => field.handleChange(val)}
-                    >
-                      {currentQ.answers.map((ans: Answer) => (
-                        <div
-                          key={ans.id}
-                          className="flex items-center space-x-2 mb-2"
-                        >
-                          <RadioGroupItem value={ans.id} id={ans.id} />
-                          <Label htmlFor={ans.id}>{ans.answer_text}</Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  )}
-                </form.Field>
-              </CardContent>
-            </Card>
-          )}
-
-          <form.Subscribe
-            selector={(state) => [state.values.answerId, state.isSubmitting]}
-          >
-            {([answerId, isSubmitting]) => (
-              <Button
-                type="submit"
-                className="w-full mt-4"
-                disabled={!answerId || !!isSubmitting || isProcessing}
-              >
-                {isSubmitting || isProcessing
-                  ? "Saving & Uploading..."
-                  : currentIndex === questions.length - 1
-                    ? "Finish"
-                    : "Next Question"}
-              </Button>
-            )}
-          </form.Subscribe>
-        </form>
-      </div>
-
-      <div className="fixed bottom-4 right-4 flex flex-row gap-4 z-50">
-        <div className="flex flex-col gap-2">
-          <div className="bg-white/90 px-2 rounded text-xs font-bold text-center">
-            Main Cam
-          </div>
-          <div className="w-48 h-36 bg-black rounded overflow-hidden border-2">
-            <video
-              ref={videoRefMain}
-              autoPlay
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <div className="bg-blue-100 px-2 rounded text-xs font-bold text-center text-blue-700">
-            RealSense (Auto)
-          </div>
-          <div className="w-48 h-36 bg-black rounded overflow-hidden border-2 border-blue-500 relative">
-            <RealSenseCanvas
-              ref={realSenseRef}
-              onReady={() => setSecReady(true)}
-            />
-            <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-600 text-white text-[10px] rounded animate-pulse">
-              REC
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+			<CameraControlPanel
+				videoDevices={videoDevices}
+				deviceIdMain={deviceIdMain}
+				setDeviceIdMain={setDeviceIdMain}
+				deviceIdSec={deviceIdSec}
+				setDeviceIdSec={setDeviceIdSec}
+				videoRefMain={videoRefMain}
+				videoRefSec={videoRefSec}
+				realSenseRef={realSenseRef}
+				isRecording={isRecording}
+				onSecReady={() => setSecReady(true)}
+			/>
+		</div>
+	);
 }
