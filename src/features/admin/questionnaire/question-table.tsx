@@ -1,7 +1,6 @@
+import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import {
-  type ColumnDef,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -10,8 +9,9 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { MoreHorizontal, Plus, Trash } from "lucide-react";
+import { Plus, Trash } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   createQuestion,
   deleteQuestions,
@@ -19,12 +19,10 @@ import {
 } from "@/apis/admin/questionnaires";
 import {
   DataTableBulkActions,
-  DataTableColumnHeader,
   DataTablePagination,
   DataTableToolbar,
 } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -32,15 +30,249 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createQuestionSchema } from "@/libs/schemas/questionnaire";
+import { getQuestionColumns } from "./components/columns";
 import type { Question } from "./questionnaires.types";
+
+const questionFormSchema = createQuestionSchema.omit({
+  questionnaire_id: true,
+});
+
+function CreateQuestionForm({
+  questionnaireId,
+  onSuccess,
+}: {
+  questionnaireId: string;
+  onSuccess: () => void;
+}) {
+  const queryClient = useQueryClient();
+
+  const createMutation = useMutation({
+    mutationFn: createQuestion,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "questions", questionnaireId],
+      });
+      onSuccess();
+
+      form.reset();
+      toast.success("Question created successfully");
+    },
+    onError: () => {
+      toast.error("Failed to create question");
+    },
+  });
+
+  const form = useForm({
+    defaultValues: {
+      question_text: "",
+      order_number: 0,
+    },
+    validators: {
+      onSubmit: ({ value }) => {
+        const result = questionFormSchema.safeParse(value);
+        if (!result.success) {
+          return result.error.issues.reduce(
+            (acc, issue) => {
+              const path = issue.path[0] as string;
+              acc[path] = issue.message;
+              return acc;
+            },
+            {} as Record<string, string>,
+          );
+        }
+        return undefined;
+      },
+    },
+    onSubmit: async ({ value }) => {
+      await createMutation.mutateAsync({
+        data: {
+          questionnaire_id: questionnaireId,
+          question_text: value.question_text,
+          order_number: Number(value.order_number),
+        },
+      });
+    },
+  });
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        form.handleSubmit();
+      }}
+      className="space-y-4"
+    >
+      <form.Field name="order_number">
+        {(field) => (
+          <div className="grid gap-2">
+            <Label htmlFor="order_number">Order</Label>
+            <Input
+              id="order_number"
+              type="number"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(Number(e.target.value))}
+            />
+            {field.state.meta.errors ? (
+              <p className="text-sm text-red-500">
+                {field.state.meta.errors.join(", ")}
+              </p>
+            ) : null}
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="question_text">
+        {(field) => (
+          <div className="grid gap-2">
+            <Label htmlFor="question_text">Question Text</Label>
+            <Input
+              id="question_text"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+            {field.state.meta.errors ? (
+              <p className="text-sm text-red-500">
+                {field.state.meta.errors.join(", ")}
+              </p>
+            ) : null}
+          </div>
+        )}
+      </form.Field>
+
+      <Button
+        type="submit"
+        className="w-full cursor-pointer"
+        disabled={createMutation.isPending}
+      >
+        Create
+      </Button>
+    </form>
+  );
+}
+
+function EditQuestionForm({
+  question,
+  questionnaireId,
+  onSuccess,
+}: {
+  question: Question;
+  questionnaireId: string;
+  onSuccess: () => void;
+}) {
+  const queryClient = useQueryClient();
+
+  const updateMutation = useMutation({
+    mutationFn: updateQuestion,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "questions", questionnaireId],
+      });
+      onSuccess();
+
+      form.reset();
+      toast.success("Question updated successfully");
+    },
+    onError: () => {
+      toast.error("Failed to update question");
+    },
+  });
+
+  const form = useForm({
+    defaultValues: {
+      question_text: question.question_text,
+      order_number: question.order_number,
+    },
+    validators: {
+      onSubmit: ({ value }) => {
+        const result = questionFormSchema.safeParse(value);
+        if (!result.success) {
+          return result.error.issues.reduce(
+            (acc, issue) => {
+              const path = issue.path[0] as string;
+              acc[path] = issue.message;
+              return acc;
+            },
+            {} as Record<string, string>,
+          );
+        }
+        return undefined;
+      },
+    },
+    onSubmit: async ({ value }) => {
+      await updateMutation.mutateAsync({
+        data: {
+          id: question.id,
+          question_text: value.question_text,
+          order_number: Number(value.order_number),
+        },
+      });
+    },
+  });
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        form.handleSubmit();
+      }}
+      className="space-y-4"
+    >
+      <form.Field name="order_number">
+        {(field) => (
+          <div className="grid gap-2">
+            <Label htmlFor="edit_order_number">Order</Label>
+            <Input
+              id="edit_order_number"
+              type="number"
+              value={String(field.state.value)}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(Number(e.target.value))}
+            />
+            {field.state.meta.errors ? (
+              <p className="text-sm text-red-500">
+                {field.state.meta.errors.join(", ")}
+              </p>
+            ) : null}
+          </div>
+        )}
+      </form.Field>
+
+      <form.Field name="question_text">
+        {(field) => (
+          <div className="grid gap-2">
+            <Label htmlFor="edit_question_text">Question Text</Label>
+            <Input
+              id="edit_question_text"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+            {field.state.meta.errors ? (
+              <p className="text-sm text-red-500">
+                {field.state.meta.errors.join(", ")}
+              </p>
+            ) : null}
+          </div>
+        )}
+      </form.Field>
+
+      <Button
+        type="submit"
+        className="w-full cursor-pointer"
+        disabled={updateMutation.isPending}
+      >
+        Update
+      </Button>
+    </form>
+  );
+}
 
 export function QuestionTable({
   data,
@@ -57,26 +289,6 @@ export function QuestionTable({
 
   const queryClient = useQueryClient();
 
-  const createMutation = useMutation({
-    mutationFn: createQuestion,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["admin", "questions", questionnaireId],
-      });
-      setIsCreateOpen(false);
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: updateQuestion,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["admin", "questions", questionnaireId],
-      });
-      setEditingQuestion(null);
-    },
-  });
-
   const deleteMutation = useMutation({
     mutationFn: deleteQuestions,
     onSuccess: () => {
@@ -84,78 +296,17 @@ export function QuestionTable({
         queryKey: ["admin", "questions", questionnaireId],
       });
       setRowSelection({});
+
+      toast.success("Question deleted successfully");
+    },
+    onError: () => {
+      toast.error("Failed to delete question");
     },
   });
 
-  const columns: ColumnDef<Question>[] = [
-    {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "order_number",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Order" />
-      ),
-      cell: ({ row }) => (
-        <div className="pl-4">{row.getValue("order_number")}</div>
-      ),
-    },
-    {
-      accessorKey: "question_text",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Question" />
-      ),
-      cell: ({ row }) => (
-        <span className="font-medium">{row.getValue("question_text")}</span>
-      ),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link
-                to="/admin/questionnaires/$questionnaireId/$questionId"
-                params={{ questionnaireId, questionId: row.original.id }}
-              >
-                Manage Answers
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setEditingQuestion(row.original)}>
-              Edit
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
-  ];
-
   const table = useReactTable({
     data,
-    columns,
+    columns: getQuestionColumns(questionnaireId, setEditingQuestion),
     state: { sorting, rowSelection, globalFilter },
     onSortingChange: setSorting,
     onRowSelectionChange: setRowSelection,
@@ -166,34 +317,13 @@ export function QuestionTable({
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    createMutation.mutate({
-      questionnaire_id: questionnaireId,
-      question_text: formData.get("question_text") as string,
-      order_number: Number(formData.get("order_number")),
-    });
-  };
-
-  const handleUpdate = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!editingQuestion) return;
-    const formData = new FormData(e.currentTarget);
-    updateMutation.mutate({
-      id: editingQuestion.id,
-      question_text: formData.get("question_text") as string,
-      order_number: Number(formData.get("order_number")),
-    });
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Questions</h3>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button size="sm" className="cursor-pointer">
               <Plus className="mr-2 h-4 w-4" /> Add Question
             </Button>
           </DialogTrigger>
@@ -201,28 +331,10 @@ export function QuestionTable({
             <DialogHeader>
               <DialogTitle>Add Question</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="order_number">Order</Label>
-                <Input
-                  id="order_number"
-                  name="order_number"
-                  type="number"
-                  defaultValue={0}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="question_text">Question Text</Label>
-                <Input id="question_text" name="question_text" required />
-              </div>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={createMutation.isPending}
-              >
-                Create
-              </Button>
-            </form>
+            <CreateQuestionForm
+              questionnaireId={questionnaireId}
+              onSuccess={() => setIsCreateOpen(false)}
+            />
           </DialogContent>
         </Dialog>
 
@@ -234,33 +346,13 @@ export function QuestionTable({
             <DialogHeader>
               <DialogTitle>Edit Question</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleUpdate} className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="edit_order_number">Order</Label>
-                <Input
-                  id="edit_order_number"
-                  name="order_number"
-                  type="number"
-                  defaultValue={editingQuestion?.order_number || 0}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit_question_text">Question Text</Label>
-                <Input
-                  id="edit_question_text"
-                  name="question_text"
-                  defaultValue={editingQuestion?.question_text}
-                  required
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={updateMutation.isPending}
-              >
-                Update
-              </Button>
-            </form>
+            {editingQuestion && (
+              <EditQuestionForm
+                question={editingQuestion}
+                questionnaireId={questionnaireId}
+                onSuccess={() => setEditingQuestion(null)}
+              />
+            )}
           </DialogContent>
         </Dialog>
       </div>
@@ -316,7 +408,7 @@ export function QuestionTable({
             const ids = table
               .getFilteredSelectedRowModel()
               .rows.map((row) => row.original.id);
-            deleteMutation.mutate({ ids });
+            deleteMutation.mutate({ data: { ids } });
           }}
         >
           <Trash className="mr-2 h-4 w-4" /> Delete Selected

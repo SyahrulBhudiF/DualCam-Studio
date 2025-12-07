@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { Plus, Trash } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   createQuestionnaire,
   deleteQuestionnaires,
@@ -40,9 +41,9 @@ import type { Questionnaire } from "./questionnaires.types";
 
 export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [rowSelection, setRowSelection] = useState({});
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [globalFilter, setGlobalFilter] = useState<string>("");
+  const [isCreateOpen, setIsCreateOpen] = useState<boolean>(false);
 
   const queryClient = useQueryClient();
 
@@ -51,6 +52,12 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "questionnaires"] });
       setIsCreateOpen(false);
+
+      form.reset();
+      toast.success("Questionnaire created successfully");
+    },
+    onError: () => {
+      toast.error("Failed to create questionnaire");
     },
   });
 
@@ -59,6 +66,10 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "questionnaires"] });
       setRowSelection({});
+      toast.success("Questionnaire deleted successfully");
+    },
+    onError: () => {
+      toast.error("Failed to delete questionnaire");
     },
   });
 
@@ -66,6 +77,12 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
     mutationFn: updateQuestionnaire,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "questionnaires"] });
+
+      form.reset();
+      toast.success("Questionnaire updated successfully");
+    },
+    onError: () => {
+      toast.error("Failed to update questionnaire");
     },
   });
 
@@ -73,8 +90,10 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
     () => {},
     (item) =>
       updateMutation.mutate({
-        id: item.id,
-        is_active: !item.is_active,
+        data: {
+          id: item.id,
+          is_active: !item.is_active,
+        },
       }),
   );
 
@@ -115,9 +134,11 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
     },
     onSubmit: async ({ value }) => {
       await createMutation.mutateAsync({
-        title: value.title,
-        description: value.description || null,
-        is_active: value.is_active,
+        data: {
+          title: value.title,
+          description: value.description || null,
+          is_active: value.is_active,
+        },
       });
     },
   });
@@ -128,7 +149,7 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
         <h2 className="text-2xl font-bold tracking-tight">Questionnaires</h2>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button size="sm" className="cursor-pointer">
               <Plus className="mr-2 h-4 w-4" /> Add Questionnaire
             </Button>
           </DialogTrigger>
@@ -189,7 +210,7 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
               </form.Field>
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full cursor-pointer"
                 disabled={createMutation.isPending}
               >
                 {createMutation.isPending ? "Creating..." : "Create"}
@@ -260,12 +281,12 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
         <Button
           variant="destructive"
           size="sm"
-          className="h-8"
+          className="h-8 cursor-pointer"
           onClick={() => {
             const ids = table
               .getFilteredSelectedRowModel()
               .rows.map((row) => row.original.id);
-            deleteMutation.mutate({ ids });
+            deleteMutation.mutate({ data: { ids } });
           }}
         >
           <Trash className="mr-2 h-4 w-4" /> Delete Selected

@@ -12,6 +12,7 @@ import type * as React from "react";
 import { fetchUser } from "@/apis/user";
 import { DefaultCatchBoundary } from "@/components/DefaultCatchBoundary";
 import { NotFound } from "@/components/NotFound";
+import { Toaster } from "@/components/ui/sonner";
 import { DirectionProvider } from "@/libs/context/direction-provider";
 import { ThemeProvider } from "@/libs/context/theme-provider";
 import appCss from "@/styles/app.css?url";
@@ -96,6 +97,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster />
         <TanStackRouterDevtools position="bottom-left" />
         <Scripts />
       </body>
