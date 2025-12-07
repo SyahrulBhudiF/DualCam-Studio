@@ -454,10 +454,4 @@ video_uploads/
 
 ---
 
-## License
-
-ISC
-
----
-
 DualCam Studio aims to be a general‑purpose, dataset‑oriented platform for dual‑camera microexpression recording and questionnaire management, suitable both for research and for more traditional online exam and survey use cases.
