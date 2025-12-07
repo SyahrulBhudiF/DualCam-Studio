@@ -1,0 +1,1 @@
+import{j as x}from"./main-DZWvjlLQ.js";import{c as l}from"./utils-CwvXAYlB.js";function m({fixed:o,className:t,fluid:n,...a}){return x.jsx("main",{"data-layout":o?"fixed":"auto",className:l("px-4 py-6",o&&"flex grow flex-col overflow-hidden",!n&&"@7xl/content:mx-auto @7xl/content:w-full @7xl/content:max-w-7xl",t),...a})}export{m as M};
