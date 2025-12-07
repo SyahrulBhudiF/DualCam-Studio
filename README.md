@@ -6,262 +6,457 @@ The system is designed for research scenarios such as anxiety and microexpressio
 
 ---
 
-## Core capabilities
+## Table of Contents
 
-### 1. Dual‑camera recording
+- [Core Capabilities](#core-capabilities)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Database Schema](#database-schema)
+- [Setup and Configuration](#setup-and-configuration)
+- [Usage Overview](#usage-overview)
+- [API Routes](#api-routes)
+- [Scripts](#scripts)
 
-- Primary camera: standard webcam (MediaRecorder in the browser).
-- Secondary camera:
-  - Intel RealSense via a WebSocket bridge (`server-camera.py`).
-  - Or a second standard webcam.
+---
+
+## Core Capabilities
+
+### 1. Dual‑Camera Recording
+
+- **Primary camera:** Standard webcam (MediaRecorder in the browser)
+- **Secondary camera:**
+  - Intel RealSense via a WebSocket bridge (`server-camera.py`)
+  - Or a second standard webcam
+- **Recording modes:**
+  - **Full‑session recording:** Records entire questionnaire session as one video
+  - **Segmented per‑question recording:** Records each question separately with chunked uploads
+- Video files are written to disk on the server (`video_uploads/`), with metadata linking recordings to responses and questions
+
+### 2. Flexible Questionnaire CMS
+
+- Questionnaires are stored in the database and can be changed without code changes
+- Admin capabilities:
+  - Create and activate one questionnaire at a time for participants
+  - Define ordered questions per questionnaire
+  - Attach multiple answers/options per question with their own scores
+- Use cases:
+  - Anxiety or microexpression research questionnaires
+  - Online exams and quizzes
+  - Generic surveys and feedback forms
+
+### 3. Participant Profiles and Responses
+
+- **Profile data stored:**
+  - `id`, `name`, `class`, `email`, `nim`, `semester`, `gender`, `age`, `created_at`
+- **Response tracking:**
+  - `responses` table: links user, questionnaire, video path, and total score
+  - `response_details` table: per-question answers with scores and video segment paths
 - Supports:
-  - Full‑session recording for an entire questionnaire.
-  - Segmented per‑question recording with chunked uploads.
-- Video files are written to disk on the server (`video_uploads/`), with JSON metadata linking recordings to responses and questions.
+  - Mapping each participant's answers to exact questions and answer options
+  - Linking full‑session or segmented video paths to each response
 
-### 2. Flexible questionnaire CMS
-
-- Questionnaires are stored in the database and can be changed without code changes.
-- Admins can:
-  - Create and activate one questionnaire at a time for participants.
-  - Define ordered questions per questionnaire.
-  - Attach multiple answers/options per question with their own scores.
-- The same engine can be used for:
-  - Anxiety or microexpression research questionnaires.
-  - Online exams and quizzes.
-  - Generic surveys and feedback forms.
-
-Data model :
-
-- `questionnaires`
-  - `id`, `title`, `description`, `is_active`, `created_at`
-- `questions`
-  - `id`, `questionnaire_id`, `question_text`, `order_number`, `created_at`
-- `answers`
-  - `id`, `question_id`, `answer_text`, `score`, `created_at`
-
-### 3. Participant profiles and responses
-
-- Profiles are stored in `profiles`:
-  - `id`, `name`, `class`, `created_at`
-- Responses are stored in `responses` and `response_details`:
-  - `responses`
-    - `id`, `user_id` (FK to `profiles`), `questionnaire_id`, `video_path`, `total_score`, `created_at`
-  - `response_details`
-    - `id`, `response_id`, `question_id`, `answer_id`, `score`
-- Supports:
-  - Mapping each participant’s answers to exact questions and answer options.
-  - Linking full‑session or segmented video paths to each response.
-
-### 4. Admin dashboard and analytics
+### 4. Admin Dashboard and Analytics
 
 The admin dashboard provides:
 
-- High‑level metrics:
-  - Total questionnaires.
-  - Active questionnaires.
-  - Total responses.
-  - Average total score.
-  - Number of distinct classes.
-- Breakdown analytics:
-  - Responses and average score per questionnaire.
-  - Responses and average score per class (using `profiles.class`).
-- Question‑level analytics:
-  - Average score per question.
-  - Average score and counts per answer option.
-- Timeline analytics:
-  - Responses per day.
-  - Average scores per day.
-- Video analytics:
-  - Count of responses with video attached.
-  - Ratio of video responses to total responses.
-- Basic charting using shadcn‑styled chart components with Recharts.
+- **High‑level metrics:**
+  - Total questionnaires and active questionnaires
+  - Total responses and average total score
+  - Number of distinct classes
+- **Breakdown analytics:**
+  - Responses and average score per questionnaire
+  - Responses and average score per class
+- **Question‑level analytics:**
+  - Average score per question
+  - Average score and counts per answer option
+- **Timeline analytics:**
+  - Responses per day
+  - Average scores per day
+- **Video analytics:**
+  - Count of responses with video attached
+  - Ratio of video responses to total responses
+- **Export:** Excel export with multiple sheets (summary, breakdowns, question stats, timeline data)
 
-These analytics are powered by server functions in `src/apis/dashboard.ts` that aggregate data from Supabase and serve it to the dashboard via TanStack Query.
+### 5. Admin Response Management
 
-### 5. Dataset‑oriented design
+- View all responses with filtering by:
+  - Questionnaire
+  - Class
+  - Date range
+- Response detail view with:
+  - Profile information
+  - Video playback (full-mode and segmented-mode)
+  - Question-by-question answers with scores
+- Bulk delete responses
+- Export individual response details
 
-DualCam Studio is structured to make dataset collection straightforward:
+### 6. Video Playback
 
-- Every response carries:
-  - User profile reference.
-  - Questionnaire and question references.
-  - Selected answer IDs and scores.
-  - Video paths for primary and optional secondary camera.
-- Suitable for building datasets for:
-  - Microexpression analysis.
-  - Anxiety studies.
-  - Examination performance and behavioral research.
-- Export:
-  - Dashboard includes an “Export Excel” feature that writes multiple sheets:
-    - Summary metrics.
-    - Per‑questionnaire breakdown.
-    - Per‑class breakdown.
-    - Question statistics.
-    - Answer statistics.
-    - Timeline data.
+The system includes a video streaming API that serves recorded videos:
+
+- **Full mode:** Plays main and secondary camera recordings side by side
+- **Segmented mode:** Plays per-question video segments with navigation
+- **Fallback support:** Automatically builds video paths for older recordings where `video_segment_path` is null
 
 ---
 
-## Tech stack
+## Tech Stack
 
-- **Framework:** TanStack Start (React, TanStack Router, TanStack Query)
-- **Backend integration:** Supabase (Postgres + Auth)
-- **Video capture:**
-  - Browser MediaRecorder for webcam.
-  - Optional Python WebSocket bridge for Intel RealSense.
-- **UI components:** shadcn‑style components (`src/components/ui`)
-- **Charts:** Recharts wrapped by `src/components/ui/chart.tsx`
-- **Schema validation:** Zod (via `libs/schemas/*`)
-- **Runtime:** Bun (scripts), Node ecosystem compatible
-
----
-
-## Project structure (high‑level)
-
-- `src/apis/`
-  - `dashboard.ts` – analytics server functions for the admin dashboard.
-  - `questionnaire.ts` – questionnaire loading and full‑session submission.
-  - `segmented-upload.ts` – chunked upload and segmented submission.
-  - `user.ts` – authentication and user fetch helpers.
-- `src/features/questionnaire/`
-  - `index.tsx` – full‑session questionnaire flow with dual‑camera recording.
-  - `segmented/` – segmented per‑question recording flow.
-- `src/features/dashboard/`
-  - `index.tsx` – top‑level admin dashboard page.
-  - `components/` - dashboard content, tabs, overview, analytics, analysis chart, types.
-- `src/components/`
-  - `RealSenseCanvas.tsx` – RealSense video rendering.
-  - `CameraControlPanel.tsx` – camera device selection and control.
-  - `layout/*` – layout primitives.
-  - `ui/*` – shadcn‑style UI library.
-- `video_uploads/`
-  - Created at runtime to store recorded video files.
+| Category | Technology |
+|----------|------------|
+| **Framework** | TanStack Start (React 19, TanStack Router, TanStack Query) |
+| **Backend Integration** | Supabase (PostgreSQL + Auth) |
+| **Video Capture** | Browser MediaRecorder, Python WebSocket bridge for Intel RealSense |
+| **UI Components** | shadcn/ui style components with Radix UI primitives |
+| **State Management** | Zustand |
+| **Charts** | Recharts |
+| **Form Handling** | TanStack Form with Zod validation |
+| **Data Tables** | TanStack Table |
+| **Styling** | Tailwind CSS v4 |
+| **Runtime** | Bun (recommended), Node.js compatible |
+| **Linting/Formatting** | Biome |
 
 ---
 
-## Supabase schema overview
+## Project Structure
 
-Minimum expected tables and relationships:
-
-- `profiles`
-  - `id uuid primary key references auth.users(id) on delete cascade`
-  - `name text not null`
-  - `class text not null`
-  - `created_at timestamptz default now()`
-- `questionnaires`
-  - `id uuid primary key default gen_random_uuid()`
-  - `title text not null`
-  - `description text`
-  - `is_active boolean default true`
-  - `created_at timestamptz default now()`
-- `questions`
-  - `id uuid primary key default gen_random_uuid()`
-  - `questionnaire_id uuid references questionnaires(id) on delete cascade`
-  - `question_text text not null`
-  - `order_number int`
-  - `created_at timestamptz default now()`
-- `answers`
-  - `id uuid primary key default gen_random_uuid()`
-  - `question_id uuid references questions(id) on delete cascade`
-  - `answer_text text not null`
-  - `score int not null`
-  - `created_at timestamptz default now()`
-- `responses`
-  - `id uuid primary key default gen_random_uuid()`
-  - `user_id uuid references profiles(id) on delete cascade`
-  - `questionnaire_id uuid references questionnaires(id) on delete cascade`
-  - `video_path text`
-  - `total_score int`
-  - `created_at timestamptz default now()`
-- `response_details`
-  - `id uuid primary key default gen_random_uuid()`
-  - `response_id uuid references responses(id) on delete cascade`
-  - `question_id uuid references questions(id)`
-  - `answer_id uuid references answers(id)`
-  - `score int`
-
-Adjust column names if the actual database differs; ensure foreign keys and indexes match the needs of analytics queries.
+```
+QUIS/
+├── src/
+│   ├── apis/                    # Server functions
+│   │   ├── admin/
+│   │   │   ├── questionnaires.ts  # Questionnaire CRUD
+│   │   │   └── responses.ts       # Response management & filtering
+│   │   ├── dashboard.ts           # Analytics server functions
+│   │   ├── questionnaire.ts       # Full-session questionnaire submission
+│   │   ├── segmented-upload.ts    # Chunked upload & segmented submission
+│   │   └── user.ts                # Authentication helpers
+│   │
+│   ├── components/
+│   │   ├── ui/                  # shadcn-style UI library
+│   │   ├── layout/              # Layout primitives
+│   │   ├── data-table/          # Reusable data table components
+│   │   ├── Auth.tsx             # Authentication component
+│   │   ├── CameraControlPanel.tsx # Camera device selection & control
+│   │   └── RealSenseCanvas.tsx  # RealSense video rendering via WebSocket
+│   │
+│   ├── features/
+│   │   ├── admin/
+│   │   │   ├── questionnaire/   # Questionnaire management UI
+│   │   │   └── responses/       # Response list & detail views
+│   │   ├── dashboard/           # Admin dashboard & analytics
+│   │   ├── profile/             # User profile management
+│   │   └── questionnaire/
+│   │       ├── index.tsx        # Full-session questionnaire flow
+│   │       └── segmented/       # Segmented per-question flow
+│   │
+│   ├── libs/
+│   │   ├── hooks/
+│   │   │   └── use-camera-setup.ts  # Dual camera management hook
+│   │   ├── schemas/             # Zod validation schemas
+│   │   └── store/               # Zustand stores
+│   │
+│   ├── routes/                  # TanStack Router file-based routes
+│   │   ├── api/
+│   │   │   └── video/
+│   │   │       └── $.ts         # Video streaming endpoint
+│   │   ├── admin/               # Admin routes (dashboard, questionnaires, responses)
+│   │   ├── questionnaire/       # Questionnaire routes (full & segmented)
+│   │   └── ...
+│   │
+│   └── utils/
+│       └── supabase.ts          # Supabase client utilities
+│
+├── video_uploads/               # Runtime storage for recorded videos
+│   ├── full/                    # Full-session recordings
+│   └── segmented/               # Per-question recordings
+│
+├── server-camera.py             # Intel RealSense WebSocket server
+├── pyproject.toml               # Python dependencies for camera server
+├── package.json                 # Node.js dependencies
+├── vite.config.ts               # Vite configuration
+├── biome.json                   # Biome linter/formatter config
+└── tsconfig.json                # TypeScript configuration
+```
 
 ---
 
-## Setup and configuration
+## Database Schema
+
+### Tables
+
+#### `profiles`
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key (references auth.users) |
+| `name` | text | Participant name |
+| `class` | text | Class/group identifier |
+| `email` | text | Email address |
+| `nim` | text | Student ID number |
+| `semester` | text | Current semester |
+| `gender` | text | Gender |
+| `age` | int | Age |
+| `created_at` | timestamptz | Creation timestamp |
+
+#### `questionnaires`
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `title` | text | Questionnaire title |
+| `description` | text | Description |
+| `is_active` | boolean | Whether questionnaire is active |
+| `created_at` | timestamptz | Creation timestamp |
+
+#### `questions`
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `questionnaire_id` | uuid | FK to questionnaires |
+| `question_text` | text | Question content |
+| `order_number` | int | Display order |
+| `created_at` | timestamptz | Creation timestamp |
+
+#### `answers`
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `question_id` | uuid | FK to questions |
+| `answer_text` | text | Answer content |
+| `score` | int | Score value for this answer |
+| `created_at` | timestamptz | Creation timestamp |
+
+#### `responses`
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | FK to profiles |
+| `questionnaire_id` | uuid | FK to questionnaires |
+| `video_path` | text | JSON paths (full mode) or folder name (segmented mode) |
+| `total_score` | int | Sum of all answer scores |
+| `created_at` | timestamptz | Creation timestamp |
+
+#### `response_details`
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `response_id` | uuid | FK to responses |
+| `question_id` | uuid | FK to questions |
+| `answer_id` | uuid | FK to answers |
+| `score` | int | Score for this answer |
+| `video_segment_path` | text | JSON with main/secondary video paths (segmented mode) |
+
+---
+
+## Setup and Configuration
 
 ### Prerequisites
 
-- Bun (recommended) or Node.js with npm/pnpm/yarn.
-- Supabase project with the tables described above.
-- (Optional) Intel RealSense camera and Python 3 environment for the RealSense WebSocket helper.
+- **Bun** (recommended) or Node.js 18+
+- **Supabase** project with tables as described above
+- **Python 3.10+** with uv (optional, for Intel RealSense camera)
+- **Intel RealSense SDK** (optional, for RealSense camera support)
 
-### Environment variables
+### Environment Variables
 
-Configure at least:
-
-- `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-
-These are used by the Supabase server client utilities in `src/utils/supabase.ts`.
-
-### Install dependencies
-
-Using Bun:
+Create a `.env` file or set these environment variables:
 
 ```bash
-bun install
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
 ```
 
-Alternatively, use npm/pnpm/yarn with the equivalent command.
+### Install Dependencies
 
-### Development server
+```bash
+# JavaScript dependencies
+bun install
 
-Run the Dev server:
+# Python dependencies (for RealSense camera)
+uv sync
+```
+
+### Database Setup
+
+Run the following SQL to create the required tables (adjust as needed):
+
+```sql
+-- Profiles table
+CREATE TABLE profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  class text,
+  email text,
+  nim text,
+  semester text,
+  gender text,
+  age int,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Questionnaires table
+CREATE TABLE questionnaires (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text,
+  is_active boolean DEFAULT false,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Questions table
+CREATE TABLE questions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  questionnaire_id uuid REFERENCES questionnaires(id) ON DELETE CASCADE,
+  question_text text NOT NULL,
+  order_number int,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Answers table
+CREATE TABLE answers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  question_id uuid REFERENCES questions(id) ON DELETE CASCADE,
+  answer_text text NOT NULL,
+  score int NOT NULL DEFAULT 0,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Responses table
+CREATE TABLE responses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
+  questionnaire_id uuid REFERENCES questionnaires(id) ON DELETE CASCADE,
+  video_path text,
+  total_score int,
+  created_at timestamptz DEFAULT now()
+);
+
+-- Response details table
+CREATE TABLE response_details (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  response_id uuid REFERENCES responses(id) ON DELETE CASCADE,
+  question_id uuid REFERENCES questions(id),
+  answer_id uuid REFERENCES answers(id),
+  score int,
+  video_segment_path text
+);
+```
+
+---
+
+## Usage Overview
+
+### Development Server
 
 ```bash
 bun run dev
 ```
 
-This starts the TanStack Start dev environment.
+This starts the TanStack Start dev environment at `http://localhost:3000`.
 
-### RealSense camera helper (optional)
+### RealSense Camera Server (Optional)
 
-If using Intel RealSense via WebSocket, run:
+If using Intel RealSense via WebSocket:
 
 ```bash
 bun run camera
 ```
 
-This uses `uv` to launch `server-camera.py`, which streams RealSense frames and exposes a WebSocket endpoint expected by the frontend.
+This launches `server-camera.py` which:
+- Streams RealSense frames to connected clients via WebSocket on port 8080
+- Handles START/STOP recording commands
+- Saves recordings directly to `video_uploads/`
+
+### Workflow
+
+1. **Setup:** Configure Supabase and environment variables
+2. **Start servers:** Run dev server (and camera helper if using RealSense)
+3. **Create questionnaire:** Use admin dashboard to create questionnaires, questions, and answers
+4. **Activate questionnaire:** Set one questionnaire as active
+5. **Participants answer:**
+   - Open questionnaire page
+   - Cameras initialize automatically
+   - Recording starts when both cameras are ready
+   - Submit answers when done
+6. **Review responses:** Use admin dashboard to:
+   - View summary metrics and analytics
+   - Browse individual responses with video playback
+   - Export data to Excel
 
 ---
 
-## Usage overview
+## API Routes
 
-1. Configure Supabase schema and environment variables.
-2. Start the dev server (and camera helper if using RealSense).
-3. Log in via Supabase Auth (see `src/apis/user.ts` and `components/Auth.tsx`).
-4. Create or seed questionnaires, questions, and answers in Supabase.
-5. Set one questionnaire as active.
-6. Participants open the questionnaire page:
-   - Cameras are initialized (webcam and optional RealSense).
-   - Recording starts automatically once both streams are ready.
-   - Participants answer questions; on submit, recordings and answers are uploaded and stored.
-7. Admins open the dashboard:
-   - Review summary metrics and breakdowns.
-   - Export the aggregated data to Excel for further analysis or offline processing.
+### Video Streaming
+
+**`GET /api/video/{path}`**
+
+Streams video files from `video_uploads/` directory.
+
+- Supports: `.webm`, `.mp4`, `.avi`, `.mov`, `.mkv`
+- Returns appropriate Content-Type headers
+- Includes security against directory traversal
+
+Example:
+```
+GET /api/video/full/john_123456/recording_main.webm
+GET /api/video/segmented/john_123456/q1/john_1_uuid_main.webm
+```
+
+### Server Functions
+
+All data operations use TanStack Start server functions:
+
+- `getActiveQuestionnaire` - Get currently active questionnaire with questions
+- `submitQuestionnaire` - Submit full-session response with video
+- `uploadVideoChunk` - Upload segmented video chunk
+- `submitSegmentedResponse` - Submit segmented response with answers
+- `getResponses` / `getResponseById` - Fetch response data
+- `deleteResponses` - Bulk delete responses
+- `getFilterOptions` - Get available filter options
+- Dashboard analytics functions for metrics and breakdowns
 
 ---
 
 ## Scripts
 
-Common scripts (see `package.json` for full list):
+| Script | Command | Description |
+|--------|---------|-------------|
+| Dev | `bun run dev` | Start development server |
+| Build | `bun run build` | Build for production |
+| Start | `bun run start` | Start production server |
+| Camera | `bun run camera` | Start RealSense WebSocket server |
+| Lint | `bun run lint` | Run Biome linter |
+| Lint Fix | `bun run lint:fix` | Auto-fix lint issues |
+| Format | `bun run format` | Check formatting |
+| Format Fix | `bun run format:fix` | Auto-fix formatting |
+| Check | `bun run check` | Run all Biome checks |
 
-- Install: `bun install`
-- Dev: `bun run dev`
-- Build: `bun run build`
-- Start: `bun run start`
-- Camera helper: `bun run camera`
-- Lint: `bunx biome lint .`
-- Format: `bunx biome format .`
+---
+
+## Video Storage Structure
+
+```
+video_uploads/
+├── full/
+│   └── {userName}_{timestamp}/
+│       ├── recording_main.webm       # Primary camera (browser)
+│       └── recording_realsense.avi   # Secondary camera (RealSense)
+│
+└── segmented/
+    └── {userName}_{timestamp}/
+        ├── q1/
+        │   ├── {userName}_1_{questionId}_main.webm
+        │   └── {userName}_1_{questionId}_sec.avi
+        ├── q2/
+        │   └── ...
+        └── ...
+```
+
+---
+
+## License
+
+ISC
 
 ---
 
