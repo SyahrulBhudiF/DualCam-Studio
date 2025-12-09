@@ -98,7 +98,7 @@ export function ResponseList({ data, filterOptions }: ResponseListProps) {
 
 			<DataTableToolbar table={table} searchKey="name" />
 
-			<div className="rounded-md border">
+			<div className="rounded-md border overflow-auto">
 				<table className="w-full caption-bottom text-sm">
 					<thead className="[&_tr]:border-b">
 						{table.getHeaderGroups().map((headerGroup) => (

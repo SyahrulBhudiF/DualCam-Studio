@@ -221,7 +221,7 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
 			</div>
 
 			<DataTableToolbar table={table} searchKey="title" />
-			<div className="rounded-md border">
+			<div className="rounded-md border overflow-auto">
 				<table className="w-full caption-bottom text-sm">
 					<thead className="[&_tr]:border-b">
 						{table.getHeaderGroups().map((headerGroup) => (

@@ -2,7 +2,6 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
-	type ColumnDef,
 	flexRender,
 	getCoreRowModel,
 	getFilteredRowModel,
@@ -488,7 +487,7 @@ export function QuestionDetail({
 				</div>
 
 				<DataTableToolbar table={table} searchKey="answer_text" />
-				<div className="rounded-md border">
+				<div className="rounded-md border overflow-auto">
 					<table className="w-full caption-bottom text-sm">
 						<thead className="[&_tr]:border-b">
 							{table.getHeaderGroups().map((headerGroup) => (

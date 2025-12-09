@@ -202,7 +202,7 @@ export function QuestionnaireDetail({
 				</TabsContent>
 
 				<TabsContent value="responses" className="space-y-4">
-					<div className="rounded-lg border">
+					<div className="rounded-lg border overflow-auto">
 						{responsesQuery.isLoading ? (
 							<div className="flex items-center justify-center h-32">
 								<span className="text-muted-foreground">
