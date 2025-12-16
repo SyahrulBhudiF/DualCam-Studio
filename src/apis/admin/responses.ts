@@ -359,6 +359,125 @@ export const getResponsesFiltered = createServerFn({ method: "POST" })
 		});
 	});
 
+export const getAllResponsesWithDetails = createServerFn({
+	method: "GET",
+}).handler(async () => {
+	const supabase = getSupabaseServerClient();
+
+	// Get all responses with profile and questionnaire info
+	const { data: responses, error: responsesError } = await supabase
+		.from("responses")
+		.select(
+			`
+			id,
+			total_score,
+			video_path,
+			created_at,
+			questionnaire_id,
+			questionnaires (
+				id,
+				title
+			),
+			profiles!inner (
+				id,
+				name,
+				class,
+				email,
+				nim,
+				semester,
+				gender,
+				age
+			)
+		`,
+		)
+		.order("created_at", { ascending: false });
+
+	if (responsesError) throw new Error(responsesError.message);
+
+	// Get all response details with questions and answers
+	const responseIds = responses.map((r) => r.id);
+
+	const { data: allDetails, error: detailsError } = await supabase
+		.from("response_details")
+		.select(
+			`
+			id,
+			response_id,
+			question_id,
+			answer_id,
+			score,
+			questions (
+				id,
+				question_text,
+				order_number
+			),
+			answers (
+				id,
+				answer_text,
+				score
+			)
+		`,
+		)
+		.in("response_id", responseIds);
+
+	if (detailsError) throw new Error(detailsError.message);
+
+	// Group details by response_id
+	const detailsByResponseId = allDetails.reduce(
+		(acc, detail) => {
+			const responseId = detail.response_id;
+			if (!acc[responseId]) {
+				acc[responseId] = [];
+			}
+			acc[responseId].push(detail);
+			return acc;
+		},
+		{} as Record<string, typeof allDetails>,
+	);
+
+	return responses.map((r) => {
+		const questionnaire = Array.isArray(r.questionnaires)
+			? r.questionnaires[0]
+			: r.questionnaires;
+		const profile = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
+		const details = detailsByResponseId[r.id] ?? [];
+
+		return {
+			id: r.id,
+			totalScore: r.total_score,
+			videoPath: r.video_path,
+			createdAt: r.created_at,
+			questionnaireTitle: questionnaire?.title ?? null,
+			profile: profile
+				? {
+						name: profile.name,
+						class: profile.class,
+						email: profile.email,
+						nim: profile.nim,
+						semester: profile.semester,
+						gender: profile.gender,
+						age: profile.age,
+					}
+				: null,
+			details: details
+				.map((d) => {
+					const question = Array.isArray(d.questions)
+						? d.questions[0]
+						: d.questions;
+					const answer = Array.isArray(d.answers) ? d.answers[0] : d.answers;
+
+					return {
+						questionText: question?.question_text ?? null,
+						orderNumber: question?.order_number ?? null,
+						answerText: answer?.answer_text ?? null,
+						score: d.score,
+					};
+				})
+				.sort((a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0)),
+		};
+	});
+});
+
 export const getFilterOptions = createServerFn({ method: "GET" }).handler(
 	async () => {
 		const supabase = getSupabaseServerClient();
