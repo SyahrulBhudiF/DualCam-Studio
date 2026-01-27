@@ -20,6 +20,7 @@ yarn.lock
 /playwright/.cache/
 /docs
 /dist
+/coverage
 
 .idea
 .claude
