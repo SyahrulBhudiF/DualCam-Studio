@@ -25,11 +25,16 @@ import { ResponseFilters } from "./components/response-filters";
 import type { FilterOptions, ResponseListItem } from "./responses.types";
 
 type ResponseListProps = {
-	data: ResponseListItem[];
-	filterOptions: FilterOptions;
+	data?: ResponseListItem[];
+	filterOptions?: FilterOptions;
+	isLoading?: boolean;
 };
 
-export function ResponseList({ data, filterOptions }: ResponseListProps) {
+export function ResponseList({
+	data,
+	filterOptions,
+	isLoading = false,
+}: ResponseListProps) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
 	const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -53,7 +58,7 @@ export function ResponseList({ data, filterOptions }: ResponseListProps) {
 
 	const columns = getResponseColumns();
 
-	const tableData = filteredData ?? data;
+	const tableData = filteredData ?? data ?? [];
 
 	const table = useReactTable({
 		data: tableData,

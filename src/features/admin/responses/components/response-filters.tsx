@@ -23,7 +23,7 @@ import type { FilterOptions, ResponseListItem } from "../responses.types";
 const ALL_VALUE = "__all__";
 
 type ResponseFiltersProps = {
-	filterOptions: FilterOptions;
+	filterOptions?: FilterOptions;
 	onFilterApply: (data: ResponseListItem[]) => void;
 	onFilterClear: () => void;
 };
@@ -74,6 +74,21 @@ export function ResponseFilters({
 		startDate ||
 		endDate ||
 		name;
+
+	// Show loading skeleton if filterOptions not ready
+	if (!filterOptions) {
+		return (
+			<div className="flex flex-wrap items-center gap-3 p-4 border rounded-lg bg-muted/30 animate-pulse">
+				<div className="flex items-center gap-2">
+					<Filter className="h-4 w-4 text-muted-foreground" />
+					<span className="text-sm font-medium">Filters:</span>
+				</div>
+				<div className="h-10 w-[200px] bg-muted rounded" />
+				<div className="h-10 w-[150px] bg-muted rounded" />
+				<div className="h-10 w-[150px] bg-muted rounded" />
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex flex-wrap items-center gap-3 p-4 border rounded-lg bg-muted/30">
