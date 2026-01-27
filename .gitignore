@@ -18,6 +18,8 @@ yarn.lock
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/dist/
+/docs/
 
 .idea
 .claude
