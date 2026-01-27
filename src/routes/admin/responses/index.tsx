@@ -1,24 +1,37 @@
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { getFilterOptions, getResponses } from "@/apis/admin/responses";
 import { ResponseList } from "@/features/admin/responses";
 
-export const Route = createFileRoute("/admin/responses/")({
-	loader: async () => {
-		const [responses, filterOptions] = await Promise.all([
-			getResponses(),
-			getFilterOptions(),
-		]);
+const responsesQueryOptions = queryOptions({
+	queryKey: ["admin", "responses"],
+	queryFn: () => getResponses(),
+});
 
-		return {
-			responses,
-			filterOptions,
-		};
+const filterOptionsQueryOptions = queryOptions({
+	queryKey: ["admin", "responses", "filterOptions"],
+	queryFn: () => getFilterOptions(),
+});
+
+export const Route = createFileRoute("/admin/responses/")({
+	loader: ({ context }) => {
+		context.queryClient.prefetchQuery(responsesQueryOptions);
+		context.queryClient.prefetchQuery(filterOptionsQueryOptions);
 	},
 	component: ResponsesPage,
 });
 
 function ResponsesPage() {
-	const { responses, filterOptions } = Route.useLoaderData();
+	const responses = useQuery(responsesQueryOptions);
+	const filterOptions = useQuery(filterOptionsQueryOptions);
 
-	return <ResponseList data={responses} filterOptions={filterOptions} />;
+	const isLoading = responses.isLoading || filterOptions.isLoading;
+
+	return (
+		<ResponseList
+			data={responses.data}
+			filterOptions={filterOptions.data}
+			isLoading={isLoading}
+		/>
+	);
 }

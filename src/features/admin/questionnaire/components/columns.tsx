@@ -60,12 +60,12 @@ export const getQuestionnaireColumns = (
 		),
 	},
 	{
-		accessorKey: "is_active",
+		accessorKey: "isActive",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Status" />
 		),
 		cell: ({ row }) => {
-			const isActive = row.getValue("is_active");
+			const isActive = row.getValue("isActive");
 			return (
 				<Badge variant={isActive ? "default" : "secondary"}>
 					{isActive ? "Active" : "Inactive"}
@@ -93,7 +93,7 @@ export const getQuestionnaireColumns = (
 						</Link>
 					</DropdownMenuItem>
 					<DropdownMenuItem onClick={() => onToggleStatus(row.original)}>
-						{row.original.is_active ? "Set Inactive" : "Set Active"}
+						{row.original.isActive ? "Set Inactive" : "Set Active"}
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
@@ -126,21 +126,21 @@ export const getQuestionColumns = (
 		enableHiding: false,
 	},
 	{
-		accessorKey: "order_number",
+		accessorKey: "orderNumber",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Order" />
 		),
 		cell: ({ row }) => (
-			<div className="pl-4">{row.getValue("order_number")}</div>
+			<div className="pl-4">{row.getValue("orderNumber")}</div>
 		),
 	},
 	{
-		accessorKey: "question_text",
+		accessorKey: "questionText",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Question" />
 		),
 		cell: ({ row }) => (
-			<span className="font-medium">{row.getValue("question_text")}</span>
+			<span className="font-medium">{row.getValue("questionText")}</span>
 		),
 	},
 	{
@@ -193,12 +193,12 @@ export const getAnswerColumns = (
 		enableSorting: false,
 	},
 	{
-		accessorKey: "answer_text",
+		accessorKey: "answerText",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Answer" />
 		),
 		cell: ({ row }) => (
-			<span className="font-medium">{row.getValue("answer_text")}</span>
+			<span className="font-medium">{row.getValue("answerText")}</span>
 		),
 	},
 	{

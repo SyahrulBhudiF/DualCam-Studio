@@ -20,8 +20,13 @@ import { seo } from "@/utils/seo";
 export const Route = createRootRouteWithContext<{
 	queryClient: QueryClient;
 }>()({
-	beforeLoad: async () => {
-		const user = await fetchUser();
+	beforeLoad: async ({ context }) => {
+		// Use cached user data if available, otherwise fetch
+		const user = await context.queryClient.fetchQuery({
+			queryKey: ["user"],
+			queryFn: () => fetchUser(),
+			staleTime: 1000 * 60 * 5, // 5 minutes - don't refetch if fresh
+		});
 
 		return {
 			user,
