@@ -40,34 +40,36 @@ export function ProfileCard({
 	return (
 		<Card>
 			<CardHeader>
-				<div className="flex items-center justify-between">
-					<div>
+				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+					<div className="min-w-0">
 						<CardTitle className="flex items-center gap-2">
-							<User className="h-5 w-5" />
-							{profile.name ?? "Unknown"}
+							<User className="h-5 w-5 shrink-0" />
+							<span className="truncate">{profile.name ?? "Unknown"}</span>
 						</CardTitle>
 						<CardDescription>Respondent Profile</CardDescription>
 					</div>
-					<Badge variant="outline" className="text-xs">
+					<Badge variant="outline" className="text-xs w-fit shrink-0">
 						{format(new Date(createdAt), "dd MMM yyyy HH:mm")}
 					</Badge>
 				</div>
 			</CardHeader>
 			<CardContent>
-				<div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 					{profile.email && (
-						<div className="flex items-center gap-2">
-							<Mail className="h-4 w-4 text-muted-foreground" />
-							<div>
+						<div className="flex items-start gap-2 min-w-0">
+							<Mail className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+							<div className="min-w-0">
 								<div className="text-xs text-muted-foreground">Email</div>
-								<div className="text-sm font-medium">{profile.email}</div>
+								<div className="text-sm font-medium break-all">
+									{profile.email}
+								</div>
 							</div>
 						</div>
 					)}
 
 					{profile.nim && (
-						<div className="flex items-center gap-2">
-							<Hash className="h-4 w-4 text-muted-foreground" />
+						<div className="flex items-start gap-2">
+							<Hash className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
 							<div>
 								<div className="text-xs text-muted-foreground">NIM</div>
 								<div className="text-sm font-medium">{profile.nim}</div>
@@ -76,8 +78,8 @@ export function ProfileCard({
 					)}
 
 					{profile.class && (
-						<div className="flex items-center gap-2">
-							<GraduationCap className="h-4 w-4 text-muted-foreground" />
+						<div className="flex items-start gap-2">
+							<GraduationCap className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
 							<div>
 								<div className="text-xs text-muted-foreground">Class</div>
 								<div className="text-sm font-medium">{profile.class}</div>
@@ -86,8 +88,8 @@ export function ProfileCard({
 					)}
 
 					{profile.semester && (
-						<div className="flex items-center gap-2">
-							<Calendar className="h-4 w-4 text-muted-foreground" />
+						<div className="flex items-start gap-2">
+							<Calendar className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
 							<div>
 								<div className="text-xs text-muted-foreground">Semester</div>
 								<div className="text-sm font-medium">{profile.semester}</div>
@@ -96,8 +98,8 @@ export function ProfileCard({
 					)}
 
 					{profile.gender && (
-						<div className="flex items-center gap-2">
-							<Users className="h-4 w-4 text-muted-foreground" />
+						<div className="flex items-start gap-2">
+							<Users className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
 							<div>
 								<div className="text-xs text-muted-foreground">Gender</div>
 								<div className="text-sm font-medium">{profile.gender}</div>
@@ -106,8 +108,8 @@ export function ProfileCard({
 					)}
 
 					{profile.age && (
-						<div className="flex items-center gap-2">
-							<User className="h-4 w-4 text-muted-foreground" />
+						<div className="flex items-start gap-2">
+							<User className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
 							<div>
 								<div className="text-xs text-muted-foreground">Age</div>
 								<div className="text-sm font-medium">{profile.age} years</div>

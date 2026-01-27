@@ -104,7 +104,7 @@ export function VideoPlayer({ videoPath }: VideoPlayerProps) {
 						<SingleVideoPlayer src={secondarySrc} title="Secondary Camera" />
 					</TabsContent>
 					<TabsContent value="side-by-side">
-						<div className="grid grid-cols-2 gap-4">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
 								<h4 className="text-sm font-medium mb-2">Main Camera</h4>
 								<SingleVideoPlayer src={mainSrc} title="Main Side" />
