@@ -43,11 +43,11 @@ import { getAnswerColumns } from "./components/columns";
 import type { Answer, Question } from "./questionnaires.types";
 
 const questionFormSchema = createQuestionSchema.omit({
-	questionnaire_id: true,
+	questionnaireId: true,
 });
 
 const answerFormSchema = createAnswerSchema.omit({
-	question_id: true,
+	questionId: true,
 });
 
 function UpdateQuestionForm({ question }: { question: Question }) {
@@ -68,8 +68,8 @@ function UpdateQuestionForm({ question }: { question: Question }) {
 
 	const form = useForm({
 		defaultValues: {
-			question_text: question.question_text,
-			order_number: question.order_number,
+			questionText: question.questionText,
+			orderNumber: question.orderNumber,
 		},
 		validators: {
 			onSubmit: ({ value }) => {
@@ -91,8 +91,8 @@ function UpdateQuestionForm({ question }: { question: Question }) {
 			await updateMutation.mutateAsync({
 				data: {
 					id: question.id,
-					question_text: value.question_text,
-					order_number: Number(value.order_number),
+					questionText: value.questionText,
+					orderNumber: Number(value.orderNumber),
 				},
 			});
 		},
@@ -107,12 +107,12 @@ function UpdateQuestionForm({ question }: { question: Question }) {
 			}}
 			className="space-y-4 rounded-lg border p-4 max-w-2xl"
 		>
-			<form.Field name="order_number">
+			<form.Field name="orderNumber">
 				{(field) => (
 					<div className="grid gap-2">
-						<Label htmlFor="order_number">Order</Label>
+						<Label htmlFor="orderNumber">Order</Label>
 						<Input
-							id="order_number"
+							id="orderNumber"
 							type="number"
 							className="max-w-[100px]"
 							value={String(field.state.value)}
@@ -128,12 +128,12 @@ function UpdateQuestionForm({ question }: { question: Question }) {
 				)}
 			</form.Field>
 
-			<form.Field name="question_text">
+			<form.Field name="questionText">
 				{(field) => (
 					<div className="grid gap-2">
-						<Label htmlFor="question_text">Question</Label>
+						<Label htmlFor="questionText">Question</Label>
 						<Input
-							id="question_text"
+							id="questionText"
 							value={field.state.value}
 							onBlur={field.handleBlur}
 							onChange={(e) => field.handleChange(e.target.value)}
@@ -184,7 +184,7 @@ function CreateAnswerForm({
 
 	const form = useForm({
 		defaultValues: {
-			answer_text: "",
+			answerText: "",
 			score: 0,
 		},
 		validators: {
@@ -206,8 +206,8 @@ function CreateAnswerForm({
 		onSubmit: async ({ value }) => {
 			await createMutation.mutateAsync({
 				data: {
-					question_id: questionId,
-					answer_text: value.answer_text,
+					questionId: questionId,
+					answerText: value.answerText,
 					score: Number(value.score),
 				},
 			});
@@ -223,12 +223,12 @@ function CreateAnswerForm({
 			}}
 			className="space-y-4"
 		>
-			<form.Field name="answer_text">
+			<form.Field name="answerText">
 				{(field) => (
 					<div className="grid gap-2">
-						<Label htmlFor="answer_text">Answer Text</Label>
+						<Label htmlFor="answerText">Answer Text</Label>
 						<Input
-							id="answer_text"
+							id="answerText"
 							value={field.state.value}
 							onBlur={field.handleBlur}
 							onChange={(e) => field.handleChange(e.target.value)}
@@ -301,7 +301,7 @@ function EditAnswerForm({
 
 	const form = useForm({
 		defaultValues: {
-			answer_text: answer.answer_text,
+			answerText: answer.answerText,
 			score: answer.score,
 		},
 		validators: {
@@ -324,7 +324,7 @@ function EditAnswerForm({
 			await updateMutation.mutateAsync({
 				data: {
 					id: answer.id,
-					answer_text: value.answer_text,
+					answerText: value.answerText,
 					score: Number(value.score),
 				},
 			});
@@ -340,12 +340,12 @@ function EditAnswerForm({
 			}}
 			className="space-y-4"
 		>
-			<form.Field name="answer_text">
+			<form.Field name="answerText">
 				{(field) => (
 					<div className="grid gap-2">
-						<Label htmlFor="edit_answer_text">Answer Text</Label>
+						<Label htmlFor="edit_answerText">Answer Text</Label>
 						<Input
-							id="edit_answer_text"
+							id="edit_answerText"
 							value={field.state.value}
 							onBlur={field.handleBlur}
 							onChange={(e) => field.handleChange(e.target.value)}
@@ -437,7 +437,7 @@ export function QuestionDetail({
 				<Button variant="outline" size="icon" asChild>
 					<Link
 						to="/admin/questionnaires/$questionnaireId"
-						params={{ questionnaireId: question.questionnaire_id }}
+						params={{ questionnaireId: question.questionnaireId }}
 					>
 						<ArrowLeft className="h-4 w-4" />
 					</Link>
@@ -486,7 +486,7 @@ export function QuestionDetail({
 					</Dialog>
 				</div>
 
-				<DataTableToolbar table={table} searchKey="answer_text" />
+				<DataTableToolbar table={table} searchKey="answerText" />
 				<div className="rounded-md border overflow-auto">
 					<table className="w-full caption-bottom text-sm">
 						<thead className="[&_tr]:border-b">

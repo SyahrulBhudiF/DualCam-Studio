@@ -39,7 +39,10 @@ import { createQuestionnaireSchema } from "@/libs/schemas/questionnaire";
 import { getQuestionnaireColumns } from "./components/columns";
 import type { Questionnaire } from "./questionnaires.types";
 
-export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
+export function QuestionnaireList({
+	data,
+	isLoading = false,
+}: { data?: Questionnaire[]; isLoading?: boolean }) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
 	const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -92,13 +95,13 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
 			updateMutation.mutate({
 				data: {
 					id: item.id,
-					is_active: !item.is_active,
+					isActive: !item.isActive,
 				},
 			}),
 	);
 
 	const table = useReactTable({
-		data,
+		data: data ?? [],
 		columns,
 		state: { sorting, rowSelection, globalFilter },
 		onSortingChange: setSorting,
@@ -114,7 +117,7 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
 		defaultValues: {
 			title: "",
 			description: "",
-			is_active: false,
+			isActive: false,
 		},
 		validators: {
 			onSubmit: ({ value }) => {
@@ -137,7 +140,7 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
 				data: {
 					title: value.title,
 					description: value.description || null,
-					is_active: value.is_active,
+					isActive: value.isActive,
 				},
 			});
 		},
@@ -196,7 +199,7 @@ export function QuestionnaireList({ data }: { data: Questionnaire[] }) {
 									</div>
 								)}
 							</form.Field>
-							<form.Field name="is_active">
+							<form.Field name="isActive">
 								{(field) => (
 									<div className="flex items-center gap-2">
 										<Switch

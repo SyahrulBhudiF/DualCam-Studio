@@ -4,7 +4,12 @@ import { exportDashboardToExcel } from "./components/dashboard-export";
 import { DashboardTabs } from "./components/dashboard-tabs";
 import type { DashboardProps } from "./components/types";
 
-export function Dashboard({ summary, breakdown, analytics }: DashboardProps) {
+export function Dashboard({
+	summary,
+	breakdown,
+	analytics,
+	isLoading = false,
+}: DashboardProps) {
 	return (
 		<Main>
 			<div className="mb-2 flex items-center justify-between space-y-2">
@@ -14,6 +19,7 @@ export function Dashboard({ summary, breakdown, analytics }: DashboardProps) {
 						onClick={() =>
 							exportDashboardToExcel({ summary, breakdown, analytics })
 						}
+						disabled={isLoading}
 					>
 						Export Excel
 					</Button>
@@ -24,7 +30,7 @@ export function Dashboard({ summary, breakdown, analytics }: DashboardProps) {
 				summary={summary}
 				breakdown={breakdown}
 				analytics={analytics}
-				isLoading={false}
+				isLoading={isLoading}
 			/>
 		</Main>
 	);
