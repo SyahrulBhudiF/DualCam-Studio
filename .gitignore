@@ -20,6 +20,7 @@ yarn.lock
 /playwright/.cache/
 
 .idea
+.claude
 .tanstack
 .vscode
 .venv

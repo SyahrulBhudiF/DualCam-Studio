@@ -73,15 +73,14 @@ export function DashboardAnalytics({
 									<div
 										className="h-2 rounded-full bg-primary"
 										style={{
-											width:
-												analytics && analytics.video.total
-													? `${Math.min(
+											width: analytics?.video.total
+												? `${Math.min(
+														100,
+														((analytics.video.withVideo ?? 0) /
+															(analytics.video.total || 1)) *
 															100,
-															((analytics.video.withVideo ?? 0) /
-																(analytics.video.total || 1)) *
-																100,
-														)}%`
-													: "0%",
+													)}%`
+												: "0%",
 										}}
 									/>
 								</div>

@@ -6,24 +6,43 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": [
-			"**",
-			"!**/node_modules",
-			"!**/dist",
-			"!**/build",
-			"!**/.vscode",
-			"!**/components/ui",
-			"!**/components/data-table/",
-			"!**/routeTree.gen.ts"
-		],
+		"includes": ["**"],
 		"ignoreUnknown": false
 	},
 	"formatter": {
 		"enabled": true,
-		"indentStyle": "tab"
+		"indentStyle": "tab",
+		"includes": [
+			"**/*.ts",
+			"**/*.tsx",
+			"**/*.js",
+			"**/*.jsx",
+			"**/*.json",
+			"**/*.css",
+			"!**/node_modules/**",
+			"!**/dist/**",
+			"!**/build/**",
+			"!**/.vscode/**",
+			"!**/components/ui/**",
+			"!**/components/data-table/**",
+			"!**/routeTree.gen.ts"
+		]
 	},
 	"linter": {
 		"enabled": true,
+		"includes": [
+			"**/*.ts",
+			"**/*.tsx",
+			"**/*.js",
+			"**/*.jsx",
+			"!**/node_modules/**",
+			"!**/dist/**",
+			"!**/build/**",
+			"!**/.vscode/**",
+			"!**/components/ui/**",
+			"!**/components/data-table/**",
+			"!**/routeTree.gen.ts"
+		],
 		"rules": {
 			"recommended": true,
 			"correctness": {
