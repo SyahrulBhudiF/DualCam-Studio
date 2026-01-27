@@ -91,6 +91,7 @@ export function ResponseAnswers({
 							No answer details available
 						</div>
 					) : (
+						<div className="overflow-x-auto">
 						<Table>
 							<TableHeader>
 								<TableRow>
@@ -115,14 +116,14 @@ export function ResponseAnswers({
 												{detail.orderNumber ?? index + 1}
 											</TableCell>
 											<TableCell>
-												<div className="max-w-md">
+												<div className="max-w-md break-words">
 													{detail.questionText ?? "-"}
 												</div>
 											</TableCell>
 											<TableCell>
 												<div className="flex items-center gap-2">
-													<CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-													<span>{detail.answerText ?? "-"}</span>
+													<CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+													<span className="break-words">{detail.answerText ?? "-"}</span>
 												</div>
 											</TableCell>
 											<TableCell className="text-right">
@@ -157,6 +158,7 @@ export function ResponseAnswers({
 								})}
 							</TableBody>
 						</Table>
+						</div>
 					)}
 				</CardContent>
 			</Card>
@@ -218,7 +220,7 @@ export function ResponseAnswers({
 								)}
 							</TabsContent>
 							<TabsContent value="side-by-side">
-								<div className="grid grid-cols-2 gap-4">
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div>
 										<h4 className="text-sm font-medium mb-2">Main Camera</h4>
 										{selectedVideo.main ? (

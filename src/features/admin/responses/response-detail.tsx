@@ -199,19 +199,19 @@ export function ResponseDetail({ response }: ResponseDetailProps) {
 
 	return (
 		<Main className="space-y-6">
-			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-4">
+			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+				<div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
 					<Link to="/admin/responses">
-						<Button variant="ghost" size="sm" className="cursor-pointer">
+						<Button variant="ghost" size="sm" className="cursor-pointer w-fit">
 							<ArrowLeft className="h-4 w-4 mr-2" />
 							Back to Responses
 						</Button>
 					</Link>
 					<div>
-						<h2 className="text-2xl font-bold tracking-tight">
+						<h2 className="text-xl sm:text-2xl font-bold tracking-tight">
 							Response Detail
 						</h2>
-						<p className="text-muted-foreground">
+						<p className="text-sm text-muted-foreground">
 							View complete response information
 						</p>
 					</div>
@@ -219,7 +219,7 @@ export function ResponseDetail({ response }: ResponseDetailProps) {
 				<ExportResponseDetailButton response={response} />
 			</div>
 
-			<div className="grid gap-6 lg:grid-cols-2">
+			<div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
 				<ProfileCard
 					profile={response.profile}
 					createdAt={response.createdAt}
