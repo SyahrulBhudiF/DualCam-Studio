@@ -14,7 +14,7 @@ import {
 import type { Answer, Question, Questionnaire } from "../questionnaires.types";
 
 export const getQuestionnaireColumns = (
-	onEdit: (item: Questionnaire) => void,
+	_onEdit: (item: Questionnaire) => void,
 	onToggleStatus: (item: Questionnaire) => void,
 ): ColumnDef<Questionnaire>[] => [
 	{

@@ -92,72 +92,74 @@ export function ResponseAnswers({
 						</div>
 					) : (
 						<div className="overflow-x-auto">
-						<Table>
-							<TableHeader>
-								<TableRow>
-									<TableHead className="w-[60px]">#</TableHead>
-									<TableHead>Question</TableHead>
-									<TableHead>Answer</TableHead>
-									<TableHead className="w-[100px] text-right">Score</TableHead>
-									{isSegmented && (
-										<TableHead className="w-[80px] text-center">
-											Video
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead className="w-[60px]">#</TableHead>
+										<TableHead>Question</TableHead>
+										<TableHead>Answer</TableHead>
+										<TableHead className="w-[100px] text-right">
+											Score
 										</TableHead>
-									)}
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{sortedDetails.map((detail, index) => {
-									const hasVideo =
-										isSegmented && getVideoForQuestion(detail.questionId);
-									return (
-										<TableRow key={detail.id}>
-											<TableCell className="font-medium">
-												{detail.orderNumber ?? index + 1}
-											</TableCell>
-											<TableCell>
-												<div className="max-w-md break-words">
-													{detail.questionText ?? "-"}
-												</div>
-											</TableCell>
-											<TableCell>
-												<div className="flex items-center gap-2">
-													<CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-													<span className="break-words">{detail.answerText ?? "-"}</span>
-												</div>
-											</TableCell>
-											<TableCell className="text-right">
-												<Badge
-													variant={detail.score > 0 ? "default" : "secondary"}
-												>
-													{detail.score}
-												</Badge>
-											</TableCell>
-											{isSegmented && (
-												<TableCell className="text-center">
-													{hasVideo ? (
-														<Button
-															variant="ghost"
-															size="sm"
-															className="cursor-pointer"
-															onClick={() =>
-																setSelectedQuestionId(detail.questionId)
-															}
-														>
-															<Video className="h-4 w-4" />
-														</Button>
-													) : (
-														<span className="text-muted-foreground text-xs">
-															-
-														</span>
-													)}
+										{isSegmented && (
+											<TableHead className="w-[80px] text-center">
+												Video
+											</TableHead>
+										)}
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{sortedDetails.map((detail, index) => {
+										const hasVideo =
+											isSegmented && getVideoForQuestion(detail.questionId);
+										return (
+											<TableRow key={detail.id}>
+												<TableCell className="font-medium">
+													{detail.orderNumber ?? index + 1}
 												</TableCell>
-											)}
-										</TableRow>
-									);
-								})}
-							</TableBody>
-						</Table>
+												<TableCell>
+													<div className="max-w-md">
+														{detail.questionText ?? "-"}
+													</div>
+												</TableCell>
+												<TableCell>
+													<div className="flex items-center gap-2">
+														<CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+														<span>{detail.answerText ?? "-"}</span>
+													</div>
+												</TableCell>
+												<TableCell className="text-right">
+													<Badge
+														variant={detail.score > 0 ? "default" : "secondary"}
+													>
+														{detail.score}
+													</Badge>
+												</TableCell>
+												{isSegmented && (
+													<TableCell className="text-center">
+														{hasVideo ? (
+															<Button
+																variant="ghost"
+																size="sm"
+																className="cursor-pointer"
+																onClick={() =>
+																	setSelectedQuestionId(detail.questionId)
+																}
+															>
+																<Video className="h-4 w-4" />
+															</Button>
+														) : (
+															<span className="text-muted-foreground text-xs">
+																-
+															</span>
+														)}
+													</TableCell>
+												)}
+											</TableRow>
+										);
+									})}
+								</TableBody>
+							</Table>
 						</div>
 					)}
 				</CardContent>
