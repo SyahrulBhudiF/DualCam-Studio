@@ -1,6 +1,6 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import type { SQL } from "drizzle-orm";
-import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, lte } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
 import type {
 	NewResponse,
@@ -80,47 +80,22 @@ export const ResponseServiceLive = Layer.effect(
 	Effect.gen(function* () {
 		const db = yield* PgDrizzle;
 
-		const fetchProfileAndQuestionnaire = (
-			userId: string,
-			questionnaireId: string,
-		) =>
-			Effect.all({
-				profile: Effect.tryPromise({
-					try: () =>
-						db
-							.select()
-							.from(profiles)
-							.where(eq(profiles.id, userId))
-							.then((rows) => (rows[0] as Profile | undefined) ?? null),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to fetch profile",
-							cause: error,
-						}),
-				}),
-				questionnaire: Effect.tryPromise({
-					try: () =>
-						db
-							.select()
-							.from(questionnaires)
-							.where(eq(questionnaires.id, questionnaireId))
-							.then((rows) => (rows[0] as Questionnaire | undefined) ?? null),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to fetch questionnaire",
-							cause: error,
-						}),
-				}),
-			});
-
 		const getAll: IResponseService["getAll"] = Effect.gen(function* () {
 			const rows = yield* Effect.tryPromise({
 				try: () =>
 					db
-						.select()
+						.select({
+							response: responses,
+							profile: profiles,
+							questionnaire: questionnaires,
+						})
 						.from(responses)
-						.orderBy(desc(responses.createdAt))
-						.then((r) => r as Response[]),
+						.leftJoin(profiles, eq(responses.userId, profiles.id))
+						.leftJoin(
+							questionnaires,
+							eq(responses.questionnaireId, questionnaires.id),
+						)
+						.orderBy(desc(responses.createdAt)),
 				catch: (error) =>
 					new DatabaseError({
 						message: "Failed to fetch responses",
@@ -128,31 +103,31 @@ export const ResponseServiceLive = Layer.effect(
 					}),
 			});
 
-			const results = yield* Effect.forEach(
-				rows,
-				(r) =>
-					fetchProfileAndQuestionnaire(r.userId, r.questionnaireId).pipe(
-						Effect.map(({ profile, questionnaire }) => ({
-							...r,
-							profile,
-							questionnaire,
-						})),
-					),
-				{ concurrency: "unbounded" },
-			);
-
-			return results;
+			return rows.map((row) => ({
+				...(row.response as Response),
+				profile: (row.profile as Profile) ?? null,
+				questionnaire: (row.questionnaire as Questionnaire) ?? null,
+			}));
 		});
 
 		const getById: IResponseService["getById"] = (id) =>
 			Effect.gen(function* () {
-				const response = yield* Effect.tryPromise({
+				const responseRow = yield* Effect.tryPromise({
 					try: () =>
 						db
-							.select()
+							.select({
+								response: responses,
+								profile: profiles,
+								questionnaire: questionnaires,
+							})
 							.from(responses)
+							.leftJoin(profiles, eq(responses.userId, profiles.id))
+							.leftJoin(
+								questionnaires,
+								eq(responses.questionnaireId, questionnaires.id),
+							)
 							.where(eq(responses.id, id))
-							.then((rows) => rows[0] as Response | undefined),
+							.then((rows) => rows[0]),
 					catch: (error) =>
 						new DatabaseError({
 							message: "Failed to fetch response",
@@ -160,21 +135,23 @@ export const ResponseServiceLive = Layer.effect(
 						}),
 				});
 
-				if (!response) {
+				if (!responseRow) {
 					return yield* Effect.fail(new ResponseNotFoundError({ id }));
 				}
-
-				const { profile, questionnaire } = yield* fetchProfileAndQuestionnaire(
-					response.userId,
-					response.questionnaireId,
-				);
 
 				const detailRows = yield* Effect.tryPromise({
 					try: () =>
 						db
-							.select()
+							.select({
+								detail: responseDetails,
+								question: questions,
+								answer: answers,
+							})
 							.from(responseDetails)
-							.where(eq(responseDetails.responseId, id)),
+							.leftJoin(questions, eq(responseDetails.questionId, questions.id))
+							.leftJoin(answers, eq(responseDetails.answerId, answers.id))
+							.where(eq(responseDetails.responseId, id))
+							.orderBy(questions.orderNumber),
 					catch: (error) =>
 						new DatabaseError({
 							message: "Failed to fetch response details",
@@ -182,56 +159,22 @@ export const ResponseServiceLive = Layer.effect(
 						}),
 				});
 
-				const details = yield* Effect.forEach(
-					detailRows,
-					(d) =>
-						Effect.all({
-							question: Effect.tryPromise({
-								try: () =>
-									db
-										.select()
-										.from(questions)
-										.where(eq(questions.id, d.questionId))
-										.then((rows) => rows[0]),
-								catch: (error) =>
-									new DatabaseError({
-										message: "Failed to fetch question",
-										cause: error,
-									}),
-							}),
-							answer: Effect.tryPromise({
-								try: () =>
-									db
-										.select()
-										.from(answers)
-										.where(eq(answers.id, d.answerId))
-										.then((rows) => rows[0]),
-								catch: (error) =>
-									new DatabaseError({
-										message: "Failed to fetch answer",
-										cause: error,
-									}),
-							}),
-						}).pipe(
-							Effect.map(({ question, answer }) => ({
-								id: d.id,
-								responseId: d.responseId,
-								questionId: d.questionId,
-								answerId: d.answerId,
-								score: d.score,
-								videoSegmentPath: d.videoSegmentPath,
-								questionText: question?.questionText ?? null,
-								orderNumber: question?.orderNumber ?? null,
-								answerText: answer?.answerText ?? null,
-							})),
-						),
-					{ concurrency: "unbounded" },
-				);
+				const details: ResponseDetail[] = detailRows.map((row) => ({
+					id: row.detail.id,
+					responseId: row.detail.responseId,
+					questionId: row.detail.questionId,
+					answerId: row.detail.answerId,
+					score: row.detail.score,
+					videoSegmentPath: row.detail.videoSegmentPath,
+					questionText: row.question?.questionText ?? null,
+					orderNumber: row.question?.orderNumber ?? null,
+					answerText: row.answer?.answerText ?? null,
+				}));
 
 				return {
-					...response,
-					profile,
-					questionnaire,
+					...(responseRow.response as Response),
+					profile: (responseRow.profile as Profile) ?? null,
+					questionnaire: (responseRow.questionnaire as Questionnaire) ?? null,
 					details,
 				};
 			});
@@ -243,11 +186,19 @@ export const ResponseServiceLive = Layer.effect(
 				const rows = yield* Effect.tryPromise({
 					try: () =>
 						db
-							.select()
+							.select({
+								response: responses,
+								profile: profiles,
+								questionnaire: questionnaires,
+							})
 							.from(responses)
+							.leftJoin(profiles, eq(responses.userId, profiles.id))
+							.leftJoin(
+								questionnaires,
+								eq(responses.questionnaireId, questionnaires.id),
+							)
 							.where(eq(responses.questionnaireId, questionnaireId))
-							.orderBy(desc(responses.createdAt))
-							.then((r) => r as Response[]),
+							.orderBy(desc(responses.createdAt)),
 					catch: (error) =>
 						new DatabaseError({
 							message: "Failed to fetch responses",
@@ -255,20 +206,11 @@ export const ResponseServiceLive = Layer.effect(
 						}),
 				});
 
-				const results = yield* Effect.forEach(
-					rows,
-					(r) =>
-						fetchProfileAndQuestionnaire(r.userId, r.questionnaireId).pipe(
-							Effect.map(({ profile, questionnaire }) => ({
-								...r,
-								profile,
-								questionnaire,
-							})),
-						),
-					{ concurrency: "unbounded" },
-				);
-
-				return results;
+				return rows.map((row) => ({
+					...(row.response as Response),
+					profile: (row.profile as Profile) ?? null,
+					questionnaire: (row.questionnaire as Questionnaire) ?? null,
+				}));
 			});
 
 		const getFiltered: IResponseService["getFiltered"] = (filter) =>
@@ -286,16 +228,32 @@ export const ResponseServiceLive = Layer.effect(
 				if (filter.endDate) {
 					conditions.push(lte(responses.createdAt, new Date(filter.endDate)));
 				}
+				if (filter.className) {
+					conditions.push(eq(profiles.class, filter.className));
+				}
+				if (filter.name) {
+					conditions.push(ilike(profiles.name, `%${filter.name}%`));
+				}
 
 				const rows = yield* Effect.tryPromise({
 					try: () => {
-						let query = db.select().from(responses);
+						let query = db
+							.select({
+								response: responses,
+								profile: profiles,
+								questionnaire: questionnaires,
+							})
+							.from(responses)
+							.leftJoin(profiles, eq(responses.userId, profiles.id))
+							.leftJoin(
+								questionnaires,
+								eq(responses.questionnaireId, questionnaires.id),
+							);
+
 						if (conditions.length > 0) {
 							query = query.where(and(...conditions)) as typeof query;
 						}
-						return query
-							.orderBy(desc(responses.createdAt))
-							.then((r) => r as Response[]);
+						return query.orderBy(desc(responses.createdAt));
 					},
 					catch: (error) =>
 						new DatabaseError({
@@ -304,26 +262,11 @@ export const ResponseServiceLive = Layer.effect(
 						}),
 				});
 
-				const results = yield* Effect.forEach(
-					rows,
-					(r) =>
-						fetchProfileAndQuestionnaire(r.userId, r.questionnaireId).pipe(
-							Effect.map(({ profile, questionnaire }) => ({
-								...r,
-								profile,
-								questionnaire,
-							})),
-						),
-					{ concurrency: "unbounded" },
-				);
-
-				// Filter by profile fields in-memory
-				return results.filter((r) => {
-					if (filter.className && r.profile?.class !== filter.className)
-						return false;
-					if (filter.name && r.profile?.name !== filter.name) return false;
-					return true;
-				});
+				return rows.map((row) => ({
+					...(row.response as Response),
+					profile: (row.profile as Profile) ?? null,
+					questionnaire: (row.questionnaire as Questionnaire) ?? null,
+				}));
 			});
 
 		const create: IResponseService["create"] = (data, details) =>
@@ -389,13 +332,75 @@ export const ResponseServiceLive = Layer.effect(
 
 		const getAllWithDetails: IResponseService["getAllWithDetails"] = Effect.gen(
 			function* () {
-				const allResponses = yield* getAll;
-				const results = yield* Effect.forEach(
-					allResponses,
-					(r) => getById(r.id),
-					{ concurrency: 5 },
-				);
-				return results;
+				// Fetch all responses with profile and questionnaire in a single JOIN
+				const responseRows = yield* Effect.tryPromise({
+					try: () =>
+						db
+							.select({
+								response: responses,
+								profile: profiles,
+								questionnaire: questionnaires,
+							})
+							.from(responses)
+							.leftJoin(profiles, eq(responses.userId, profiles.id))
+							.leftJoin(
+								questionnaires,
+								eq(responses.questionnaireId, questionnaires.id),
+							)
+							.orderBy(desc(responses.createdAt)),
+					catch: (error) =>
+						new DatabaseError({
+							message: "Failed to fetch responses",
+							cause: error,
+						}),
+				});
+
+				// Fetch all response details with questions and answers in a single JOIN
+				const allDetails = yield* Effect.tryPromise({
+					try: () =>
+						db
+							.select({
+								detail: responseDetails,
+								question: questions,
+								answer: answers,
+							})
+							.from(responseDetails)
+							.leftJoin(questions, eq(responseDetails.questionId, questions.id))
+							.leftJoin(answers, eq(responseDetails.answerId, answers.id)),
+					catch: (error) =>
+						new DatabaseError({
+							message: "Failed to fetch response details",
+							cause: error,
+						}),
+				});
+
+				// Group details by response ID
+				const detailsByResponseId = new Map<string, ResponseDetail[]>();
+				for (const row of allDetails) {
+					const responseId = row.detail.responseId;
+					if (!detailsByResponseId.has(responseId)) {
+						detailsByResponseId.set(responseId, []);
+					}
+					detailsByResponseId.get(responseId)?.push({
+						id: row.detail.id,
+						responseId: row.detail.responseId,
+						questionId: row.detail.questionId,
+						answerId: row.detail.answerId,
+						score: row.detail.score,
+						videoSegmentPath: row.detail.videoSegmentPath,
+						questionText: row.question?.questionText ?? null,
+						orderNumber: row.question?.orderNumber ?? null,
+						answerText: row.answer?.answerText ?? null,
+					});
+				}
+
+				// Combine responses with their details
+				return responseRows.map((row) => ({
+					...(row.response as Response),
+					profile: (row.profile as Profile) ?? null,
+					questionnaire: (row.questionnaire as Questionnaire) ?? null,
+					details: detailsByResponseId.get(row.response.id) ?? [],
+				}));
 			},
 		);
 

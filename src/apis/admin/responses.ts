@@ -1,26 +1,17 @@
-import { Effect } from "effect";
-import { createServerFn } from "@tanstack/react-start";
 import { Schema } from "@effect/schema";
+import { createServerFn } from "@tanstack/react-start";
+import { Effect } from "effect";
 import {
 	ProfileService,
 	QuestionnaireService,
 	ResponseService,
 	runEffect,
 } from "@/infrastructure";
-
-const UuidSchema = Schema.UUID;
-
-const BulkDeleteInput = Schema.Struct({
-	ids: Schema.mutable(Schema.Array(Schema.UUID)),
-});
-
-const ResponseFilterInput = Schema.Struct({
-	questionnaireId: Schema.optional(Schema.UUID),
-	className: Schema.optional(Schema.String),
-	startDate: Schema.optional(Schema.String),
-	endDate: Schema.optional(Schema.String),
-	name: Schema.optional(Schema.String),
-});
+import {
+	BulkDeleteSchema,
+	ResponseFilterSchema,
+	UUID,
+} from "@/infrastructure/schemas/questionnaire";
 
 export const getResponses = createServerFn({ method: "GET" }).handler(
 	async () => {
@@ -28,6 +19,7 @@ export const getResponses = createServerFn({ method: "GET" }).handler(
 			Effect.gen(function* () {
 				const service = yield* ResponseService;
 				const responses = yield* service.getAll;
+
 				return responses.map((r) => ({
 					id: r.id,
 					totalScore: r.totalScore,
@@ -54,12 +46,13 @@ export const getResponses = createServerFn({ method: "GET" }).handler(
 );
 
 export const getResponseById = createServerFn({ method: "GET" })
-	.inputValidator((id: string) => Schema.decodeUnknownSync(UuidSchema)(id))
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* ResponseService;
 				const r = yield* service.getById(id);
+
 				return {
 					id: r.id,
 					totalScore: r.totalScore,
@@ -85,7 +78,6 @@ export const getResponseById = createServerFn({ method: "GET" })
 							}
 						: null,
 					details: r.details.map((d) => {
-						// Convert jsonb videoSegmentPath to string
 						let videoSegmentPath: string | null = null;
 						if (d.videoSegmentPath != null) {
 							if (typeof d.videoSegmentPath === "string") {
@@ -112,14 +104,13 @@ export const getResponseById = createServerFn({ method: "GET" })
 	});
 
 export const getResponsesByQuestionnaireId = createServerFn({ method: "GET" })
-	.inputValidator((questionnaireId: string) =>
-		Schema.decodeUnknownSync(UuidSchema)(questionnaireId),
-	)
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: questionnaireId }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* ResponseService;
 				const responses = yield* service.getByQuestionnaireId(questionnaireId);
+
 				return responses.map((r) => ({
 					id: r.id,
 					totalScore: r.totalScore,
@@ -143,9 +134,7 @@ export const getResponsesByQuestionnaireId = createServerFn({ method: "GET" })
 	});
 
 export const deleteResponses = createServerFn({ method: "POST" })
-	.inputValidator((input: unknown) =>
-		Schema.decodeUnknownSync(BulkDeleteInput)(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(BulkDeleteSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
@@ -156,9 +145,7 @@ export const deleteResponses = createServerFn({ method: "POST" })
 	});
 
 export const getResponsesFiltered = createServerFn({ method: "POST" })
-	.inputValidator((input: unknown) =>
-		Schema.decodeUnknownSync(ResponseFilterInput)(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(ResponseFilterSchema))
 	.handler(async ({ data: filters }) => {
 		return runEffect(
 			Effect.gen(function* () {
@@ -170,6 +157,7 @@ export const getResponsesFiltered = createServerFn({ method: "POST" })
 					startDate: filters.startDate,
 					endDate: filters.endDate,
 				});
+
 				return responses.map((r) => ({
 					id: r.id,
 					totalScore: r.totalScore,
@@ -201,6 +189,7 @@ export const getAllResponsesWithDetails = createServerFn({
 		Effect.gen(function* () {
 			const service = yield* ResponseService;
 			const responses = yield* service.getAllWithDetails;
+
 			return responses.map((r) => ({
 				id: r.id,
 				totalScore: r.totalScore,

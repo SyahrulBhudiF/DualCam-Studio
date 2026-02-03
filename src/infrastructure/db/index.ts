@@ -1,16 +1,3 @@
-// Schema exports
-
-// Relations exports
-export {
-	answersRelations,
-	profilesRelations,
-	questionnairesRelations,
-	questionsRelations,
-	responseDetailsRelations,
-	responsesRelations,
-	sessionsRelations,
-	usersRelations,
-} from "./relations";
 export {
 	answers,
 	profiles,
@@ -22,7 +9,6 @@ export {
 	users,
 } from "./schema";
 
-// Type exports
 export type {
 	Answer,
 	NewAnswer,
@@ -36,12 +22,7 @@ export type {
 	Profile,
 	Question,
 	Questionnaire,
-	QuestionnaireWithQuestions,
-	QuestionWithAnswers,
 	Response,
-	ResponseDetail,
-	ResponseDetailWithRelations,
-	ResponseWithDetails,
 	Session,
 	User,
 } from "./types";

@@ -1,8 +1,8 @@
 import { SearchIcon } from "lucide-react";
-import { cn } from "@/utils/utils";
-import { useSearch } from "@/libs/context/search-provider";
-import { Button } from "./ui/button";
 import type React from "react";
+import { useSearch } from "@/libs/context/search-provider";
+import { cn } from "@/utils/utils";
+import { Button } from "./ui/button";
 
 type SearchProps = {
 	className?: string;

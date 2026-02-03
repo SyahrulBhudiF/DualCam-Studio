@@ -1,6 +1,3 @@
-// Database errors
-
-// Auth errors
 export {
 	InvalidCredentialsError,
 	SessionExpiredError,
@@ -8,13 +5,14 @@ export {
 	TokenError,
 	UnauthorizedError,
 } from "./auth";
+
 export {
 	ConnectionError,
 	DatabaseError,
 	QueryError,
 	TransactionError,
 } from "./database";
-// Not found errors
+
 export {
 	AnswerNotFoundError,
 	ProfileNotFoundError,
@@ -23,17 +21,22 @@ export {
 	ResponseNotFoundError,
 	UserNotFoundError,
 } from "./not-found";
-// Validation errors
+
 export { ParseError, ValidationError } from "./validation";
 
 import type {
 	InvalidCredentialsError,
 	SessionExpiredError,
 	SignupError,
+	TokenError,
 	UnauthorizedError,
 } from "./auth";
-// Union type for all application errors
-import type { ConnectionError, DatabaseError, QueryError } from "./database";
+import type {
+	ConnectionError,
+	DatabaseError,
+	QueryError,
+	TransactionError,
+} from "./database";
 import type {
 	AnswerNotFoundError,
 	ProfileNotFoundError,
@@ -48,10 +51,12 @@ export type AppError =
 	| DatabaseError
 	| ConnectionError
 	| QueryError
+	| TransactionError
 	| UnauthorizedError
 	| InvalidCredentialsError
 	| SessionExpiredError
 	| SignupError
+	| TokenError
 	| ValidationError
 	| ParseError
 	| QuestionnaireNotFoundError

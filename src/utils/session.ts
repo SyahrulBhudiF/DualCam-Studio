@@ -1,9 +1,9 @@
-import { Config, Effect } from "effect";
 import {
+	deleteCookie,
 	getCookies,
 	setCookie,
-	deleteCookie,
 } from "@tanstack/react-start/server";
+import { Config, Effect } from "effect";
 
 // Session configuration using Effect Config
 const SessionConfig = Config.all({

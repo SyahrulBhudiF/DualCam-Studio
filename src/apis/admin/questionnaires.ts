@@ -1,56 +1,22 @@
-import { Effect } from "effect";
-import { createServerFn } from "@tanstack/react-start";
 import { Schema } from "@effect/schema";
+import { createServerFn } from "@tanstack/react-start";
+import { Effect } from "effect";
 import {
 	AnswerService,
 	QuestionnaireService,
 	QuestionService,
 	runEffect,
 } from "@/infrastructure";
-
-// Input schemas using Effect Schema
-const UuidSchema = Schema.UUID;
-
-const CreateQuestionnaireInput = Schema.Struct({
-	title: Schema.String,
-	description: Schema.optional(Schema.String),
-	isActive: Schema.optional(Schema.Boolean),
-});
-
-const UpdateQuestionnaireInput = Schema.Struct({
-	id: Schema.UUID,
-	title: Schema.optional(Schema.String),
-	description: Schema.optional(Schema.String),
-	isActive: Schema.optional(Schema.Boolean),
-});
-
-const BulkDeleteInput = Schema.Struct({
-	ids: Schema.mutable(Schema.Array(Schema.UUID)),
-});
-
-const CreateQuestionInput = Schema.Struct({
-	questionnaireId: Schema.UUID,
-	questionText: Schema.String,
-	orderNumber: Schema.Number,
-});
-
-const UpdateQuestionInput = Schema.Struct({
-	id: Schema.UUID,
-	questionText: Schema.optional(Schema.String),
-	orderNumber: Schema.optional(Schema.Number),
-});
-
-const CreateAnswerInput = Schema.Struct({
-	questionId: Schema.UUID,
-	answerText: Schema.String,
-	score: Schema.Number,
-});
-
-const UpdateAnswerInput = Schema.Struct({
-	id: Schema.UUID,
-	answerText: Schema.optional(Schema.String),
-	score: Schema.optional(Schema.Number),
-});
+import {
+	BulkDeleteSchema,
+	CreateAnswerSchema,
+	CreateQuestionnaireSchema,
+	CreateQuestionSchema,
+	UpdateAnswerSchema,
+	UpdateQuestionnaireSchema,
+	UpdateQuestionSchema,
+	UUID,
+} from "@/infrastructure/schemas/questionnaire";
 
 // Questionnaire APIs
 export const getQuestionnaires = createServerFn({ method: "GET" }).handler(
@@ -69,7 +35,7 @@ export const getQuestionnaires = createServerFn({ method: "GET" }).handler(
 );
 
 export const getQuestionnaireById = createServerFn({ method: "GET" })
-	.inputValidator((id: string) => Schema.decodeUnknownSync(UuidSchema)(id))
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(
 			Effect.gen(function* () {
@@ -84,13 +50,12 @@ export const getQuestionnaireById = createServerFn({ method: "GET" })
 	});
 
 export const createQuestionnaire = createServerFn({ method: "POST" })
-	.inputValidator((input: unknown) =>
-		Schema.decodeUnknownSync(CreateQuestionnaireInput)(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(CreateQuestionnaireSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* QuestionnaireService;
+
 				return yield* service.create({
 					title: data.title,
 					description: data.description ?? null,
@@ -101,14 +66,13 @@ export const createQuestionnaire = createServerFn({ method: "POST" })
 	});
 
 export const updateQuestionnaire = createServerFn({ method: "POST" })
-	.inputValidator((input: unknown) =>
-		Schema.decodeUnknownSync(UpdateQuestionnaireInput)(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(UpdateQuestionnaireSchema))
 	.handler(async ({ data }) => {
 		const { id, ...updates } = data;
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* QuestionnaireService;
+
 				return yield* service.update(id, {
 					title: updates.title,
 					description: updates.description,
@@ -119,24 +83,24 @@ export const updateQuestionnaire = createServerFn({ method: "POST" })
 	});
 
 export const deleteQuestionnaires = createServerFn({ method: "POST" })
-	.inputValidator((input: unknown) =>
-		Schema.decodeUnknownSync(BulkDeleteInput)(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(BulkDeleteSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* QuestionnaireService;
+
 				return yield* service.delete(data.ids);
 			}),
 		);
 	});
 
 export const setQuestionnaireActive = createServerFn({ method: "POST" })
-	.inputValidator((id: string) => Schema.decodeUnknownSync(UuidSchema)(id))
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* QuestionnaireService;
+
 				return yield* service.setActive(id);
 			}),
 		);
@@ -144,14 +108,13 @@ export const setQuestionnaireActive = createServerFn({ method: "POST" })
 
 // Question APIs
 export const getQuestionsByQuestionnaireId = createServerFn({ method: "GET" })
-	.inputValidator((questionnaireId: string) =>
-		Schema.decodeUnknownSync(UuidSchema)(questionnaireId),
-	)
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: questionnaireId }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* QuestionService;
 				const results = yield* service.getByQuestionnaireId(questionnaireId);
+
 				return results.map((q) => ({
 					...q,
 					createdAt: new Date().toISOString(),
@@ -161,12 +124,13 @@ export const getQuestionsByQuestionnaireId = createServerFn({ method: "GET" })
 	});
 
 export const getQuestionById = createServerFn({ method: "GET" })
-	.inputValidator((id: string) => Schema.decodeUnknownSync(UuidSchema)(id))
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* QuestionService;
 				const q = yield* service.getById(id);
+
 				return {
 					...q,
 					createdAt: new Date().toISOString(),
@@ -176,13 +140,12 @@ export const getQuestionById = createServerFn({ method: "GET" })
 	});
 
 export const createQuestion = createServerFn({ method: "POST" })
-	.inputValidator((input: unknown) =>
-		Schema.decodeUnknownSync(CreateQuestionInput)(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(CreateQuestionSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* QuestionService;
+
 				return yield* service.create({
 					questionnaireId: data.questionnaireId,
 					questionText: data.questionText,
@@ -193,14 +156,13 @@ export const createQuestion = createServerFn({ method: "POST" })
 	});
 
 export const updateQuestion = createServerFn({ method: "POST" })
-	.inputValidator((input: unknown) =>
-		Schema.decodeUnknownSync(UpdateQuestionInput)(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(UpdateQuestionSchema))
 	.handler(async ({ data }) => {
 		const { id, ...updates } = data;
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* QuestionService;
+
 				return yield* service.update(id, {
 					questionText: updates.questionText,
 					orderNumber: updates.orderNumber,
@@ -210,13 +172,12 @@ export const updateQuestion = createServerFn({ method: "POST" })
 	});
 
 export const deleteQuestions = createServerFn({ method: "POST" })
-	.inputValidator((input: unknown) =>
-		Schema.decodeUnknownSync(BulkDeleteInput)(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(BulkDeleteSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* QuestionService;
+
 				return yield* service.delete(data.ids);
 			}),
 		);
@@ -224,14 +185,13 @@ export const deleteQuestions = createServerFn({ method: "POST" })
 
 // Answer APIs
 export const getAnswersByQuestionId = createServerFn({ method: "GET" })
-	.inputValidator((questionId: string) =>
-		Schema.decodeUnknownSync(UuidSchema)(questionId),
-	)
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: questionId }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* AnswerService;
 				const results = yield* service.getByQuestionId(questionId);
+
 				return results.map((a) => ({
 					...a,
 					createdAt: new Date().toISOString(),
@@ -241,13 +201,12 @@ export const getAnswersByQuestionId = createServerFn({ method: "GET" })
 	});
 
 export const createAnswer = createServerFn({ method: "POST" })
-	.inputValidator((input: unknown) =>
-		Schema.decodeUnknownSync(CreateAnswerInput)(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(CreateAnswerSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* AnswerService;
+
 				return yield* service.create({
 					questionId: data.questionId,
 					answerText: data.answerText,
@@ -258,14 +217,13 @@ export const createAnswer = createServerFn({ method: "POST" })
 	});
 
 export const updateAnswer = createServerFn({ method: "POST" })
-	.inputValidator((input: unknown) =>
-		Schema.decodeUnknownSync(UpdateAnswerInput)(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(UpdateAnswerSchema))
 	.handler(async ({ data }) => {
 		const { id, ...updates } = data;
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* AnswerService;
+
 				return yield* service.update(id, {
 					answerText: updates.answerText,
 					score: updates.score,
@@ -275,13 +233,12 @@ export const updateAnswer = createServerFn({ method: "POST" })
 	});
 
 export const deleteAnswers = createServerFn({ method: "POST" })
-	.inputValidator((input: unknown) =>
-		Schema.decodeUnknownSync(BulkDeleteInput)(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(BulkDeleteSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* AnswerService;
+
 				return yield* service.delete(data.ids);
 			}),
 		);

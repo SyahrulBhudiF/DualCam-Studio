@@ -1,4 +1,4 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 
 export interface RealSenseHandle {
 	startRecording: (options: {

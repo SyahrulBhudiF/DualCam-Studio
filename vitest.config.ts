@@ -1,11 +1,13 @@
-import { defineConfig } from "vitest/config";
+import { loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { defineConfig } from "vitest/config";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
 	plugins: [tsconfigPaths()],
 	test: {
 		globals: true,
 		environment: "node",
+		env: loadEnv(mode, process.cwd(), ""),
 		include: ["tests/**/*.test.ts", "tests/**/*.spec.ts"],
 		exclude: ["node_modules", "dist"],
 		coverage: {
@@ -21,4 +23,4 @@ export default defineConfig({
 			],
 		},
 	},
-});
+}));

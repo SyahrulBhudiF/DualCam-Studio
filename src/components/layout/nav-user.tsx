@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { ChevronsUpDown, LogOut } from "lucide-react";
 import { SignOutDialog } from "@/components/sign-out-dialog";
 import {

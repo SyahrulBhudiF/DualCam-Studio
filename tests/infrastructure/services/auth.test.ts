@@ -1,10 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Effect, Exit, Layer } from "effect";
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import {
-	AuthService,
-	AuthServiceLive,
-} from "@/infrastructure/services/auth";
+import { Effect, Exit, Layer } from "effect";
+import { it } from "@effect/vitest";
+import { describe, expect, vi, beforeEach } from "vitest";
+import { AuthService, AuthServiceLive } from "@/infrastructure/services/auth";
 
 // Mock bcryptjs
 vi.mock("bcryptjs", () => ({
@@ -80,56 +78,49 @@ describe("AuthService", () => {
 	});
 
 	describe("signup", () => {
-		it("should create a new user successfully", async () => {
+		it.effect("should create a new user successfully", () => {
 			const testLayer = createTestLayer(mockDb);
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const authService = yield* AuthService;
-				return yield* authService.signup("test@example.com", "password123");
-			});
+				const result = yield* authService.signup("test@example.com", "password123");
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result).toBeDefined();
-			expect(result.email).toBe("test@example.com");
+				expect(result).toBeDefined();
+				expect(result.email).toBe("test@example.com");
+			}).pipe(Effect.provide(testLayer));
 		});
 
-		it("should fail if user already exists", async () => {
+		it.effect("should fail if user already exists", () => {
 			// Mock that user already exists
 			mockDb.where = vi.fn().mockImplementation(() => ({
 				then: (resolve: (rows: unknown[]) => void) => {
-					return Promise.resolve([{
-						id: "existing-id",
-						email: "test@example.com",
-						passwordHash: "hash",
-						createdAt: new Date(),
-						updatedAt: new Date(),
-					}]).then(resolve);
+					return Promise.resolve([
+						{
+							id: "existing-id",
+							email: "test@example.com",
+							passwordHash: "hash",
+							createdAt: new Date(),
+							updatedAt: new Date(),
+						},
+					]).then(resolve);
 				},
 			}));
 
 			const testLayer = createTestLayer(mockDb);
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const authService = yield* AuthService;
-				return yield* authService.signup("test@example.com", "password123");
-			});
+				const exit = yield* Effect.exit(
+					authService.signup("test@example.com", "password123"),
+				);
 
-			const exit = await Effect.runPromiseExit(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(Exit.isFailure(exit)).toBe(true);
+				expect(Exit.isFailure(exit)).toBe(true);
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 
 	describe("login", () => {
-		it("should login successfully with valid credentials", async () => {
-			const bcrypt = await import("bcryptjs");
-			vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
-
+		it.effect("should login successfully with valid credentials", () => {
 			// Mock user exists
 			let callCount = 0;
 			mockDb.where = vi.fn().mockImplementation(() => ({
@@ -137,13 +128,15 @@ describe("AuthService", () => {
 					callCount++;
 					if (callCount === 1) {
 						// First call: finding user
-						return Promise.resolve([{
-							id: "user-id",
-							email: "test@example.com",
-							passwordHash: "hashed_password",
-							createdAt: new Date(),
-							updatedAt: new Date(),
-						}]).then(resolve);
+						return Promise.resolve([
+							{
+								id: "user-id",
+								email: "test@example.com",
+								passwordHash: "hashed_password",
+								createdAt: new Date(),
+								updatedAt: new Date(),
+							},
+						]).then(resolve);
 					}
 					return Promise.resolve([]).then(resolve);
 				},
@@ -152,33 +145,31 @@ describe("AuthService", () => {
 			// Mock session creation
 			mockDb.returning = vi.fn().mockImplementation(() => ({
 				then: (resolve: (rows: unknown[]) => void) => {
-					return Promise.resolve([{
-						id: "session-id",
-						userId: "user-id",
-						token: "test-token",
-						expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-						createdAt: new Date(),
-					}]).then(resolve);
+					return Promise.resolve([
+						{
+							id: "session-id",
+							userId: "user-id",
+							token: "test-token",
+							expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+							createdAt: new Date(),
+						},
+					]).then(resolve);
 				},
 			}));
 
 			const testLayer = createTestLayer(mockDb);
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const authService = yield* AuthService;
-				return yield* authService.login("test@example.com", "password123");
-			});
+				const result = yield* authService.login("test@example.com", "password123");
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result.user).toBeDefined();
-			expect(result.session).toBeDefined();
-			expect(result.user.email).toBe("test@example.com");
+				expect(result.user).toBeDefined();
+				expect(result.session).toBeDefined();
+				expect(result.user.email).toBe("test@example.com");
+			}).pipe(Effect.provide(testLayer));
 		});
 
-		it("should fail with invalid credentials", async () => {
+		it.effect("should fail with invalid credentials", () => {
 			// Mock user not found
 			mockDb.where = vi.fn().mockImplementation(() => ({
 				then: (resolve: (rows: unknown[]) => void) => {
@@ -188,36 +179,30 @@ describe("AuthService", () => {
 
 			const testLayer = createTestLayer(mockDb);
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const authService = yield* AuthService;
-				return yield* authService.login("test@example.com", "password123");
-			});
+				const exit = yield* Effect.exit(
+					authService.login("test@example.com", "password123"),
+				);
 
-			const exit = await Effect.runPromiseExit(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(Exit.isFailure(exit)).toBe(true);
+				expect(Exit.isFailure(exit)).toBe(true);
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 
 	describe("validateSession", () => {
-		it("should fail with empty token", async () => {
+		it.effect("should fail with empty token", () => {
 			const testLayer = createTestLayer(mockDb);
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const authService = yield* AuthService;
-				return yield* authService.validateSession("");
-			});
+				const exit = yield* Effect.exit(authService.validateSession(""));
 
-			const exit = await Effect.runPromiseExit(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(Exit.isFailure(exit)).toBe(true);
+				expect(Exit.isFailure(exit)).toBe(true);
+			}).pipe(Effect.provide(testLayer));
 		});
 
-		it("should fail with expired session", async () => {
+		it.effect("should fail with expired session", () => {
 			// Mock no valid session found
 			mockDb.where = vi.fn().mockImplementation(() => ({
 				then: (resolve: (rows: unknown[]) => void) => {
@@ -227,34 +212,28 @@ describe("AuthService", () => {
 
 			const testLayer = createTestLayer(mockDb);
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const authService = yield* AuthService;
-				return yield* authService.validateSession("expired-token");
-			});
+				const exit = yield* Effect.exit(
+					authService.validateSession("expired-token"),
+				);
 
-			const exit = await Effect.runPromiseExit(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(Exit.isFailure(exit)).toBe(true);
+				expect(Exit.isFailure(exit)).toBe(true);
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 
 	describe("logout", () => {
-		it("should logout successfully", async () => {
+		it.effect("should logout successfully", () => {
 			const testLayer = createTestLayer(mockDb);
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const authService = yield* AuthService;
-				return yield* authService.logout("test-token");
-			});
+				const result = yield* authService.logout("test-token");
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result).toBeUndefined();
-			expect(mockDb.delete).toHaveBeenCalled();
+				expect(result).toBeUndefined();
+				expect(mockDb.delete).toHaveBeenCalled();
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 });

@@ -1,13 +1,14 @@
-import { Effect, Exit } from "effect";
+import { Schema } from "@effect/schema";
 import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { loginSchema, signupSchema } from "@/libs/schemas/user";
+import { Effect, Exit } from "effect";
 import { AuthService, runEffectExit } from "@/infrastructure";
+import { LoginSchema, SignupSchema } from "@/infrastructure/schemas/auth";
 import {
-	getSessionToken,
-	setSessionCookie,
 	clearSessionCookie,
 	extractErrorMessage,
+	getSessionToken,
+	setSessionCookie,
 } from "@/utils/session";
 
 export const fetchUser = createServerFn({ method: "GET" }).handler(async () => {
@@ -39,7 +40,7 @@ export const fetchUser = createServerFn({ method: "GET" }).handler(async () => {
 });
 
 export const loginFn = createServerFn({ method: "POST" })
-	.inputValidator(loginSchema)
+	.inputValidator(Schema.decodeUnknownSync(LoginSchema))
 	.handler(async ({ data }) => {
 		const exit = await runEffectExit(
 			Effect.gen(function* () {
@@ -80,7 +81,7 @@ export const logoutFn = createServerFn().handler(async () => {
 });
 
 export const signupFn = createServerFn({ method: "POST" })
-	.inputValidator(signupSchema)
+	.inputValidator(Schema.decodeUnknownSync(SignupSchema))
 	.handler(async ({ data }) => {
 		const exit = await runEffectExit(
 			Effect.gen(function* () {
@@ -88,6 +89,7 @@ export const signupFn = createServerFn({ method: "POST" })
 				yield* authService.signup(data.email, data.password);
 				const result = yield* authService.login(data.email, data.password);
 				yield* setSessionCookie(result.session.token);
+
 				return result;
 			}),
 		);

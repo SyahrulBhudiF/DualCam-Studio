@@ -1,7 +1,7 @@
 import path from "node:path";
-import { Effect } from "effect";
-import { createServerFn } from "@tanstack/react-start";
 import { Schema } from "@effect/schema";
+import { createServerFn } from "@tanstack/react-start";
+import { Effect } from "effect";
 import {
 	AnswerService,
 	FileUploadService,
@@ -10,18 +10,7 @@ import {
 	ResponseService,
 	runEffect,
 } from "@/infrastructure";
-
-// Input schema for submission
-const SubmissionInput = Schema.Struct({
-	questionnaireId: Schema.UUID,
-	userEmail: Schema.String,
-	userName: Schema.String,
-	userClass: Schema.String,
-	answers: Schema.Record({ key: Schema.String, value: Schema.UUID }),
-	folderName: Schema.String,
-	videoBase64Main: Schema.optional(Schema.String),
-	videoBase64Secondary: Schema.optional(Schema.String),
-});
+import { SubmissionSchema } from "@/infrastructure/schemas/questionnaire";
 
 export const getActiveQuestionnaire = createServerFn({ method: "GET" }).handler(
 	async () => {
@@ -29,6 +18,7 @@ export const getActiveQuestionnaire = createServerFn({ method: "GET" }).handler(
 			Effect.gen(function* () {
 				const service = yield* QuestionnaireService;
 				const result = yield* service.getActive;
+
 				return {
 					questionnaire: {
 						id: result.questionnaire.id,
@@ -52,9 +42,7 @@ export const getActiveQuestionnaire = createServerFn({ method: "GET" }).handler(
 );
 
 export const submitQuestionnaire = createServerFn({ method: "POST" })
-	.inputValidator((data: unknown) =>
-		Schema.decodeUnknownSync(SubmissionInput)(data),
-	)
+	.inputValidator(Schema.decodeUnknownSync(SubmissionSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
@@ -72,8 +60,10 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
 				yield* fileUploadService.ensureDirectory(userFolder);
 
 				// Save main video if provided
-				const storedPathObject: { main: string | null; secondary: string | null } =
-					{ main: null, secondary: null };
+				const storedPathObject: {
+					main: string | null;
+					secondary: string | null;
+				} = { main: null, secondary: null };
 
 				if (data.videoBase64Main) {
 					const mainFileName = "recording_main.webm";
@@ -106,10 +96,7 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
 				// Get answer scores
 				const answerIds = Object.values(data.answers);
 				const dbAnswers = yield* answerService.getByIds(answerIds);
-				const totalScore = dbAnswers.reduce(
-					(acc, curr) => acc + curr.score,
-					0,
-				);
+				const totalScore = dbAnswers.reduce((acc, curr) => acc + curr.score, 0);
 
 				// Upsert profile
 				const profile = yield* profileService.upsertByEmail(data.userEmail, {
