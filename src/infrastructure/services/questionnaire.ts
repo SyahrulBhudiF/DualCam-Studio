@@ -103,47 +103,59 @@ export const QuestionnaireServiceLive = Layer.effect(
 					);
 				}
 
-				const questionRows = yield* Effect.tryPromise({
+				// Fetch questions with their answers in a single JOIN query
+				const rows = yield* Effect.tryPromise({
 					try: () =>
 						db
-							.select()
+							.select({
+								question: questions,
+								answer: answers,
+							})
 							.from(questions)
+							.leftJoin(answers, eq(questions.id, answers.questionId))
 							.where(eq(questions.questionnaireId, questionnaire.id))
 							.orderBy(questions.orderNumber),
 					catch: (error) =>
 						new DatabaseError({
-							message: "Failed to fetch questions",
+							message: "Failed to fetch questions with answers",
 							cause: error,
 						}),
 				});
 
-				const questionsWithAnswers = yield* Effect.forEach(
-					questionRows,
-					(q) =>
-						Effect.tryPromise({
-							try: () =>
-								db.select().from(answers).where(eq(answers.questionId, q.id)),
-							catch: (error) =>
-								new DatabaseError({
-									message: "Failed to fetch answers",
-									cause: error,
-								}),
-						}).pipe(
-							Effect.map((answerRows) => ({
-								id: q.id,
-								questionText: q.questionText,
-								orderNumber: q.orderNumber,
-								answers: answerRows.map((a) => ({
-									id: a.id,
-									answerText: a.answerText,
-									score: a.score,
-								})),
-							})),
-						),
-					{ concurrency: "unbounded" },
-				);
+				// Group answers by question
+				const questionMap = new Map<
+					string,
+					{
+						id: string;
+						questionText: string;
+						orderNumber: number;
+						answers: Array<{ id: string; answerText: string; score: number }>;
+					}
+				>();
 
-				return { questionnaire, questions: questionsWithAnswers };
+				for (const row of rows) {
+					const q = row.question;
+					if (!questionMap.has(q.id)) {
+						questionMap.set(q.id, {
+							id: q.id,
+							questionText: q.questionText,
+							orderNumber: q.orderNumber,
+							answers: [],
+						});
+					}
+					if (row.answer) {
+						questionMap.get(q.id)?.answers.push({
+							id: row.answer.id,
+							answerText: row.answer.answerText,
+							score: row.answer.score,
+						});
+					}
+				}
+
+				return {
+					questionnaire,
+					questions: Array.from(questionMap.values()),
+				};
 			},
 		);
 

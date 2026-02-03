@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Effect, Exit, Layer } from "effect";
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
+import { Effect, Exit, Layer } from "effect";
+import { it } from "@effect/vitest";
+import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	ProfileService,
 	ProfileServiceLive,
@@ -54,7 +55,7 @@ const createTestLayer = (
 		insertResult?: unknown;
 		updateResult?: unknown;
 		getAllResult?: unknown[];
-	}
+	},
 ) => {
 	// Mock for getAll - select().from(profiles)
 	mockDb.from = vi.fn().mockImplementation(() => ({
@@ -63,7 +64,7 @@ const createTestLayer = (
 		where: vi.fn().mockImplementation(() => ({
 			then: (resolve: (rows: unknown[]) => void) =>
 				Promise.resolve(overrides?.selectResult ?? [mockDb.profiles[0]]).then(
-					resolve
+					resolve,
 				),
 		})),
 	}));
@@ -71,12 +72,12 @@ const createTestLayer = (
 	mockDb.where = vi.fn().mockImplementation(() => ({
 		then: (resolve: (rows: unknown[]) => void) =>
 			Promise.resolve(overrides?.selectResult ?? [mockDb.profiles[0]]).then(
-				resolve
+				resolve,
 			),
 		returning: vi.fn().mockImplementation(() => ({
 			then: (resolve: (rows: unknown[]) => void) =>
 				Promise.resolve(
-					overrides?.updateResult ? [overrides.updateResult] : []
+					overrides?.updateResult ? [overrides.updateResult] : [],
 				).then(resolve),
 		})),
 	}));
@@ -84,7 +85,7 @@ const createTestLayer = (
 	mockDb.returning = vi.fn().mockImplementation(() => ({
 		then: (resolve: (rows: unknown[]) => void) =>
 			Promise.resolve(
-				overrides?.insertResult ? [overrides.insertResult] : []
+				overrides?.insertResult ? [overrides.insertResult] : [],
 			).then(resolve),
 	}));
 
@@ -101,25 +102,21 @@ describe("ProfileService", () => {
 	});
 
 	describe("getById", () => {
-		it("should return profile by id", async () => {
+		it.effect("should return profile by id", () => {
 			const testLayer = createTestLayer(mockDb, {
 				selectResult: [mockDb.profiles[0]],
 			});
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				return yield* service.getById("p1");
-			});
+				const result = yield* service.getById("p1");
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result.id).toBe("p1");
-			expect(result.email).toBe("user1@example.com");
+				expect(result.id).toBe("p1");
+				expect(result.email).toBe("user1@example.com");
+			}).pipe(Effect.provide(testLayer));
 		});
 
-		it("should fail when profile not found", async () => {
+		it.effect("should fail when profile not found", () => {
 			mockDb.from = vi.fn().mockImplementation(() => ({
 				where: vi.fn().mockImplementation(() => ({
 					then: (resolve: (rows: unknown[]) => void) =>
@@ -129,38 +126,30 @@ describe("ProfileService", () => {
 
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				return yield* service.getById("non-existent");
-			});
+				const exit = yield* Effect.exit(service.getById("non-existent"));
 
-			const exit = await Effect.runPromiseExit(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(Exit.isFailure(exit)).toBe(true);
+				expect(Exit.isFailure(exit)).toBe(true);
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 
 	describe("getByEmail", () => {
-		it("should return profile by email", async () => {
+		it.effect("should return profile by email", () => {
 			const testLayer = createTestLayer(mockDb, {
 				selectResult: [mockDb.profiles[0]],
 			});
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				return yield* service.getByEmail("user1@example.com");
-			});
+				const result = yield* service.getByEmail("user1@example.com");
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result?.email).toBe("user1@example.com");
+				expect(result?.email).toBe("user1@example.com");
+			}).pipe(Effect.provide(testLayer));
 		});
 
-		it("should return null when email not found", async () => {
+		it.effect("should return null when email not found", () => {
 			mockDb.from = vi.fn().mockImplementation(() => ({
 				where: vi.fn().mockImplementation(() => ({
 					then: (resolve: (rows: unknown[]) => void) =>
@@ -170,21 +159,17 @@ describe("ProfileService", () => {
 
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				return yield* service.getByEmail("nonexistent@example.com");
-			});
+				const result = yield* service.getByEmail("nonexistent@example.com");
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result).toBeNull();
+				expect(result).toBeNull();
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 
 	describe("create", () => {
-		it("should create a new profile", async () => {
+		it.effect("should create a new profile", () => {
 			const newProfile = {
 				id: "new-id",
 				email: "new@example.com",
@@ -197,26 +182,22 @@ describe("ProfileService", () => {
 				insertResult: newProfile,
 			});
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				return yield* service.create({
+				const result = yield* service.create({
 					email: "new@example.com",
 					name: "New User",
 					class: "Class C",
 				});
-			});
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result.email).toBe("new@example.com");
-			expect(result.name).toBe("New User");
+				expect(result.email).toBe("new@example.com");
+				expect(result.name).toBe("New User");
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 
 	describe("upsertByEmail", () => {
-		it("should update existing profile", async () => {
+		it.effect("should update existing profile", () => {
 			const updatedProfile = {
 				id: "p1",
 				email: "user1@example.com",
@@ -247,22 +228,18 @@ describe("ProfileService", () => {
 				updateResult: updatedProfile,
 			});
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				return yield* service.upsertByEmail("user1@example.com", {
+				const result = yield* service.upsertByEmail("user1@example.com", {
 					name: "Updated User",
 					class: "Class D",
 				});
-			});
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result.name).toBe("Updated User");
+				expect(result.name).toBe("Updated User");
+			}).pipe(Effect.provide(testLayer));
 		});
 
-		it("should create new profile if not exists", async () => {
+		it.effect("should create new profile if not exists", () => {
 			const newProfile = {
 				id: "new-id",
 				email: "newuser@example.com",
@@ -291,87 +268,67 @@ describe("ProfileService", () => {
 				insertResult: newProfile,
 			});
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				return yield* service.upsertByEmail("newuser@example.com", {
+				const result = yield* service.upsertByEmail("newuser@example.com", {
 					name: "New User",
 					class: "Class E",
 				});
-			});
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result.email).toBe("newuser@example.com");
+				expect(result.email).toBe("newuser@example.com");
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 
 	describe("getAll", () => {
-		it("should return all profiles", async () => {
+		it.effect("should return all profiles", () => {
 			const testLayer = createTestLayer(mockDb, {
 				getAllResult: mockDb.profiles,
 			});
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				return yield* service.getAll;
-			});
+				const result = yield* service.getAll;
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result).toHaveLength(3);
+				expect(result).toHaveLength(3);
+			}).pipe(Effect.provide(testLayer));
 		});
 
-		it("should return empty array when no profiles", async () => {
+		it.effect("should return empty array when no profiles", () => {
 			const testLayer = createTestLayer(mockDb, { getAllResult: [] });
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				return yield* service.getAll;
-			});
+				const result = yield* service.getAll;
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result).toHaveLength(0);
+				expect(result).toHaveLength(0);
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 
 	describe("getUniqueClasses", () => {
-		it("should return unique classes sorted", async () => {
+		it.effect("should return unique classes sorted", () => {
 			const testLayer = createTestLayer(mockDb, {
 				getAllResult: mockDb.profiles,
 			});
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				return yield* service.getUniqueClasses;
-			});
+				const result = yield* service.getUniqueClasses;
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result).toEqual(["Class A", "Class B"]);
+				expect(result).toEqual(["Class A", "Class B"]);
+			}).pipe(Effect.provide(testLayer));
 		});
 
-		it("should return empty array when no profiles", async () => {
+		it.effect("should return empty array when no profiles", () => {
 			const testLayer = createTestLayer(mockDb, { getAllResult: [] });
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				return yield* service.getUniqueClasses;
-			});
+				const result = yield* service.getUniqueClasses;
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result).toHaveLength(0);
+				expect(result).toHaveLength(0);
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 });

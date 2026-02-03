@@ -1,6 +1,6 @@
 {
-	"id": "2084ff33-6c21-4e12-b5f8-1cbc5cbebe51",
-	"prevId": "00000000-0000-0000-0000-000000000000",
+	"id": "6b584c79-6972-4b67-96bf-e57c1246ea9c",
+	"prevId": "2084ff33-6c21-4e12-b5f8-1cbc5cbebe51",
 	"version": "7",
 	"dialect": "postgresql",
 	"tables": {
@@ -33,9 +33,32 @@
 					"primaryKey": false,
 					"notNull": true,
 					"default": 0
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"idx_answers_question_id": {
+					"name": "idx_answers_question_id",
+					"columns": [
+						{
+							"expression": "question_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
 			"foreignKeys": {
 				"answers_question_id_questions_id_fk": {
 					"name": "answers_question_id_questions_id_fk",
@@ -114,7 +137,23 @@
 					"default": "now()"
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"idx_profiles_class": {
+					"name": "idx_profiles_class",
+					"columns": [
+						{
+							"expression": "class",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
 			"foreignKeys": {},
 			"compositePrimaryKeys": {},
 			"uniqueConstraints": {
@@ -203,9 +242,32 @@
 					"primaryKey": false,
 					"notNull": true,
 					"default": 0
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"idx_questions_questionnaire_id": {
+					"name": "idx_questions_questionnaire_id",
+					"columns": [
+						{
+							"expression": "questionnaire_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
 			"foreignKeys": {
 				"questions_questionnaire_id_questionnaires_id_fk": {
 					"name": "questions_questionnaire_id_questionnaires_id_fk",
@@ -266,7 +328,53 @@
 					"notNull": false
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"idx_response_details_response_id": {
+					"name": "idx_response_details_response_id",
+					"columns": [
+						{
+							"expression": "response_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"idx_response_details_question_id": {
+					"name": "idx_response_details_question_id",
+					"columns": [
+						{
+							"expression": "question_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"idx_response_details_answer_id": {
+					"name": "idx_response_details_answer_id",
+					"columns": [
+						{
+							"expression": "answer_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
 			"foreignKeys": {
 				"response_details_response_id_responses_id_fk": {
 					"name": "response_details_response_id_responses_id_fk",
@@ -346,7 +454,53 @@
 					"default": "now()"
 				}
 			},
-			"indexes": {},
+			"indexes": {
+				"idx_responses_user_id": {
+					"name": "idx_responses_user_id",
+					"columns": [
+						{
+							"expression": "user_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"idx_responses_questionnaire_id": {
+					"name": "idx_responses_questionnaire_id",
+					"columns": [
+						{
+							"expression": "questionnaire_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				},
+				"idx_responses_created_at": {
+					"name": "idx_responses_created_at",
+					"columns": [
+						{
+							"expression": "created_at",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
 			"foreignKeys": {
 				"responses_user_id_profiles_id_fk": {
 					"name": "responses_user_id_profiles_id_fk",

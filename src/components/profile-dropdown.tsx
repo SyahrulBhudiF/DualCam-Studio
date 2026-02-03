@@ -1,4 +1,4 @@
-import useDialogState from "@/libs/hooks/use-dialog-state";
+import { SignOutDialog } from "@/components/sign-out-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -9,7 +9,7 @@ import {
 	DropdownMenuShortcut,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SignOutDialog } from "@/components/sign-out-dialog";
+import useDialogState from "@/libs/hooks/use-dialog-state";
 
 export function ProfileDropdown() {
 	const [open, setOpen] = useDialogState();

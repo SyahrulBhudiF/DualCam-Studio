@@ -10,7 +10,6 @@ import {
 	SessionExpiredError,
 	SignupError,
 	TokenError,
-	UnauthorizedError,
 } from "../errors/auth";
 
 // Get auth configuration from environment
@@ -106,7 +105,10 @@ export const AuthServiceLive = Layer.effect(
 				const passwordHash = yield* Effect.tryPromise({
 					try: () => bcrypt.hash(password, config.saltRounds),
 					catch: (error) =>
-						new SignupError({ message: "Failed to hash password", cause: error }),
+						new SignupError({
+							message: "Failed to hash password",
+							cause: error,
+						}),
 				});
 
 				// Create user
@@ -217,7 +219,10 @@ export const AuthServiceLive = Layer.effect(
 							.select()
 							.from(sessions)
 							.where(
-								and(eq(sessions.token, token), gt(sessions.expiresAt, new Date())),
+								and(
+									eq(sessions.token, token),
+									gt(sessions.expiresAt, new Date()),
+								),
 							)
 							.then((rows) => rows[0] as Session | undefined),
 					catch: (error) =>

@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Effect, Exit, Layer } from "effect";
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
+import { Effect, Exit, Layer } from "effect";
+import { it } from "@effect/vitest";
+import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	QuestionService,
 	QuestionServiceLive,
@@ -50,30 +51,30 @@ const createTestLayer = (
 		selectResult?: unknown[];
 		insertResult?: unknown;
 		updateResult?: unknown;
-	}
+	},
 ) => {
 	mockDb.orderBy = vi.fn().mockImplementation(() => ({
 		then: (resolve: (rows: unknown[]) => void) =>
 			Promise.resolve(overrides?.selectResult ?? mockDb.questions).then(
-				resolve
+				resolve,
 			),
 	}));
 
 	mockDb.where = vi.fn().mockImplementation(() => ({
 		then: (resolve: (rows: unknown[]) => void) =>
 			Promise.resolve(overrides?.selectResult ?? [mockDb.questions[0]]).then(
-				resolve
+				resolve,
 			),
 		orderBy: vi.fn().mockImplementation(() => ({
 			then: (resolve: (rows: unknown[]) => void) =>
 				Promise.resolve(overrides?.selectResult ?? mockDb.questions).then(
-					resolve
+					resolve,
 				),
 		})),
 		returning: vi.fn().mockImplementation(() => ({
 			then: (resolve: (rows: unknown[]) => void) =>
 				Promise.resolve(
-					overrides?.updateResult ? [overrides.updateResult] : []
+					overrides?.updateResult ? [overrides.updateResult] : [],
 				).then(resolve),
 		})),
 	}));
@@ -81,7 +82,7 @@ const createTestLayer = (
 	mockDb.returning = vi.fn().mockImplementation(() => ({
 		then: (resolve: (rows: unknown[]) => void) =>
 			Promise.resolve(
-				overrides?.insertResult ? [overrides.insertResult] : []
+				overrides?.insertResult ? [overrides.insertResult] : [],
 			).then(resolve),
 	}));
 
@@ -98,58 +99,46 @@ describe("QuestionService", () => {
 	});
 
 	describe("getByQuestionnaireId", () => {
-		it("should return questions for a questionnaire", async () => {
+		it.effect("should return questions for a questionnaire", () => {
 			const testLayer = createTestLayer(mockDb);
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* QuestionService;
-				return yield* service.getByQuestionnaireId("qn1");
-			});
+				const result = yield* service.getByQuestionnaireId("qn1");
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result).toHaveLength(2);
-			expect(result[0].questionText).toBe("Question 1");
+				expect(result).toHaveLength(2);
+				expect(result[0].questionText).toBe("Question 1");
+			}).pipe(Effect.provide(testLayer));
 		});
 
-		it("should return empty array when no questions", async () => {
+		it.effect("should return empty array when no questions", () => {
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* QuestionService;
-				return yield* service.getByQuestionnaireId("non-existent");
-			});
+				const result = yield* service.getByQuestionnaireId("non-existent");
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result).toHaveLength(0);
+				expect(result).toHaveLength(0);
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 
 	describe("getById", () => {
-		it("should return question by id", async () => {
+		it.effect("should return question by id", () => {
 			const testLayer = createTestLayer(mockDb, {
 				selectResult: [mockDb.questions[0]],
 			});
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* QuestionService;
-				return yield* service.getById("q1");
-			});
+				const result = yield* service.getById("q1");
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result.id).toBe("q1");
-			expect(result.questionText).toBe("Question 1");
+				expect(result.id).toBe("q1");
+				expect(result.questionText).toBe("Question 1");
+			}).pipe(Effect.provide(testLayer));
 		});
 
-		it("should fail when question not found", async () => {
+		it.effect("should fail when question not found", () => {
 			mockDb.where = vi.fn().mockImplementation(() => ({
 				then: (resolve: (rows: unknown[]) => void) =>
 					Promise.resolve([]).then(resolve),
@@ -157,26 +146,21 @@ describe("QuestionService", () => {
 
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* QuestionService;
-				return yield* service.getById("non-existent");
-			});
+				const exit = yield* Effect.exit(service.getById("non-existent"));
 
-			const exit = await Effect.runPromiseExit(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(Exit.isFailure(exit)).toBe(true);
+				expect(Exit.isFailure(exit)).toBe(true);
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 
 	describe("create", () => {
-		it("should create a new question", async () => {
+		it.effect("should create a new question", () => {
 			const newQuestion = {
 				id: "new-id",
 				questionnaireId: "qn1",
 				questionText: "New Question",
-				questionType: "single_choice",
 				orderNumber: 3,
 				createdAt: new Date(),
 			};
@@ -185,31 +169,25 @@ describe("QuestionService", () => {
 				insertResult: newQuestion,
 			});
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* QuestionService;
-				return yield* service.create({
+				const result = yield* service.create({
 					questionnaireId: "qn1",
 					questionText: "New Question",
-					questionType: "single_choice",
 					orderNumber: 3,
 				});
-			});
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result.questionText).toBe("New Question");
+				expect(result.questionText).toBe("New Question");
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 
 	describe("update", () => {
-		it("should update an existing question", async () => {
+		it.effect("should update an existing question", () => {
 			const updatedQuestion = {
 				id: "q1",
 				questionnaireId: "qn1",
 				questionText: "Updated Question",
-				questionType: "single_choice",
 				orderNumber: 1,
 				createdAt: new Date(),
 			};
@@ -218,19 +196,17 @@ describe("QuestionService", () => {
 				updateResult: updatedQuestion,
 			});
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* QuestionService;
-				return yield* service.update("q1", { questionText: "Updated Question" });
-			});
+				const result = yield* service.update("q1", {
+					questionText: "Updated Question",
+				});
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(result.questionText).toBe("Updated Question");
+				expect(result.questionText).toBe("Updated Question");
+			}).pipe(Effect.provide(testLayer));
 		});
 
-		it("should fail when updating non-existent question", async () => {
+		it.effect("should fail when updating non-existent question", () => {
 			mockDb.where = vi.fn().mockImplementation(() => ({
 				returning: vi.fn().mockImplementation(() => ({
 					then: (resolve: (rows: unknown[]) => void) =>
@@ -240,33 +216,29 @@ describe("QuestionService", () => {
 
 			const testLayer = createTestLayer(mockDb, { updateResult: undefined });
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* QuestionService;
-				return yield* service.update("non-existent", {
-					questionText: "New Text",
-				});
-			});
+				const exit = yield* Effect.exit(
+					service.update("non-existent", {
+						questionText: "New Text",
+					}),
+				);
 
-			const exit = await Effect.runPromiseExit(
-				program.pipe(Effect.provide(testLayer))
-			);
-
-			expect(Exit.isFailure(exit)).toBe(true);
+				expect(Exit.isFailure(exit)).toBe(true);
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 
 	describe("delete", () => {
-		it("should delete questions", async () => {
+		it.effect("should delete questions", () => {
 			const testLayer = createTestLayer(mockDb);
 
-			const program = Effect.gen(function* () {
+			return Effect.gen(function* () {
 				const service = yield* QuestionService;
-				return yield* service.delete(["q1", "q2"]);
-			});
+				yield* service.delete(["q1", "q2"]);
 
-			await Effect.runPromise(program.pipe(Effect.provide(testLayer)));
-
-			expect(mockDb.delete).toHaveBeenCalled();
+				expect(mockDb.delete).toHaveBeenCalled();
+			}).pipe(Effect.provide(testLayer));
 		});
 	});
 });

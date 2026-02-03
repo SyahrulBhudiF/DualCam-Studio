@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Effect, Layer } from "effect";
-import { FileSystem } from "@effect/platform";
-import { NodeFileSystem } from "@effect/platform-node";
+import { Effect } from "effect";
+import { it } from "@effect/vitest";
+import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	FileUploadService,
 	FileUploadServiceLive,
@@ -13,23 +12,19 @@ describe("FileUploadService", () => {
 	});
 
 	describe("getUploadRoot", () => {
-		it("should return the upload root path", async () => {
-			const program = Effect.gen(function* () {
+		it.effect("should return the upload root path", () =>
+			Effect.gen(function* () {
 				const service = yield* FileUploadService;
-				return yield* service.getUploadRoot;
-			});
+				const result = yield* service.getUploadRoot;
 
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(FileUploadServiceLive))
-			);
-
-			expect(result).toBeDefined();
-			expect(result).toContain("video_uploads");
-		});
+				expect(result).toBeDefined();
+				expect(result).toContain("video_uploads");
+			}).pipe(Effect.provide(FileUploadServiceLive)),
+		);
 	});
 
 	describe("uploadChunk", () => {
-		it("should return correct path format for uploaded file", async () => {
+		it("should return correct path format for uploaded file", () => {
 			// Test the path generation logic without actually writing files
 			const folderName = "user123";
 			const fileName = "video.mp4";
@@ -38,7 +33,7 @@ describe("FileUploadService", () => {
 			expect(expectedPath).toBe("/video_uploads/user123/video.mp4");
 		});
 
-		it("should handle nested file paths", async () => {
+		it("should handle nested file paths", () => {
 			const folderName = "user123";
 			const fileName = "subfolder/video.mp4";
 			const expectedPath = `/video_uploads/${folderName}/${fileName}`;
@@ -73,8 +68,8 @@ describe("FileUploadService", () => {
 	});
 
 	describe("service structure", () => {
-		it("should have required methods", async () => {
-			const program = Effect.gen(function* () {
+		it.effect("should have required methods", () =>
+			Effect.gen(function* () {
 				const service = yield* FileUploadService;
 				return {
 					hasEnsureDirectory: typeof service.ensureDirectory === "function",
@@ -82,16 +77,15 @@ describe("FileUploadService", () => {
 					hasUploadChunk: typeof service.uploadChunk === "function",
 					hasGetUploadRoot: Effect.isEffect(service.getUploadRoot),
 				};
-			});
-
-			const result = await Effect.runPromise(
-				program.pipe(Effect.provide(FileUploadServiceLive))
-			);
-
-			expect(result.hasEnsureDirectory).toBe(true);
-			expect(result.hasSaveFile).toBe(true);
-			expect(result.hasUploadChunk).toBe(true);
-			expect(result.hasGetUploadRoot).toBe(true);
-		});
+			}).pipe(
+				Effect.map((result) => {
+					expect(result.hasEnsureDirectory).toBe(true);
+					expect(result.hasSaveFile).toBe(true);
+					expect(result.hasUploadChunk).toBe(true);
+					expect(result.hasGetUploadRoot).toBe(true);
+				}),
+				Effect.provide(FileUploadServiceLive),
+			),
+		);
 	});
 });

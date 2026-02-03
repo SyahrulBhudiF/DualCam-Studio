@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Effect } from "effect";
+import { it } from "@effect/vitest";
+import { describe, expect, vi, beforeEach } from "vitest";
 
 // Mock the tanstack server functions
 vi.mock("@tanstack/react-start/server", () => ({
@@ -81,7 +82,7 @@ describe("Session Utilities", () => {
 
 			const result = extractErrorMessage(
 				new Error("Some error"),
-				"Default message"
+				"Default message",
 			);
 
 			expect(result).toBe("Default message");
@@ -128,7 +129,7 @@ describe("Session Config", () => {
 			"test-token",
 			expect.objectContaining({
 				maxAge: 14 * 24 * 60 * 60,
-			})
+			}),
 		);
 	});
 });

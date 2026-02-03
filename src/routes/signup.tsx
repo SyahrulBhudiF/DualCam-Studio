@@ -1,8 +1,8 @@
+import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { signupFn } from "@/apis/user";
 import { Auth } from "@/components/Auth";
 import { getValidationErrorMessage } from "@/utils/utils";
-import { useMutation } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/signup")({
 	component: SignupComp,

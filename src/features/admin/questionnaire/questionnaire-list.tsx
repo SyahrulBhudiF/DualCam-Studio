@@ -42,7 +42,10 @@ import type { Questionnaire } from "./questionnaires.types";
 export function QuestionnaireList({
 	data,
 	isLoading = false,
-}: { data?: Questionnaire[]; isLoading?: boolean }) {
+}: {
+	data?: Questionnaire[];
+	isLoading?: boolean;
+}) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
 	const [globalFilter, setGlobalFilter] = useState<string>("");

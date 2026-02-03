@@ -1,5 +1,5 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { count, eq } from "drizzle-orm";
+import { avg, count, countDistinct, eq, sql, sum } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
 import {
 	answers,
@@ -84,319 +84,291 @@ export const DashboardServiceLive = Layer.effect(
 	Effect.gen(function* () {
 		const db = yield* PgDrizzle;
 
-		const getSummary: IDashboardService["getSummary"] = Effect.gen(function* () {
-			const [totalQ, activeQ, allResponses, allProfiles] = yield* Effect.all([
-				Effect.tryPromise({
-					try: () =>
-						db
-							.select({ count: count() })
-							.from(questionnaires)
-							.then((r) => r[0]?.count ?? 0),
-					catch: (e) =>
-						new DatabaseError({
-							message: "Failed to count questionnaires",
-							cause: e,
-						}),
-				}),
-				Effect.tryPromise({
-					try: () =>
-						db
-							.select({ count: count() })
-							.from(questionnaires)
-							.where(eq(questionnaires.isActive, true))
-							.then((r) => r[0]?.count ?? 0),
-					catch: (e) =>
-						new DatabaseError({
-							message: "Failed to count active questionnaires",
-							cause: e,
-						}),
-				}),
-				Effect.tryPromise({
-					try: () => db.select().from(responses),
-					catch: (e) =>
-						new DatabaseError({
-							message: "Failed to fetch responses",
-							cause: e,
-						}),
-				}),
-				Effect.tryPromise({
-					try: () => db.select().from(profiles),
-					catch: (e) =>
-						new DatabaseError({
-							message: "Failed to fetch profiles",
-							cause: e,
-						}),
-				}),
-			]);
+		const getSummary: IDashboardService["getSummary"] = Effect.gen(
+			function* () {
+				const [totalQ, activeQ, responseStats, classCount] = yield* Effect.all([
+					// Count total questionnaires
+					Effect.tryPromise({
+						try: () =>
+							db
+								.select({ count: count() })
+								.from(questionnaires)
+								.then((r) => r[0]?.count ?? 0),
+						catch: (e) =>
+							new DatabaseError({
+								message: "Failed to count questionnaires",
+								cause: e,
+							}),
+					}),
+					// Count active questionnaires
+					Effect.tryPromise({
+						try: () =>
+							db
+								.select({ count: count() })
+								.from(questionnaires)
+								.where(eq(questionnaires.isActive, true))
+								.then((r) => r[0]?.count ?? 0),
+						catch: (e) =>
+							new DatabaseError({
+								message: "Failed to count active questionnaires",
+								cause: e,
+							}),
+					}),
+					// Get response count and average score using SQL aggregation
+					Effect.tryPromise({
+						try: () =>
+							db
+								.select({
+									totalResponses: count(),
+									avgScore: avg(responses.totalScore),
+								})
+								.from(responses)
+								.then((r) => ({
+									totalResponses: r[0]?.totalResponses ?? 0,
+									avgScore: Number(r[0]?.avgScore) || 0,
+								})),
+						catch: (e) =>
+							new DatabaseError({
+								message: "Failed to fetch response stats",
+								cause: e,
+							}),
+					}),
+					// Count unique classes using SQL
+					Effect.tryPromise({
+						try: () =>
+							db
+								.select({ count: countDistinct(profiles.class) })
+								.from(profiles)
+								.then((r) => r[0]?.count ?? 0),
+						catch: (e) =>
+							new DatabaseError({
+								message: "Failed to count classes",
+								cause: e,
+							}),
+					}),
+				]);
 
-			const totalScore = allResponses.reduce(
-				(acc, r) => acc + (r.totalScore ?? 0),
-				0,
-			);
-			const avgScore =
-				allResponses.length > 0 ? totalScore / allResponses.length : 0;
-
-			const uniqueClasses = new Set(
-				allProfiles.map((p) => p.class).filter((c): c is string => !!c),
-			);
-
-			return {
-				totalQuestionnaires: totalQ,
-				activeQuestionnaires: activeQ,
-				totalResponses: allResponses.length,
-				averageScore: avgScore,
-				totalClasses: uniqueClasses.size,
-			};
-		});
+				return {
+					totalQuestionnaires: totalQ,
+					activeQuestionnaires: activeQ,
+					totalResponses: responseStats.totalResponses,
+					averageScore: responseStats.avgScore,
+					totalClasses: classCount,
+				};
+			},
+		);
 
 		const getBreakdown: IDashboardService["getBreakdown"] = Effect.gen(
 			function* () {
-				const [allResponses, allQuestionnaires, allProfiles] =
-					yield* Effect.all([
-						Effect.tryPromise({
-							try: () => db.select().from(responses),
-							catch: (e) =>
-								new DatabaseError({
-									message: "Failed to fetch responses",
-									cause: e,
-								}),
-						}),
-						Effect.tryPromise({
-							try: () => db.select().from(questionnaires),
-							catch: (e) =>
-								new DatabaseError({
-									message: "Failed to fetch questionnaires",
-									cause: e,
-								}),
-						}),
-						Effect.tryPromise({
-							try: () => db.select().from(profiles),
-							catch: (e) =>
-								new DatabaseError({
-									message: "Failed to fetch profiles",
-									cause: e,
-								}),
-						}),
-					]);
-
-				// Questionnaire stats
-				const qMap = new Map<
-					string,
-					{
-						id: string;
-						title: string;
-						totalResponses: number;
-						totalScore: number;
-					}
-				>();
-				for (const q of allQuestionnaires) {
-					qMap.set(q.id, {
-						id: q.id,
-						title: q.title,
-						totalResponses: 0,
-						totalScore: 0,
-					});
-				}
-				for (const r of allResponses) {
-					const q = qMap.get(r.questionnaireId);
-					if (q) {
-						q.totalResponses++;
-						q.totalScore += r.totalScore ?? 0;
-					}
-				}
-				const questionnaireStats: QuestionnaireStats[] = Array.from(
-					qMap.values(),
-				).map((q) => ({
-					id: q.id,
-					title: q.title,
-					totalResponses: q.totalResponses,
-					averageScore:
-						q.totalResponses > 0 ? q.totalScore / q.totalResponses : 0,
-				}));
-
-				// Class stats
-				const profileMap = new Map<string, string>();
-				for (const p of allProfiles) {
-					if (p.class) profileMap.set(p.id, p.class);
-				}
-
-				const classMap = new Map<
-					string,
-					{ className: string; totalResponses: number; totalScore: number }
-				>();
-				for (const r of allResponses) {
-					const cls = profileMap.get(r.userId);
-					if (cls) {
-						if (!classMap.has(cls)) {
-							classMap.set(cls, {
-								className: cls,
-								totalResponses: 0,
-								totalScore: 0,
-							});
-						}
-						const c = classMap.get(cls)!;
-						c.totalResponses++;
-						c.totalScore += r.totalScore ?? 0;
-					}
-				}
-				const classStats: ClassStats[] = Array.from(classMap.values()).map(
-					(c) => ({
-						className: c.className,
-						totalResponses: c.totalResponses,
-						averageScore:
-							c.totalResponses > 0 ? c.totalScore / c.totalResponses : 0,
+				const [questionnaireStats, classStats] = yield* Effect.all([
+					// Questionnaire stats using SQL GROUP BY
+					Effect.tryPromise({
+						try: () =>
+							db
+								.select({
+									id: questionnaires.id,
+									title: questionnaires.title,
+									totalResponses: count(responses.id),
+									totalScore: sum(responses.totalScore),
+								})
+								.from(questionnaires)
+								.leftJoin(
+									responses,
+									eq(questionnaires.id, responses.questionnaireId),
+								)
+								.groupBy(questionnaires.id, questionnaires.title)
+								.then((rows) =>
+									rows.map((r) => ({
+										id: r.id,
+										title: r.title,
+										totalResponses: r.totalResponses,
+										averageScore:
+											r.totalResponses > 0
+												? Number(r.totalScore) / r.totalResponses
+												: 0,
+									})),
+								),
+						catch: (e) =>
+							new DatabaseError({
+								message: "Failed to fetch questionnaire stats",
+								cause: e,
+							}),
 					}),
-				);
+					// Class stats using SQL GROUP BY with JOIN
+					Effect.tryPromise({
+						try: () =>
+							db
+								.select({
+									className: profiles.class,
+									totalResponses: count(responses.id),
+									totalScore: sum(responses.totalScore),
+								})
+								.from(responses)
+								.innerJoin(profiles, eq(responses.userId, profiles.id))
+								.groupBy(profiles.class)
+								.then((rows) =>
+									rows
+										.filter((r) => r.className !== null)
+										.map((r) => ({
+											className: r.className as string,
+											totalResponses: r.totalResponses,
+											averageScore:
+												r.totalResponses > 0
+													? Number(r.totalScore) / r.totalResponses
+													: 0,
+										})),
+								),
+						catch: (e) =>
+							new DatabaseError({
+								message: "Failed to fetch class stats",
+								cause: e,
+							}),
+					}),
+				]);
 
-				return { questionnaires: questionnaireStats, classes: classStats };
+				return {
+					questionnaires: questionnaireStats,
+					classes: classStats,
+				};
 			},
 		);
 
 		const getAnalyticsDetails: IDashboardService["getAnalyticsDetails"] =
 			Effect.gen(function* () {
-				const [allDetails, allQuestions, allAnswers, allResponses] =
+				const [questionStats, answerStats, timeline, videoStats] =
 					yield* Effect.all([
+						// Question stats using SQL GROUP BY
 						Effect.tryPromise({
-							try: () => db.select().from(responseDetails),
+							try: () =>
+								db
+									.select({
+										id: questions.id,
+										text: questions.questionText,
+										order: questions.orderNumber,
+										totalResponses: count(responseDetails.id),
+										totalScore: sum(responseDetails.score),
+									})
+									.from(questions)
+									.leftJoin(
+										responseDetails,
+										eq(questions.id, responseDetails.questionId),
+									)
+									.groupBy(
+										questions.id,
+										questions.questionText,
+										questions.orderNumber,
+									)
+									.then((rows) =>
+										rows.map((r) => ({
+											id: r.id,
+											text: r.text,
+											order: r.order,
+											averageScore:
+												r.totalResponses > 0
+													? Number(r.totalScore) / r.totalResponses
+													: 0,
+										})),
+									),
 							catch: (e) =>
 								new DatabaseError({
-									message: "Failed to fetch response details",
+									message: "Failed to fetch question stats",
 									cause: e,
 								}),
 						}),
+						// Answer stats using SQL GROUP BY
 						Effect.tryPromise({
-							try: () => db.select().from(questions),
+							try: () =>
+								db
+									.select({
+										id: answers.id,
+										text: answers.answerText,
+										questionId: answers.questionId,
+										totalResponses: count(responseDetails.id),
+										totalScore: sum(responseDetails.score),
+									})
+									.from(answers)
+									.leftJoin(
+										responseDetails,
+										eq(answers.id, responseDetails.answerId),
+									)
+									.groupBy(answers.id, answers.answerText, answers.questionId)
+									.then((rows) =>
+										rows.map((r) => ({
+											id: r.id,
+											text: r.text,
+											questionId: r.questionId,
+											totalResponses: r.totalResponses,
+											averageScore:
+												r.totalResponses > 0
+													? Number(r.totalScore) / r.totalResponses
+													: 0,
+										})),
+									),
 							catch: (e) =>
 								new DatabaseError({
-									message: "Failed to fetch questions",
+									message: "Failed to fetch answer stats",
 									cause: e,
 								}),
 						}),
+						// Timeline using SQL GROUP BY with date truncation
 						Effect.tryPromise({
-							try: () => db.select().from(answers),
+							try: () =>
+								db
+									.select({
+										date: sql<Date | string>`DATE(${responses.createdAt})`.as(
+											"date",
+										),
+										totalResponses: count(),
+										totalScore: sum(responses.totalScore),
+									})
+									.from(responses)
+									.groupBy(sql`DATE(${responses.createdAt})`)
+									.orderBy(sql`DATE(${responses.createdAt})`)
+									.then((rows) =>
+										rows.map((r) => ({
+											date:
+												r.date instanceof Date
+													? r.date.toISOString().split("T")[0]
+													: String(r.date),
+											totalResponses: r.totalResponses,
+											averageScore:
+												r.totalResponses > 0
+													? Number(r.totalScore) / r.totalResponses
+													: 0,
+										})),
+									),
 							catch: (e) =>
 								new DatabaseError({
-									message: "Failed to fetch answers",
+									message: "Failed to fetch timeline",
 									cause: e,
 								}),
 						}),
+						// Video stats using SQL
 						Effect.tryPromise({
-							try: () => db.select().from(responses),
+							try: () =>
+								db
+									.select({
+										total: count(),
+										withVideo: count(responses.videoPath),
+									})
+									.from(responses)
+									.then((r) => ({
+										total: r[0]?.total ?? 0,
+										withVideo: r[0]?.withVideo ?? 0,
+									})),
 							catch: (e) =>
 								new DatabaseError({
-									message: "Failed to fetch responses",
+									message: "Failed to fetch video stats",
 									cause: e,
 								}),
 						}),
 					]);
 
-				// Question stats
-				const questionMap = new Map<
-					string,
-					{
-						id: string;
-						text: string;
-						order: number | null;
-						totalScore: number;
-						count: number;
-					}
-				>();
-				for (const q of allQuestions) {
-					questionMap.set(q.id, {
-						id: q.id,
-						text: q.questionText,
-						order: q.orderNumber,
-						totalScore: 0,
-						count: 0,
-					});
-				}
-				for (const d of allDetails) {
-					const q = questionMap.get(d.questionId);
-					if (q) {
-						q.totalScore += d.score ?? 0;
-						q.count++;
-					}
-				}
-				const questionStats: QuestionStats[] = Array.from(
-					questionMap.values(),
-				).map((q) => ({
-					id: q.id,
-					text: q.text,
-					order: q.order,
-					averageScore: q.count > 0 ? q.totalScore / q.count : 0,
-				}));
-
-				// Answer stats
-				const answerMap = new Map<
-					string,
-					{
-						id: string;
-						text: string;
-						questionId: string;
-						totalScore: number;
-						count: number;
-					}
-				>();
-				for (const a of allAnswers) {
-					answerMap.set(a.id, {
-						id: a.id,
-						text: a.answerText,
-						questionId: a.questionId,
-						totalScore: 0,
-						count: 0,
-					});
-				}
-				for (const d of allDetails) {
-					const a = answerMap.get(d.answerId);
-					if (a) {
-						a.totalScore += d.score ?? 0;
-						a.count++;
-					}
-				}
-				const answerStats: AnswerStats[] = Array.from(answerMap.values()).map(
-					(a) => ({
-						id: a.id,
-						text: a.text,
-						questionId: a.questionId,
-						totalResponses: a.count,
-						averageScore: a.count > 0 ? a.totalScore / a.count : 0,
-					}),
-				);
-
-				// Timeline
-				const timelineMap = new Map<
-					string,
-					{ date: string; totalResponses: number; totalScore: number }
-				>();
-				for (const r of allResponses) {
-					const date = r.createdAt.toISOString().slice(0, 10);
-					if (!timelineMap.has(date)) {
-						timelineMap.set(date, { date, totalResponses: 0, totalScore: 0 });
-					}
-					const t = timelineMap.get(date)!;
-					t.totalResponses++;
-					t.totalScore += r.totalScore ?? 0;
-				}
-				const timeline: TimelineEntry[] = Array.from(timelineMap.values())
-					.sort((a, b) => a.date.localeCompare(b.date))
-					.map((t) => ({
-						date: t.date,
-						totalResponses: t.totalResponses,
-						averageScore:
-							t.totalResponses > 0 ? t.totalScore / t.totalResponses : 0,
-					}));
-
-				// Video stats
-				const withVideo = allResponses.filter((r) => r.videoPath).length;
-
 				return {
 					questions: questionStats,
 					answers: answerStats,
 					timeline,
-					video: {
-						withVideo,
-						total: allResponses.length,
-					},
+					video: videoStats,
 				};
 			});
 

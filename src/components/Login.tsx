@@ -47,7 +47,7 @@ export function Login() {
 					{displayError && <div className="text-red-400">{displayError}</div>}
 
 					{(handlerError === "Invalid login credentials" ||
-					handlerError === "Invalid credentials") && (
+						handlerError === "Invalid credentials") && (
 						<div>
 							<button
 								className="text-blue-500"
