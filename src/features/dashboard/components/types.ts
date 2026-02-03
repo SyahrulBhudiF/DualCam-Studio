@@ -20,4 +20,5 @@ export interface DashboardProps {
 	summary: SummaryData;
 	breakdown: BreakdownData;
 	analytics: AnalyticsData;
+	isLoading?: boolean;
 }

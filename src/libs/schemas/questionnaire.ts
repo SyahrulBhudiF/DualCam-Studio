@@ -50,7 +50,7 @@ export type uploadChunk = z.infer<typeof uploadChunkSchema>;
 export const createQuestionnaireSchema = z.object({
 	title: z.string().min(1, "Title is required"),
 	description: z.string().optional().nullable(),
-	is_active: z.boolean().default(false),
+	isActive: z.boolean().default(false),
 });
 
 export const updateQuestionnaireSchema = createQuestionnaireSchema
@@ -60,26 +60,26 @@ export const updateQuestionnaireSchema = createQuestionnaireSchema
 	});
 
 export const createQuestionSchema = z.object({
-	questionnaire_id: z.uuid(),
-	question_text: z.string().min(1, "Question text is required"),
-	order_number: z.coerce.number().int().default(0),
+	questionnaireId: z.uuid(),
+	questionText: z.string().min(1, "Question text is required"),
+	orderNumber: z.coerce.number().int().default(0),
 });
 
 export const updateQuestionSchema = createQuestionSchema
-	.omit({ questionnaire_id: true })
+	.omit({ questionnaireId: true })
 	.partial()
 	.extend({
 		id: z.uuid(),
 	});
 
 export const createAnswerSchema = z.object({
-	question_id: z.uuid(),
-	answer_text: z.string().min(1, "Answer text is required"),
+	questionId: z.uuid(),
+	answerText: z.string().min(1, "Answer text is required"),
 	score: z.coerce.number().int().default(0),
 });
 
 export const updateAnswerSchema = createAnswerSchema
-	.omit({ question_id: true })
+	.omit({ questionId: true })
 	.partial()
 	.extend({
 		id: z.uuid(),

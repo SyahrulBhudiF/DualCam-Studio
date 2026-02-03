@@ -1,183 +1,245 @@
+import { Schema } from "@effect/schema";
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
+import { Effect } from "effect";
 import {
-	bulkDeleteSchema,
-	createAnswerSchema,
-	createQuestionnaireSchema,
-	createQuestionSchema,
-	updateAnswerSchema,
-	updateQuestionnaireSchema,
-	updateQuestionSchema,
-} from "@/libs/schemas/questionnaire";
-import { getSupabaseServerClient } from "@/utils/supabase";
+	AnswerService,
+	QuestionnaireService,
+	QuestionService,
+	runEffect,
+} from "@/infrastructure";
+import {
+	BulkDeleteSchema,
+	CreateAnswerSchema,
+	CreateQuestionnaireSchema,
+	CreateQuestionSchema,
+	UpdateAnswerSchema,
+	UpdateQuestionnaireSchema,
+	UpdateQuestionSchema,
+	UUID,
+} from "@/infrastructure/schemas/questionnaire";
 
+// Questionnaire APIs
 export const getQuestionnaires = createServerFn({ method: "GET" }).handler(
 	async () => {
-		const supabase = getSupabaseServerClient();
-		const { data, error } = await supabase
-			.from("questionnaires")
-			.select("*")
-			.order("created_at", { ascending: false });
-		if (error) throw new Error(error.message);
-		return data;
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* QuestionnaireService;
+				const results = yield* service.getAll;
+				return results.map((q) => ({
+					...q,
+					createdAt: q.createdAt.toISOString(),
+				}));
+			}),
+		);
 	},
 );
 
 export const getQuestionnaireById = createServerFn({ method: "GET" })
-	.inputValidator((id: string) => z.uuid().parse(id))
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: id }) => {
-		const supabase = getSupabaseServerClient();
-		const { data, error } = await supabase
-			.from("questionnaires")
-			.select("*")
-			.eq("id", id)
-			.single();
-		if (error) throw new Error(error.message);
-		return data;
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* QuestionnaireService;
+				const q = yield* service.getById(id);
+				return {
+					...q,
+					createdAt: q.createdAt.toISOString(),
+				};
+			}),
+		);
 	});
 
 export const createQuestionnaire = createServerFn({ method: "POST" })
-	.inputValidator((input) => createQuestionnaireSchema.parse(input))
+	.inputValidator(Schema.decodeUnknownSync(CreateQuestionnaireSchema))
 	.handler(async ({ data }) => {
-		const supabase = getSupabaseServerClient();
-		if (data.is_active) {
-			await supabase
-				.from("questionnaires")
-				.update({ is_active: false })
-				.neq("id", "00000000-0000-0000-0000-000000000000");
-		}
-		const { error } = await supabase.from("questionnaires").insert(data);
-		if (error) throw new Error(error.message);
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* QuestionnaireService;
+
+				return yield* service.create({
+					title: data.title,
+					description: data.description ?? null,
+					isActive: data.isActive ?? false,
+				});
+			}),
+		);
 	});
 
 export const updateQuestionnaire = createServerFn({ method: "POST" })
-	.inputValidator((input) => updateQuestionnaireSchema.parse(input))
+	.inputValidator(Schema.decodeUnknownSync(UpdateQuestionnaireSchema))
 	.handler(async ({ data }) => {
-		const supabase = getSupabaseServerClient();
 		const { id, ...updates } = data;
-		if (updates.is_active) {
-			await supabase
-				.from("questionnaires")
-				.update({ is_active: false })
-				.neq("id", id);
-		}
-		const { error } = await supabase
-			.from("questionnaires")
-			.update(updates)
-			.eq("id", id);
-		if (error) throw new Error(error.message);
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* QuestionnaireService;
+
+				return yield* service.update(id, {
+					title: updates.title,
+					description: updates.description,
+					isActive: updates.isActive,
+				});
+			}),
+		);
 	});
 
 export const deleteQuestionnaires = createServerFn({ method: "POST" })
-	.inputValidator((input) => bulkDeleteSchema.parse(input))
+	.inputValidator(Schema.decodeUnknownSync(BulkDeleteSchema))
 	.handler(async ({ data }) => {
-		const supabase = getSupabaseServerClient();
-		const { error } = await supabase
-			.from("questionnaires")
-			.delete()
-			.in("id", data.ids);
-		if (error) throw new Error(error.message);
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* QuestionnaireService;
+
+				return yield* service.delete(data.ids);
+			}),
+		);
 	});
 
+export const setQuestionnaireActive = createServerFn({ method: "POST" })
+	.inputValidator(Schema.decodeUnknownSync(UUID))
+	.handler(async ({ data: id }) => {
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* QuestionnaireService;
+
+				return yield* service.setActive(id);
+			}),
+		);
+	});
+
+// Question APIs
 export const getQuestionsByQuestionnaireId = createServerFn({ method: "GET" })
-	.inputValidator((questionnaireId: string) =>
-		z.string().uuid().parse(questionnaireId),
-	)
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: questionnaireId }) => {
-		const supabase = getSupabaseServerClient();
-		const { data, error } = await supabase
-			.from("questions")
-			.select("*")
-			.eq("questionnaire_id", questionnaireId)
-			.order("order_number", { ascending: true });
-		if (error) throw new Error(error.message);
-		return data;
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* QuestionService;
+				const results = yield* service.getByQuestionnaireId(questionnaireId);
+
+				return results.map((q) => ({
+					...q,
+					createdAt: new Date().toISOString(),
+				}));
+			}),
+		);
 	});
 
 export const getQuestionById = createServerFn({ method: "GET" })
-	.inputValidator((id: string) => z.uuid().parse(id))
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: id }) => {
-		const supabase = getSupabaseServerClient();
-		const { data, error } = await supabase
-			.from("questions")
-			.select("*")
-			.eq("id", id)
-			.single();
-		if (error) throw new Error(error.message);
-		return data;
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* QuestionService;
+				const q = yield* service.getById(id);
+
+				return {
+					...q,
+					createdAt: new Date().toISOString(),
+				};
+			}),
+		);
 	});
 
 export const createQuestion = createServerFn({ method: "POST" })
-	.inputValidator((input) => createQuestionSchema.parse(input))
+	.inputValidator(Schema.decodeUnknownSync(CreateQuestionSchema))
 	.handler(async ({ data }) => {
-		const supabase = getSupabaseServerClient();
-		const { error } = await supabase.from("questions").insert(data);
-		if (error) throw new Error(error.message);
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* QuestionService;
+
+				return yield* service.create({
+					questionnaireId: data.questionnaireId,
+					questionText: data.questionText,
+					orderNumber: data.orderNumber,
+				});
+			}),
+		);
 	});
 
 export const updateQuestion = createServerFn({ method: "POST" })
-	.inputValidator((input) => updateQuestionSchema.parse(input))
+	.inputValidator(Schema.decodeUnknownSync(UpdateQuestionSchema))
 	.handler(async ({ data }) => {
-		const supabase = getSupabaseServerClient();
 		const { id, ...updates } = data;
-		const { error } = await supabase
-			.from("questions")
-			.update(updates)
-			.eq("id", id);
-		if (error) throw new Error(error.message);
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* QuestionService;
+
+				return yield* service.update(id, {
+					questionText: updates.questionText,
+					orderNumber: updates.orderNumber,
+				});
+			}),
+		);
 	});
 
 export const deleteQuestions = createServerFn({ method: "POST" })
-	.inputValidator((input) => bulkDeleteSchema.parse(input))
+	.inputValidator(Schema.decodeUnknownSync(BulkDeleteSchema))
 	.handler(async ({ data }) => {
-		const supabase = getSupabaseServerClient();
-		const { error } = await supabase
-			.from("questions")
-			.delete()
-			.in("id", data.ids);
-		if (error) throw new Error(error.message);
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* QuestionService;
+
+				return yield* service.delete(data.ids);
+			}),
+		);
 	});
 
+// Answer APIs
 export const getAnswersByQuestionId = createServerFn({ method: "GET" })
-	.inputValidator((questionId: string) => z.uuid().parse(questionId))
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: questionId }) => {
-		const supabase = getSupabaseServerClient();
-		const { data, error } = await supabase
-			.from("answers")
-			.select("*")
-			.eq("question_id", questionId)
-			.order("score", { ascending: false });
-		if (error) throw new Error(error.message);
-		return data;
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* AnswerService;
+				const results = yield* service.getByQuestionId(questionId);
+
+				return results.map((a) => ({
+					...a,
+					createdAt: new Date().toISOString(),
+				}));
+			}),
+		);
 	});
 
 export const createAnswer = createServerFn({ method: "POST" })
-	.inputValidator((input) => createAnswerSchema.parse(input))
+	.inputValidator(Schema.decodeUnknownSync(CreateAnswerSchema))
 	.handler(async ({ data }) => {
-		const supabase = getSupabaseServerClient();
-		const { error } = await supabase.from("answers").insert(data);
-		if (error) throw new Error(error.message);
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* AnswerService;
+
+				return yield* service.create({
+					questionId: data.questionId,
+					answerText: data.answerText,
+					score: data.score,
+				});
+			}),
+		);
 	});
 
 export const updateAnswer = createServerFn({ method: "POST" })
-	.inputValidator((input) => updateAnswerSchema.parse(input))
+	.inputValidator(Schema.decodeUnknownSync(UpdateAnswerSchema))
 	.handler(async ({ data }) => {
-		const supabase = getSupabaseServerClient();
 		const { id, ...updates } = data;
-		const { error } = await supabase
-			.from("answers")
-			.update(updates)
-			.eq("id", id);
-		if (error) throw new Error(error.message);
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* AnswerService;
+
+				return yield* service.update(id, {
+					answerText: updates.answerText,
+					score: updates.score,
+				});
+			}),
+		);
 	});
 
 export const deleteAnswers = createServerFn({ method: "POST" })
-	.inputValidator((input) => bulkDeleteSchema.parse(input))
+	.inputValidator(Schema.decodeUnknownSync(BulkDeleteSchema))
 	.handler(async ({ data }) => {
-		const supabase = getSupabaseServerClient();
-		const { error } = await supabase
-			.from("answers")
-			.delete()
-			.in("id", data.ids);
-		if (error) throw new Error(error.message);
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* AnswerService;
+
+				return yield* service.delete(data.ids);
+			}),
+		);
 	});

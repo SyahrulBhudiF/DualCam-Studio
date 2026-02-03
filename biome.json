@@ -46,12 +46,12 @@
 		"rules": {
 			"recommended": true,
 			"correctness": {
-				"useExhaustiveDependencies": {
-					"level": "off"
-				}
+				"useExhaustiveDependencies": "off",
+				"noUnusedFunctionParameters": "off"
 			},
 			"suspicious": {
-				"useIterableCallbackReturn": "off"
+				"useIterableCallbackReturn": "off",
+				"noThenProperty": "off"
 			}
 		}
 	},

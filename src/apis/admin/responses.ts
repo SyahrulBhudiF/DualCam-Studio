@@ -1,513 +1,249 @@
+import { Schema } from "@effect/schema";
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
-import { getSupabaseServerClient } from "@/utils/supabase";
+import { Effect } from "effect";
+import {
+	ProfileService,
+	QuestionnaireService,
+	ResponseService,
+	runEffect,
+} from "@/infrastructure";
+import {
+	BulkDeleteSchema,
+	ResponseFilterSchema,
+	UUID,
+} from "@/infrastructure/schemas/questionnaire";
 
 export const getResponses = createServerFn({ method: "GET" }).handler(
 	async () => {
-		const supabase = getSupabaseServerClient();
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* ResponseService;
+				const responses = yield* service.getAll;
 
-		const { data, error } = await supabase
-			.from("responses")
-			.select(
-				`
-        id,
-        total_score,
-        video_path,
-        created_at,
-        questionnaire_id,
-        questionnaires (
-          id,
-          title
-        ),
-        profiles!inner (
-          id,
-          name,
-          class,
-          email,
-          nim,
-          semester,
-          gender,
-          age
-        )
-      `,
-			)
-			.order("created_at", { ascending: false });
-
-		if (error) throw new Error(error.message);
-
-		return data.map((r) => {
-			const questionnaire = Array.isArray(r.questionnaires)
-				? r.questionnaires[0]
-				: r.questionnaires;
-			const profile = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
-
-			return {
-				id: r.id,
-				totalScore: r.total_score,
-				videoPath: r.video_path,
-				createdAt: r.created_at,
-				questionnaireId: r.questionnaire_id,
-				questionnaireTitle: questionnaire?.title ?? null,
-				profile: profile
-					? {
-							id: profile.id,
-							name: profile.name,
-							class: profile.class,
-							email: profile.email,
-							nim: profile.nim,
-							semester: profile.semester,
-							gender: profile.gender,
-							age: profile.age,
-						}
-					: null,
-			};
-		});
+				return responses.map((r) => ({
+					id: r.id,
+					totalScore: r.totalScore,
+					videoPath: r.videoPath,
+					createdAt: r.createdAt.toISOString(),
+					questionnaireId: r.questionnaireId,
+					questionnaireTitle: r.questionnaire?.title ?? null,
+					profile: r.profile
+						? {
+								id: r.profile.id,
+								name: r.profile.name,
+								class: r.profile.class,
+								email: r.profile.email,
+								nim: r.profile.nim,
+								semester: r.profile.semester,
+								gender: r.profile.gender,
+								age: r.profile.age,
+							}
+						: null,
+				}));
+			}),
+		);
 	},
 );
 
 export const getResponseById = createServerFn({ method: "GET" })
-	.inputValidator((id: string) => z.uuid().parse(id))
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: id }) => {
-		const supabase = getSupabaseServerClient();
-
-		const { data: response, error: responseError } = await supabase
-			.from("responses")
-			.select(
-				`
-        id,
-        total_score,
-        video_path,
-        created_at,
-        questionnaire_id,
-        questionnaires (
-          id,
-          title,
-          description
-        ),
-        profiles!inner (
-          id,
-          name,
-          class,
-          email,
-          nim,
-          semester,
-          gender,
-          age
-        )
-      `,
-			)
-			.eq("id", id)
-			.single();
-
-		if (responseError) throw new Error(responseError.message);
-
-		const { data: details, error: detailsError } = await supabase
-			.from("response_details")
-			.select(
-				`
-        id,
-        question_id,
-        answer_id,
-        score,
-        video_segment_path,
-        questions (
-          id,
-          question_text,
-          order_number
-        ),
-        answers (
-          id,
-          answer_text,
-          score
-        )
-      `,
-			)
-			.eq("response_id", id)
-			.order("question_id", { ascending: true });
-
-		if (detailsError) throw new Error(detailsError.message);
-
-		const questionnaire = Array.isArray(response.questionnaires)
-			? response.questionnaires[0]
-			: response.questionnaires;
-		const profile = Array.isArray(response.profiles)
-			? response.profiles[0]
-			: response.profiles;
-
-		return {
-			id: response.id,
-			totalScore: response.total_score,
-			videoPath: response.video_path,
-			createdAt: response.created_at,
-			questionnaire: questionnaire
-				? {
-						id: questionnaire.id,
-						title: questionnaire.title,
-						description: questionnaire.description,
-					}
-				: null,
-			profile: profile
-				? {
-						id: profile.id,
-						name: profile.name,
-						class: profile.class,
-						email: profile.email,
-						nim: profile.nim,
-						semester: profile.semester,
-						gender: profile.gender,
-						age: profile.age,
-					}
-				: null,
-			details: details.map((d) => {
-				const question = Array.isArray(d.questions)
-					? d.questions[0]
-					: d.questions;
-				const answer = Array.isArray(d.answers) ? d.answers[0] : d.answers;
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* ResponseService;
+				const r = yield* service.getById(id);
 
 				return {
-					id: d.id,
-					questionId: d.question_id,
-					answerId: d.answer_id,
-					score: d.score,
-					videoSegmentPath: d.video_segment_path ?? null,
-					questionText: question?.question_text ?? null,
-					orderNumber: question?.order_number ?? null,
-					answerText: answer?.answer_text ?? null,
-					maxScore: answer?.score ?? null,
+					id: r.id,
+					totalScore: r.totalScore,
+					videoPath: r.videoPath,
+					createdAt: r.createdAt.toISOString(),
+					questionnaire: r.questionnaire
+						? {
+								id: r.questionnaire.id,
+								title: r.questionnaire.title,
+								description: r.questionnaire.description,
+							}
+						: null,
+					profile: r.profile
+						? {
+								id: r.profile.id,
+								name: r.profile.name,
+								class: r.profile.class,
+								email: r.profile.email,
+								nim: r.profile.nim,
+								semester: r.profile.semester,
+								gender: r.profile.gender,
+								age: r.profile.age,
+							}
+						: null,
+					details: r.details.map((d) => {
+						let videoSegmentPath: string | null = null;
+						if (d.videoSegmentPath != null) {
+							if (typeof d.videoSegmentPath === "string") {
+								videoSegmentPath = d.videoSegmentPath;
+							} else if (typeof d.videoSegmentPath === "object") {
+								videoSegmentPath = JSON.stringify(d.videoSegmentPath);
+							}
+						}
+						return {
+							id: d.id,
+							questionId: d.questionId,
+							answerId: d.answerId,
+							score: d.score,
+							videoSegmentPath,
+							questionText: d.questionText,
+							orderNumber: d.orderNumber,
+							answerText: d.answerText,
+							maxScore: d.score,
+						};
+					}),
 				};
 			}),
-		};
+		);
 	});
 
 export const getResponsesByQuestionnaireId = createServerFn({ method: "GET" })
-	.inputValidator((questionnaireId: string) =>
-		z.string().uuid().parse(questionnaireId),
-	)
+	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: questionnaireId }) => {
-		const supabase = getSupabaseServerClient();
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* ResponseService;
+				const responses = yield* service.getByQuestionnaireId(questionnaireId);
 
-		const { data, error } = await supabase
-			.from("responses")
-			.select(
-				`
-        id,
-        total_score,
-        video_path,
-        created_at,
-        profiles!inner (
-          id,
-          name,
-          class,
-          email,
-          nim,
-          semester,
-          gender,
-          age
-        )
-      `,
-			)
-			.eq("questionnaire_id", questionnaireId)
-			.order("created_at", { ascending: false });
-
-		if (error) throw new Error(error.message);
-
-		return data.map((r) => {
-			const profile = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
-
-			return {
-				id: r.id,
-				totalScore: r.total_score,
-				videoPath: r.video_path,
-				createdAt: r.created_at,
-				profile: profile
-					? {
-							id: profile.id,
-							name: profile.name,
-							class: profile.class,
-							email: profile.email,
-							nim: profile.nim,
-							semester: profile.semester,
-							gender: profile.gender,
-							age: profile.age,
-						}
-					: null,
-			};
-		});
+				return responses.map((r) => ({
+					id: r.id,
+					totalScore: r.totalScore,
+					videoPath: r.videoPath,
+					createdAt: r.createdAt.toISOString(),
+					profile: r.profile
+						? {
+								id: r.profile.id,
+								name: r.profile.name,
+								class: r.profile.class,
+								email: r.profile.email,
+								nim: r.profile.nim,
+								semester: r.profile.semester,
+								gender: r.profile.gender,
+								age: r.profile.age,
+							}
+						: null,
+				}));
+			}),
+		);
 	});
 
 export const deleteResponses = createServerFn({ method: "POST" })
-	.inputValidator((input: { ids: string[] }) =>
-		z.object({ ids: z.array(z.uuid()) }).parse(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(BulkDeleteSchema))
 	.handler(async ({ data }) => {
-		const supabase = getSupabaseServerClient();
-
-		const { error: detailsError } = await supabase
-			.from("response_details")
-			.delete()
-			.in("response_id", data.ids);
-
-		if (detailsError) throw new Error(detailsError.message);
-
-		const { error } = await supabase
-			.from("responses")
-			.delete()
-			.in("id", data.ids);
-
-		if (error) throw new Error(error.message);
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* ResponseService;
+				return yield* service.delete(data.ids);
+			}),
+		);
 	});
 
 export const getResponsesFiltered = createServerFn({ method: "POST" })
-	.inputValidator(
-		(input: {
-			questionnaireId?: string;
-			className?: string;
-			startDate?: string;
-			endDate?: string;
-			name?: string;
-		}) =>
-			z
-				.object({
-					questionnaireId: z.uuid().optional(),
-					className: z.string().optional(),
-					startDate: z.string().optional(),
-					endDate: z.string().optional(),
-					name: z.string().optional(),
-				})
-				.parse(input),
-	)
+	.inputValidator(Schema.decodeUnknownSync(ResponseFilterSchema))
 	.handler(async ({ data: filters }) => {
-		const supabase = getSupabaseServerClient();
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* ResponseService;
+				const responses = yield* service.getFiltered({
+					questionnaireId: filters.questionnaireId,
+					className: filters.className,
+					name: filters.name,
+					startDate: filters.startDate,
+					endDate: filters.endDate,
+				});
 
-		let query = supabase
-			.from("responses")
-			.select(
-				`
-        id,
-        total_score,
-        video_path,
-        created_at,
-        questionnaire_id,
-        questionnaires (
-          id,
-          title
-        ),
-        profiles!inner (
-          id,
-          name,
-          class,
-          email,
-          nim,
-          semester,
-          gender,
-          age
-        )
-      `,
-			)
-			.order("created_at", { ascending: false });
-
-		if (filters.questionnaireId) {
-			query = query.eq("questionnaire_id", filters.questionnaireId);
-		}
-
-		if (filters.className) {
-			query = query.eq("profiles.class", filters.className);
-		}
-
-		if (filters.name) {
-			query = query.eq("profiles.name", filters.name);
-		}
-
-		if (filters.startDate) {
-			query = query.gte("created_at", filters.startDate);
-		}
-
-		if (filters.endDate) {
-			query = query.lte("created_at", filters.endDate);
-		}
-
-		const { data, error } = await query;
-
-		if (error) throw new Error(error.message);
-
-		return data.map((r) => {
-			const questionnaire = Array.isArray(r.questionnaires)
-				? r.questionnaires[0]
-				: r.questionnaires;
-			const profile = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
-
-			return {
-				id: r.id,
-				totalScore: r.total_score,
-				videoPath: r.video_path,
-				createdAt: r.created_at,
-				questionnaireId: r.questionnaire_id,
-				questionnaireTitle: questionnaire?.title ?? null,
-				profile: profile
-					? {
-							id: profile.id,
-							name: profile.name,
-							class: profile.class,
-							email: profile.email,
-							nim: profile.nim,
-							semester: profile.semester,
-							gender: profile.gender,
-							age: profile.age,
-						}
-					: null,
-			};
-		});
+				return responses.map((r) => ({
+					id: r.id,
+					totalScore: r.totalScore,
+					videoPath: r.videoPath,
+					createdAt: r.createdAt.toISOString(),
+					questionnaireId: r.questionnaireId,
+					questionnaireTitle: r.questionnaire?.title ?? null,
+					profile: r.profile
+						? {
+								id: r.profile.id,
+								name: r.profile.name,
+								class: r.profile.class,
+								email: r.profile.email,
+								nim: r.profile.nim,
+								semester: r.profile.semester,
+								gender: r.profile.gender,
+								age: r.profile.age,
+							}
+						: null,
+				}));
+			}),
+		);
 	});
 
 export const getAllResponsesWithDetails = createServerFn({
 	method: "GET",
 }).handler(async () => {
-	const supabase = getSupabaseServerClient();
+	return runEffect(
+		Effect.gen(function* () {
+			const service = yield* ResponseService;
+			const responses = yield* service.getAllWithDetails;
 
-	// Get all responses with profile and questionnaire info
-	const { data: responses, error: responsesError } = await supabase
-		.from("responses")
-		.select(
-			`
-			id,
-			total_score,
-			video_path,
-			created_at,
-			questionnaire_id,
-			questionnaires (
-				id,
-				title
-			),
-			profiles!inner (
-				id,
-				name,
-				class,
-				email,
-				nim,
-				semester,
-				gender,
-				age
-			)
-		`,
-		)
-		.order("created_at", { ascending: false });
-
-	if (responsesError) throw new Error(responsesError.message);
-
-	// Get all response details with questions and answers
-	const responseIds = responses.map((r) => r.id);
-
-	const { data: allDetails, error: detailsError } = await supabase
-		.from("response_details")
-		.select(
-			`
-			id,
-			response_id,
-			question_id,
-			answer_id,
-			score,
-			questions (
-				id,
-				question_text,
-				order_number
-			),
-			answers (
-				id,
-				answer_text,
-				score
-			)
-		`,
-		)
-		.in("response_id", responseIds);
-
-	if (detailsError) throw new Error(detailsError.message);
-
-	// Group details by response_id
-	const detailsByResponseId = allDetails.reduce(
-		(acc, detail) => {
-			const responseId = detail.response_id;
-			if (!acc[responseId]) {
-				acc[responseId] = [];
-			}
-			acc[responseId].push(detail);
-			return acc;
-		},
-		{} as Record<string, typeof allDetails>,
-	);
-
-	return responses.map((r) => {
-		const questionnaire = Array.isArray(r.questionnaires)
-			? r.questionnaires[0]
-			: r.questionnaires;
-		const profile = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
-		const details = detailsByResponseId[r.id] ?? [];
-
-		return {
-			id: r.id,
-			totalScore: r.total_score,
-			videoPath: r.video_path,
-			createdAt: r.created_at,
-			questionnaireTitle: questionnaire?.title ?? null,
-			profile: profile
-				? {
-						name: profile.name,
-						class: profile.class,
-						email: profile.email,
-						nim: profile.nim,
-						semester: profile.semester,
-						gender: profile.gender,
-						age: profile.age,
-					}
-				: null,
-			details: details
-				.map((d) => {
-					const question = Array.isArray(d.questions)
-						? d.questions[0]
-						: d.questions;
-					const answer = Array.isArray(d.answers) ? d.answers[0] : d.answers;
-
-					return {
-						questionText: question?.question_text ?? null,
-						orderNumber: question?.order_number ?? null,
-						answerText: answer?.answer_text ?? null,
+			return responses.map((r) => ({
+				id: r.id,
+				totalScore: r.totalScore,
+				videoPath: r.videoPath,
+				createdAt: r.createdAt.toISOString(),
+				questionnaireTitle: r.questionnaire?.title ?? null,
+				profile: r.profile
+					? {
+							name: r.profile.name,
+							class: r.profile.class,
+							email: r.profile.email,
+							nim: r.profile.nim,
+							semester: r.profile.semester,
+							gender: r.profile.gender,
+							age: r.profile.age,
+						}
+					: null,
+				details: r.details
+					.map((d) => ({
+						questionText: d.questionText,
+						orderNumber: d.orderNumber,
+						answerText: d.answerText,
 						score: d.score,
-					};
-				})
-				.sort((a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0)),
-		};
-	});
+					}))
+					.sort((a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0)),
+			}));
+		}),
+	);
 });
 
 export const getFilterOptions = createServerFn({ method: "GET" }).handler(
 	async () => {
-		const supabase = getSupabaseServerClient();
+		return runEffect(
+			Effect.gen(function* () {
+				const questionnaireService = yield* QuestionnaireService;
+				const profileService = yield* ProfileService;
 
-		const [questionnaireResult, classResult] = await Promise.all([
-			supabase
-				.from("questionnaires")
-				.select("id, title")
-				.order("created_at", { ascending: false }),
-			supabase.from("profiles").select("class, name"),
-		]);
+				const [questionnaires, profiles, uniqueClasses] = yield* Effect.all([
+					questionnaireService.getAll,
+					profileService.getAll,
+					profileService.getUniqueClasses,
+				]);
 
-		if (questionnaireResult.error)
-			throw new Error(questionnaireResult.error.message);
-		if (classResult.error) throw new Error(classResult.error.message);
-
-		const uniqueClasses = [
-			...new Set(
-				classResult.data
-					.map((p) => p.class)
-					.filter((c): c is string => typeof c === "string"),
-			),
-		].sort();
-
-		return {
-			questionnaires: questionnaireResult.data,
-			classes: uniqueClasses,
-			names: classResult.data
-				.map((p) => p.name)
-				.filter((n): n is string => typeof n === "string"),
-		};
+				return {
+					questionnaires: questionnaires.map((q) => ({
+						id: q.id,
+						title: q.title,
+					})),
+					classes: uniqueClasses,
+					names: profiles
+						.map((p) => p.name)
+						.filter((n): n is string => typeof n === "string"),
+				};
+			}),
+		);
 	},
 );
