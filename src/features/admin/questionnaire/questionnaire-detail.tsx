@@ -62,7 +62,7 @@ export function QuestionnaireDetail({
 		defaultValues: {
 			title: questionnaire.title,
 			description: questionnaire.description || "",
-			is_active: questionnaire.is_active,
+			isActive: questionnaire.isActive,
 		},
 		validators: {
 			onSubmit: ({ value }) => {
@@ -86,7 +86,7 @@ export function QuestionnaireDetail({
 					id: questionnaire.id,
 					title: value.title,
 					description: value.description || null,
-					is_active: value.is_active,
+					isActive: value.isActive,
 				},
 			});
 		},
@@ -167,15 +167,15 @@ export function QuestionnaireDetail({
 								)}
 							</form.Field>
 
-							<form.Field name="is_active">
+							<form.Field name="isActive">
 								{(field) => (
 									<div className="flex items-center gap-2">
 										<Switch
-											id="is_active"
+											id="isActive"
 											checked={field.state.value}
 											onCheckedChange={field.handleChange}
 										/>
-										<Label htmlFor="is_active">Active</Label>
+										<Label htmlFor="isActive">Active</Label>
 										{field.state.meta.errors ? (
 											<p className="text-sm text-red-500">
 												{field.state.meta.errors.join(", ")}

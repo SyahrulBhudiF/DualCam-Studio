@@ -1,117 +1,87 @@
-import fs from "node:fs";
-import path from "node:path";
+import { Schema } from "@effect/schema";
 import { createServerFn } from "@tanstack/react-start";
+import { Effect } from "effect";
 import {
-	type finalSubmit,
-	finalSubmitSchema,
-	type uploadChunk,
-	uploadChunkSchema,
-} from "@/libs/schemas/questionnaire";
-import { getSupabaseServerClient } from "@/utils/supabase";
+	AnswerService,
+	FileUploadService,
+	ProfileService,
+	ResponseService,
+	runEffect,
+} from "@/infrastructure";
+import {
+	FinalSubmitSchema,
+	UploadChunkSchema,
+} from "@/infrastructure/schemas/questionnaire";
 
 export const uploadVideoChunk = createServerFn({ method: "POST" })
-	.inputValidator((data: uploadChunk) => uploadChunkSchema.parse(data))
+	.inputValidator(Schema.decodeUnknownSync(UploadChunkSchema))
 	.handler(async ({ data }) => {
-		const uploadRoot = path.join(process.cwd(), "video_uploads");
-		const userFolder = path.join(uploadRoot, data.folderName);
+		return runEffect(
+			Effect.gen(function* () {
+				const service = yield* FileUploadService;
 
-		if (!fs.existsSync(uploadRoot)) fs.mkdirSync(uploadRoot);
-		if (!fs.existsSync(userFolder)) fs.mkdirSync(userFolder);
-
-		const filePath = path.join(userFolder, data.fileName);
-		const fileDir = path.dirname(filePath);
-
-		if (!fs.existsSync(fileDir)) {
-			fs.mkdirSync(fileDir, { recursive: true });
-		}
-
-		const buffer = Buffer.from(data.fileBase64.split(",")[1], "base64");
-
-		try {
-			fs.writeFileSync(filePath, buffer);
-			return {
-				success: true,
-				path: `/video_uploads/${data.folderName}/${data.fileName}`,
-			};
-		} catch (e) {
-			throw new Error(
-				`Failed to save chunk: ${e instanceof Error ? e.message : String(e)}`,
-			);
-		}
+				return yield* service.uploadChunk({
+					folderName: data.folderName,
+					fileName: data.fileName,
+					fileBase64: data.fileBase64,
+				});
+			}),
+		);
 	});
 
 export const submitSegmentedResponse = createServerFn({ method: "POST" })
-	.inputValidator((data: finalSubmit) => finalSubmitSchema.parse(data))
+	.inputValidator(Schema.decodeUnknownSync(FinalSubmitSchema))
 	.handler(async ({ data }) => {
-		const supabase = getSupabaseServerClient();
+		return runEffect(
+			Effect.gen(function* () {
+				const answerService = yield* AnswerService;
+				const profileService = yield* ProfileService;
+				const responseService = yield* ResponseService;
 
-		const { data: existing, error: checkErr } = await supabase
-			.from("profiles")
-			.select("id")
-			.eq("email", data.userEmail)
-			.maybeSingle();
-
-		if (checkErr) throw new Error(checkErr.message);
-
-		let profileId = existing?.id;
-
-		if (!profileId) {
-			const { data: created, error: createErr } = await supabase
-				.from("profiles")
-				.insert({
+				// Upsert profile with all fields
+				const profile = yield* profileService.upsertByEmail(data.userEmail, {
 					name: data.userName,
 					class: data.userClass,
-					semester: data.userSemester,
-					nim: data.userNim,
-					gender: data.userGender,
-					age: data.userAge,
-					email: data.userEmail,
-				})
-				.select("id")
-				.single();
+					semester: data.userSemester ?? null,
+					nim: data.userNim ?? null,
+					gender: data.userGender ?? null,
+					age: data.userAge ?? null,
+				});
 
-			if (createErr) throw new Error(createErr.message);
-			profileId = created.id;
-		}
+				// Get answer scores
+				const answerIds = data.answers.map((a) => a.answerId);
+				const dbAnswers = yield* answerService.getByIds(answerIds);
+				const totalScore = dbAnswers.reduce((acc, curr) => acc + curr.score, 0);
 
-		const answerIds = data.answers.map((a) => a.answerId);
-		const { data: dbAnswers } = await supabase
-			.from("answers")
-			.select("id, score")
-			.in("id", answerIds);
+				// Create response details
+				const details = data.answers.map((ans) => {
+					const score =
+						dbAnswers.find((d) => d.id === ans.answerId)?.score || 0;
+					const videoJson = JSON.stringify({
+						main: ans.videoMainPath ?? null,
+						secondary: ans.videoSecPath ?? null,
+					});
 
-		const totalScore =
-			dbAnswers?.reduce((acc, curr) => acc + curr.score, 0) || 0;
+					return {
+						questionId: ans.questionId,
+						answerId: ans.answerId,
+						score,
+						videoSegmentPath: videoJson,
+					};
+				});
 
-		const { data: response, error: respError } = await supabase
-			.from("responses")
-			.insert({
-				user_id: profileId,
-				questionnaire_id: data.questionnaireId,
-				video_path: data.folderName,
-				total_score: totalScore,
-			})
-			.select("id")
-			.single();
+				// Create response
+				const response = yield* responseService.create(
+					{
+						userId: profile.id,
+						questionnaireId: data.questionnaireId,
+						videoPath: data.folderName,
+						totalScore,
+					},
+					details,
+				);
 
-		if (respError) throw new Error(respError.message);
-
-		const details = data.answers.map((ans) => {
-			const score = dbAnswers?.find((d) => d.id === ans.answerId)?.score || 0;
-			const videoJson = JSON.stringify({
-				main: ans.videoMainPath,
-				secondary: ans.videoSecPath,
-			});
-
-			return {
-				response_id: response.id,
-				question_id: ans.questionId,
-				answer_id: ans.answerId,
-				score: score,
-				video_segment_path: videoJson,
-			};
-		});
-
-		await supabase.from("response_details").insert(details);
-		return { success: true, responseId: response.id };
+				return { success: true, responseId: response.id };
+			}),
+		);
 	});

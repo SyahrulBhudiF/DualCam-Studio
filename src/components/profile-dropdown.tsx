@@ -1,17 +1,15 @@
-import { Link } from "@tanstack/react-router";
-import useDialogState from "@/libs/hooks/use-dialog-state";
+import { SignOutDialog } from "@/components/sign-out-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
-	DropdownMenuGroup,
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuShortcut,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SignOutDialog } from "@/components/sign-out-dialog";
+import useDialogState from "@/libs/hooks/use-dialog-state";
 
 export function ProfileDropdown() {
 	const [open, setOpen] = useDialogState();
@@ -27,34 +25,12 @@ export function ProfileDropdown() {
 				<DropdownMenuContent className="w-56" align="end" forceMount>
 					<DropdownMenuLabel className="font-normal">
 						<div className="flex flex-col gap-1.5">
-							<p className="text-sm leading-none font-medium">satnaing</p>
+							<p className="text-sm leading-none font-medium">User</p>
 							<p className="text-muted-foreground text-xs leading-none">
-								satnaingdev@gmail.com
+								user@example.com
 							</p>
 						</div>
 					</DropdownMenuLabel>
-					<DropdownMenuSeparator />
-					<DropdownMenuGroup>
-						<DropdownMenuItem asChild>
-							<Link to="/settings">
-								Profile
-								<DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-							</Link>
-						</DropdownMenuItem>
-						<DropdownMenuItem asChild>
-							<Link to="/settings">
-								Billing
-								<DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-							</Link>
-						</DropdownMenuItem>
-						<DropdownMenuItem asChild>
-							<Link to="/settings">
-								Settings
-								<DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-							</Link>
-						</DropdownMenuItem>
-						<DropdownMenuItem>New Team</DropdownMenuItem>
-					</DropdownMenuGroup>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem variant="destructive" onClick={() => setOpen(true)}>
 						Sign out

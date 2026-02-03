@@ -1,8 +1,8 @@
+import type React from "react";
 import {
 	RealSenseCanvas,
 	type RealSenseHandle,
 } from "@/components/RealSenseCanvas";
-import type React from "react";
 
 interface CameraControlPanelProps {
 	videoDevices: MediaDeviceInfo[];

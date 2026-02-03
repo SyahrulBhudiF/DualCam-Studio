@@ -37,7 +37,7 @@ import { getQuestionColumns } from "./components/columns";
 import type { Question } from "./questionnaires.types";
 
 const questionFormSchema = createQuestionSchema.omit({
-	questionnaire_id: true,
+	questionnaireId: true,
 });
 
 function CreateQuestionForm({
@@ -67,8 +67,8 @@ function CreateQuestionForm({
 
 	const form = useForm({
 		defaultValues: {
-			question_text: "",
-			order_number: 0,
+			questionText: "",
+			orderNumber: 0,
 		},
 		validators: {
 			onSubmit: ({ value }) => {
@@ -89,9 +89,9 @@ function CreateQuestionForm({
 		onSubmit: async ({ value }) => {
 			await createMutation.mutateAsync({
 				data: {
-					questionnaire_id: questionnaireId,
-					question_text: value.question_text,
-					order_number: Number(value.order_number),
+					questionnaireId: questionnaireId,
+					questionText: value.questionText,
+					orderNumber: Number(value.orderNumber),
 				},
 			});
 		},
@@ -106,12 +106,12 @@ function CreateQuestionForm({
 			}}
 			className="space-y-4"
 		>
-			<form.Field name="order_number">
+			<form.Field name="orderNumber">
 				{(field) => (
 					<div className="grid gap-2">
-						<Label htmlFor="order_number">Order</Label>
+						<Label htmlFor="orderNumber">Order</Label>
 						<Input
-							id="order_number"
+							id="orderNumber"
 							type="number"
 							value={field.state.value}
 							onBlur={field.handleBlur}
@@ -126,12 +126,12 @@ function CreateQuestionForm({
 				)}
 			</form.Field>
 
-			<form.Field name="question_text">
+			<form.Field name="questionText">
 				{(field) => (
 					<div className="grid gap-2">
-						<Label htmlFor="question_text">Question Text</Label>
+						<Label htmlFor="questionText">Question Text</Label>
 						<Input
-							id="question_text"
+							id="questionText"
 							value={field.state.value}
 							onBlur={field.handleBlur}
 							onChange={(e) => field.handleChange(e.target.value)}
@@ -185,8 +185,8 @@ function EditQuestionForm({
 
 	const form = useForm({
 		defaultValues: {
-			question_text: question.question_text,
-			order_number: question.order_number,
+			questionText: question.questionText,
+			orderNumber: question.orderNumber,
 		},
 		validators: {
 			onSubmit: ({ value }) => {
@@ -208,8 +208,8 @@ function EditQuestionForm({
 			await updateMutation.mutateAsync({
 				data: {
 					id: question.id,
-					question_text: value.question_text,
-					order_number: Number(value.order_number),
+					questionText: value.questionText,
+					orderNumber: Number(value.orderNumber),
 				},
 			});
 		},
@@ -224,12 +224,12 @@ function EditQuestionForm({
 			}}
 			className="space-y-4"
 		>
-			<form.Field name="order_number">
+			<form.Field name="orderNumber">
 				{(field) => (
 					<div className="grid gap-2">
-						<Label htmlFor="edit_order_number">Order</Label>
+						<Label htmlFor="edit_orderNumber">Order</Label>
 						<Input
-							id="edit_order_number"
+							id="edit_orderNumber"
 							type="number"
 							value={String(field.state.value)}
 							onBlur={field.handleBlur}
@@ -244,12 +244,12 @@ function EditQuestionForm({
 				)}
 			</form.Field>
 
-			<form.Field name="question_text">
+			<form.Field name="questionText">
 				{(field) => (
 					<div className="grid gap-2">
-						<Label htmlFor="edit_question_text">Question Text</Label>
+						<Label htmlFor="edit_questionText">Question Text</Label>
 						<Input
-							id="edit_question_text"
+							id="edit_questionText"
 							value={field.state.value}
 							onBlur={field.handleBlur}
 							onChange={(e) => field.handleChange(e.target.value)}
@@ -357,7 +357,7 @@ export function QuestionTable({
 				</Dialog>
 			</div>
 
-			<DataTableToolbar table={table} searchKey="question_text" />
+			<DataTableToolbar table={table} searchKey="questionText" />
 			<div className="rounded-md border overflow-auto">
 				<table className="w-full caption-bottom text-sm">
 					<thead className="[&_tr]:border-b">

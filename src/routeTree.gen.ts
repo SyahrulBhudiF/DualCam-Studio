@@ -16,6 +16,7 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuccessIndexRouteImport } from './routes/success/index'
 import { Route as QuestionnaireIndexRouteImport } from './routes/questionnaire/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as QuestionnaireSegmentedIndexRouteImport } from './routes/questionnaire/segmented/index'
 import { Route as AdminResponsesIndexRouteImport } from './routes/admin/responses/index'
 import { Route as AdminQuestionnairesIndexRouteImport } from './routes/admin/questionnaires/index'
@@ -59,6 +60,11 @@ const QuestionnaireIndexRoute = QuestionnaireIndexRouteImport.update({
   id: '/questionnaire/',
   path: '/questionnaire/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const QuestionnaireSegmentedIndexRoute =
   QuestionnaireSegmentedIndexRouteImport.update({
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
+  '/admin/': typeof AdminIndexRoute
   '/questionnaire': typeof QuestionnaireIndexRoute
   '/success': typeof SuccessIndexRoute
   '/api/video/$': typeof ApiVideoSplatRoute
@@ -125,10 +132,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
+  '/admin': typeof AdminIndexRoute
   '/questionnaire': typeof QuestionnaireIndexRoute
   '/success': typeof SuccessIndexRoute
   '/api/video/$': typeof ApiVideoSplatRoute
@@ -147,6 +154,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
+  '/admin/': typeof AdminIndexRoute
   '/questionnaire/': typeof QuestionnaireIndexRoute
   '/success/': typeof SuccessIndexRoute
   '/api/video/$': typeof ApiVideoSplatRoute
@@ -166,6 +174,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/logout'
     | '/signup'
+    | '/admin/'
     | '/questionnaire'
     | '/success'
     | '/api/video/$'
@@ -179,10 +188,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/login'
     | '/logout'
     | '/signup'
+    | '/admin'
     | '/questionnaire'
     | '/success'
     | '/api/video/$'
@@ -200,6 +209,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/logout'
     | '/signup'
+    | '/admin/'
     | '/questionnaire/'
     | '/success/'
     | '/api/video/$'
@@ -275,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuestionnaireIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/questionnaire/segmented/': {
       id: '/questionnaire/segmented/'
       path: '/questionnaire/segmented'
@@ -335,6 +352,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
   AdminDashboardIndexRoute: typeof AdminDashboardIndexRoute
   AdminQuestionnairesIndexRoute: typeof AdminQuestionnairesIndexRoute
   AdminResponsesIndexRoute: typeof AdminResponsesIndexRoute
@@ -344,6 +362,7 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
   AdminDashboardIndexRoute: AdminDashboardIndexRoute,
   AdminQuestionnairesIndexRoute: AdminQuestionnairesIndexRoute,
   AdminResponsesIndexRoute: AdminResponsesIndexRoute,

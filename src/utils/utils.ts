@@ -5,12 +5,6 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
-export function requireEnv<T>(name: string): T {
-	const value = process.env[name];
-	if (!value) throw new Error(`Missing environment variable: ${name}`);
-	return value as T;
-}
-
 export function getValidationErrorMessage(error: unknown): string | null {
 	if (!error || typeof error !== "object" || !("message" in error)) {
 		return null;
