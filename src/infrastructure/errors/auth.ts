@@ -25,3 +25,12 @@ export class TokenError extends Data.TaggedError("TokenError")<{
 	readonly message: string;
 	readonly cause?: unknown;
 }> {}
+
+export class RateLimitError extends Data.TaggedError("RateLimitError")<{
+	readonly message: string;
+	readonly retryAfterMs: number;
+}> {}
+
+export class CsrfError extends Data.TaggedError("CsrfError")<{
+	readonly message: string;
+}> {}

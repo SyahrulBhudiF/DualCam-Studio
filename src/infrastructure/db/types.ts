@@ -4,6 +4,7 @@ import type {
 	profiles,
 	questionnaires,
 	questions,
+	rateLimits,
 	responseDetails,
 	responses,
 	sessions,
@@ -27,3 +28,4 @@ export type NewResponse = InferInsertModel<typeof responses>;
 export type NewResponseDetail = InferInsertModel<typeof responseDetails>;
 export type NewUser = InferInsertModel<typeof users>;
 export type NewSession = InferInsertModel<typeof sessions>;
+export type RateLimit = InferSelectModel<typeof rateLimits>;

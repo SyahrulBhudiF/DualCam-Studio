@@ -1,0 +1,1 @@
+ALTER TABLE "rate_limits" ALTER COLUMN "expires_at" SET DATA TYPE timestamp with time zone;

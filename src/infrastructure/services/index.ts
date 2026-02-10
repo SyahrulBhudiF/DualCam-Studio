@@ -6,6 +6,7 @@ import { FileUploadServiceLive } from "./file-upload";
 import { ProfileServiceLive } from "./profile";
 import { QuestionServiceLive } from "./question";
 import { QuestionnaireServiceLive } from "./questionnaire";
+import { RateLimitServiceLive } from "./rate-limit";
 import { ResponseServiceLive } from "./response";
 
 export { AnswerService } from "./answer";
@@ -15,6 +16,7 @@ export { FileUploadService } from "./file-upload";
 export { ProfileService } from "./profile";
 export { QuestionService } from "./question";
 export { QuestionnaireService } from "./questionnaire";
+export { RateLimitService } from "./rate-limit";
 export { ResponseService } from "./response";
 
 export const AllServicesLive = Layer.mergeAll(
@@ -26,4 +28,5 @@ export const AllServicesLive = Layer.mergeAll(
 	DashboardServiceLive,
 	FileUploadServiceLive,
 	AuthServiceLive,
+	RateLimitServiceLive,
 );

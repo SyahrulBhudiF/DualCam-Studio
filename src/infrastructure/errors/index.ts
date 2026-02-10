@@ -1,5 +1,7 @@
 export {
+	CsrfError,
 	InvalidCredentialsError,
+	RateLimitError,
 	SessionExpiredError,
 	SignupError,
 	TokenError,
@@ -25,7 +27,9 @@ export {
 export { ParseError, ValidationError } from "./validation";
 
 import type {
+	CsrfError,
 	InvalidCredentialsError,
+	RateLimitError,
 	SessionExpiredError,
 	SignupError,
 	TokenError,
@@ -57,6 +61,8 @@ export type AppError =
 	| SessionExpiredError
 	| SignupError
 	| TokenError
+	| RateLimitError
+	| CsrfError
 	| ValidationError
 	| ParseError
 	| QuestionnaireNotFoundError

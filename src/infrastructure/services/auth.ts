@@ -2,6 +2,7 @@ import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import * as bcrypt from "bcryptjs";
 import { and, eq, gt, lt } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
+import { AuthConfig } from "../config";
 import type { NewSession, NewUser, Session, User } from "../db";
 import { sessions, users } from "../db";
 import { DatabaseError } from "../errors";
@@ -11,27 +12,7 @@ import {
 	SignupError,
 	TokenError,
 } from "../errors/auth";
-
-// Get auth configuration from environment
-const getAuthConfig = () => ({
-	saltRounds: Number.parseInt(process.env.BCRYPT_SALT_ROUNDS ?? "10", 10),
-	sessionDurationMs:
-		Number.parseInt(process.env.SESSION_DURATION_DAYS ?? "7", 10) *
-		24 *
-		60 *
-		60 *
-		1000,
-});
-
-function generateToken(): string {
-	const chars =
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-	let token = "";
-	for (let i = 0; i < 64; i++) {
-		token += chars.charAt(Math.floor(Math.random() * chars.length));
-	}
-	return token;
-}
+import { generateToken } from "@/utils/crypto";
 
 export interface IAuthService {
 	readonly signup: (
@@ -76,6 +57,7 @@ export const AuthServiceLive = Layer.effect(
 	AuthService,
 	Effect.gen(function* () {
 		const db = yield* PgDrizzle;
+		const config = yield* AuthConfig;
 
 		const signup: IAuthService["signup"] = (email, password) =>
 			Effect.gen(function* () {
@@ -101,7 +83,6 @@ export const AuthServiceLive = Layer.effect(
 				}
 
 				// Hash password
-				const config = getAuthConfig();
 				const passwordHash = yield* Effect.tryPromise({
 					try: () => bcrypt.hash(password, config.saltRounds),
 					catch: (error) =>
@@ -168,9 +149,22 @@ export const AuthServiceLive = Layer.effect(
 					);
 				}
 
-				// Create session
+				// Session fixation prevention: delete all existing sessions for this user
+				yield* Effect.tryPromise({
+					try: () =>
+						db.delete(sessions).where(eq(sessions.userId, user.id)),
+					catch: (error) =>
+						new DatabaseError({
+							message: "Failed to clear existing sessions",
+							cause: error,
+						}),
+				});
+
+				// Piggyback expired session cleanup (fire-and-forget)
+				yield* Effect.fork(deleteExpiredSessions());
+
+				// Create new session
 				const token = generateToken();
-				const config = getAuthConfig();
 				const expiresAt = new Date(Date.now() + config.sessionDurationMs);
 
 				const session = yield* Effect.tryPromise({
@@ -283,7 +277,6 @@ export const AuthServiceLive = Layer.effect(
 				const { session } = yield* validateSession(token);
 
 				// Update expiration
-				const config = getAuthConfig();
 				const newExpiresAt = new Date(Date.now() + config.sessionDurationMs);
 				const updated = yield* Effect.tryPromise({
 					try: () =>

@@ -1,16 +1,19 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { loginFn, signupFn } from "@/apis/user";
 import { getValidationErrorMessage } from "@/utils/utils";
 import { Auth } from "./Auth";
+import { Button } from "./ui/button";
 
 export function Login() {
 	const router = useRouter();
+	const queryClient = useQueryClient();
 
 	const loginMutation = useMutation({
 		mutationFn: loginFn,
 		onSuccess: async (data) => {
 			if (!data?.error) {
+				await queryClient.invalidateQueries({ queryKey: ["user"] });
 				await router.invalidate();
 				router.navigate({ to: "/admin/dashboard" });
 			}
@@ -44,13 +47,16 @@ export function Login() {
 			}}
 			afterSubmit={
 				<>
-					{displayError && <div className="text-red-400">{displayError}</div>}
+					{displayError && (
+						<p className="text-destructive text-sm">{displayError}</p>
+					)}
 
 					{(handlerError === "Invalid login credentials" ||
 						handlerError === "Invalid credentials") && (
 						<div>
-							<button
-								className="text-blue-500"
+							<Button
+								variant="link"
+								className="px-0"
 								onClick={(e) => {
 									const form = (e.currentTarget as HTMLButtonElement).form;
 									if (!form) return;
@@ -67,7 +73,7 @@ export function Login() {
 								type="button"
 							>
 								Sign up instead?
-							</button>
+							</Button>
 						</div>
 					)}
 				</>
