@@ -3,17 +3,8 @@ import {
 	getCookies,
 	setCookie,
 } from "@tanstack/react-start/server";
-import { Config, Effect } from "effect";
-
-// Session configuration using Effect Config
-const SessionConfig = Config.all({
-	cookieName: Config.string("SESSION_COOKIE_NAME"),
-	durationDays: Config.number("SESSION_DURATION_DAYS"),
-	secure: Config.string("NODE_ENV").pipe(
-		Config.map((env) => env === "production"),
-		Config.withDefault(false),
-	),
-});
+import { Effect } from "effect";
+import { SessionConfig } from "@/infrastructure/config";
 
 // Get the session token from cookies
 export const getSessionToken = Effect.gen(function* () {

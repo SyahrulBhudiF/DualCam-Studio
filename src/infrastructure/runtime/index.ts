@@ -9,6 +9,7 @@ import {
 	type ProfileService,
 	type QuestionnaireService,
 	type QuestionService,
+	type RateLimitService,
 	type ResponseService,
 } from "../services";
 
@@ -28,6 +29,7 @@ export const runEffect = <A, E>(
 		| DashboardService
 		| FileUploadService
 		| AuthService
+		| RateLimitService
 	>,
 ): Promise<A> => AppRuntime.runPromise(effect);
 
@@ -43,5 +45,6 @@ export const runEffectExit = <A, E>(
 		| DashboardService
 		| FileUploadService
 		| AuthService
+		| RateLimitService
 	>,
 ) => AppRuntime.runPromiseExit(effect);

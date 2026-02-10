@@ -124,3 +124,9 @@ export const users = pgTable("users", {
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const rateLimits = pgTable("rate_limits", {
+	key: text("key").primaryKey(),
+	count: integer("count").notNull().default(1),
+	expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
