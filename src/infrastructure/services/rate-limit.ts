@@ -32,43 +32,28 @@ export const RateLimitServiceLive = Layer.effect(
 				const expiresAt = new Date(now + config.windowMs);
 
 				// Step 1: Get existing entry
-				const existing = yield* Effect.tryPromise({
-					try: () =>
-						db
-							.select()
-							.from(rateLimits)
-							.where(eq(rateLimits.key, key))
-							.then((rows) => rows[0] as RateLimit | undefined),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to check rate limit",
-							cause: error,
-						}),
-				});
+				const [existing] = yield* db
+					.select()
+					.from(rateLimits)
+					.where(eq(rateLimits.key, key));
 
 				// Step 2: If no entry or expired, reset to count=1
-				if (!existing || existing.expiresAt.getTime() < now) {
-					yield* Effect.tryPromise({
-						try: () =>
-							db
-								.insert(rateLimits)
-								.values({ key, count: 1, expiresAt })
-								.onConflictDoUpdate({
-									target: rateLimits.key,
-									set: { count: 1, expiresAt },
-								}),
-						catch: (error) =>
-							new DatabaseError({
-								message: "Failed to reset rate limit",
-								cause: error,
-							}),
-					});
+				if (!existing || (existing as RateLimit).expiresAt.getTime() < now) {
+					yield* db
+						.insert(rateLimits)
+						.values({ key, count: 1, expiresAt })
+						.onConflictDoUpdate({
+							target: rateLimits.key,
+							set: { count: 1, expiresAt },
+						});
 					return;
 				}
 
+				const entry = existing as RateLimit;
+
 				// Step 3: Check if over limit BEFORE incrementing
-				if (existing.count >= config.maxAttempts) {
-					const retryAfterMs = existing.expiresAt.getTime() - now;
+				if (entry.count >= config.maxAttempts) {
+					const retryAfterMs = entry.expiresAt.getTime() - now;
 					return yield* Effect.fail(
 						new RateLimitError({
 							message: `Too many attempts. Try again in ${Math.ceil(retryAfterMs / 1000)} seconds.`,
@@ -78,32 +63,35 @@ export const RateLimitServiceLive = Layer.effect(
 				}
 
 				// Step 4: Increment count
-				yield* Effect.tryPromise({
-					try: () =>
-						db
-							.update(rateLimits)
-							.set({ count: existing.count + 1 })
-							.where(eq(rateLimits.key, key)),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to update rate limit",
-							cause: error,
-						}),
-				});
-			});
+				yield* db
+					.update(rateLimits)
+					.set({ count: entry.count + 1 })
+					.where(eq(rateLimits.key, key));
+			}).pipe(
+				Effect.mapError((e): RateLimitError | DatabaseError =>
+					e instanceof RateLimitError
+						? e
+						: new DatabaseError({
+								message: "Failed to check rate limit",
+								cause: e,
+							}),
+				),
+			);
 
 		const cleanup: IRateLimitService["cleanup"] = () =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.delete(rateLimits)
-						.where(lt(rateLimits.expiresAt, new Date())),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to cleanup rate limits",
-						cause: error,
-					}),
-			}).pipe(Effect.map(() => undefined));
+			Effect.gen(function* () {
+				yield* db
+					.delete(rateLimits)
+					.where(lt(rateLimits.expiresAt, new Date()));
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to cleanup rate limits",
+							cause: e,
+						}),
+				),
+			);
 
 		return { check, cleanup };
 	}),

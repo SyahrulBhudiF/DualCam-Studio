@@ -34,112 +34,115 @@ export const AnswerServiceLive = Layer.effect(
 		const db = yield* PgDrizzle;
 
 		const getByQuestionId: IAnswerService["getByQuestionId"] = (questionId) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.select()
-						.from(answers)
-						.where(eq(answers.questionId, questionId))
-						.orderBy(answers.score)
-						.then((rows) => rows as Answer[]),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to fetch answers",
-						cause: error,
-					}),
-			});
+			Effect.gen(function* () {
+				const rows = yield* db
+					.select()
+					.from(answers)
+					.where(eq(answers.questionId, questionId))
+					.orderBy(answers.score);
+				return rows as Answer[];
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to fetch answers",
+							cause: e,
+						}),
+				),
+			);
 
 		const getById: IAnswerService["getById"] = (id) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.select()
-						.from(answers)
-						.where(eq(answers.id, id))
-						.then((rows) => rows[0] as Answer | undefined),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to fetch answer",
-						cause: error,
-					}),
+			Effect.gen(function* () {
+				const [result] = yield* db
+					.select()
+					.from(answers)
+					.where(eq(answers.id, id));
+				if (!result) {
+					return yield* Effect.fail(new AnswerNotFoundError({ id }));
+				}
+				return result as Answer;
 			}).pipe(
-				Effect.flatMap((result) =>
-					result
-						? Effect.succeed(result)
-						: Effect.fail(new AnswerNotFoundError({ id })),
+				Effect.mapError((e): AnswerNotFoundError | DatabaseError =>
+					e instanceof AnswerNotFoundError
+						? e
+						: new DatabaseError({
+								message: "Failed to fetch answer",
+								cause: e,
+							}),
 				),
 			);
 
 		const getByIds: IAnswerService["getByIds"] = (ids) =>
-			Effect.tryPromise({
-				try: async () => {
-					const results: Answer[] = [];
-					for (const id of ids) {
-						const rows = await db
-							.select()
-							.from(answers)
-							.where(eq(answers.id, id));
-						if (rows[0]) results.push(rows[0] as Answer);
-					}
-					return results;
-				},
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to fetch answers by ids",
-						cause: error,
-					}),
-			});
+			Effect.gen(function* () {
+				const results: Answer[] = [];
+				for (const id of ids) {
+					const [row] = yield* db
+						.select()
+						.from(answers)
+						.where(eq(answers.id, id));
+					if (row) results.push(row as Answer);
+				}
+				return results;
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to fetch answers by ids",
+							cause: e,
+						}),
+				),
+			);
 
 		const create: IAnswerService["create"] = (data) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.insert(answers)
-						.values(data)
-						.returning()
-						.then((rows) => rows[0] as Answer),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to create answer",
-						cause: error,
-					}),
-			});
+			Effect.gen(function* () {
+				const [result] = yield* db.insert(answers).values(data).returning();
+				return result as Answer;
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to create answer",
+							cause: e,
+						}),
+				),
+			);
 
 		const update: IAnswerService["update"] = (id, data) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.update(answers)
-						.set(data)
-						.where(eq(answers.id, id))
-						.returning()
-						.then((rows) => rows[0] as Answer | undefined),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to update answer",
-						cause: error,
-					}),
+			Effect.gen(function* () {
+				const [result] = yield* db
+					.update(answers)
+					.set(data)
+					.where(eq(answers.id, id))
+					.returning();
+				if (!result) {
+					return yield* Effect.fail(new AnswerNotFoundError({ id }));
+				}
+				return result as Answer;
 			}).pipe(
-				Effect.flatMap((result) =>
-					result
-						? Effect.succeed(result)
-						: Effect.fail(new AnswerNotFoundError({ id })),
+				Effect.mapError((e): AnswerNotFoundError | DatabaseError =>
+					e instanceof AnswerNotFoundError
+						? e
+						: new DatabaseError({
+								message: "Failed to update answer",
+								cause: e,
+							}),
 				),
 			);
 
 		const deleteAnswers: IAnswerService["delete"] = (ids) =>
-			Effect.tryPromise({
-				try: async () => {
-					for (const id of ids) {
-						await db.delete(answers).where(eq(answers.id, id));
-					}
-				},
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to delete answers",
-						cause: error,
-					}),
-			});
+			Effect.gen(function* () {
+				for (const id of ids) {
+					yield* db.delete(answers).where(eq(answers.id, id));
+				}
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to delete answers",
+							cause: e,
+						}),
+				),
+			);
 
 		return {
 			getByQuestionId,

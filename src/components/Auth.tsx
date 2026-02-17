@@ -18,9 +18,7 @@ export function Auth({
 		<div className="fixed inset-0 bg-background flex items-center justify-center p-8">
 			<Card className="w-full sm:max-w-md">
 				<CardHeader>
-					<CardTitle className="text-2xl text-center">
-						{actionText}
-					</CardTitle>
+					<CardTitle className="text-2xl text-center">{actionText}</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<form

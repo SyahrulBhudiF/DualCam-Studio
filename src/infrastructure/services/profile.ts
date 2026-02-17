@@ -34,93 +34,94 @@ export const ProfileServiceLive = Layer.effect(
 		const db = yield* PgDrizzle;
 
 		const getById: IProfileService["getById"] = (id) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.select()
-						.from(profiles)
-						.where(eq(profiles.id, id))
-						.then((rows) => rows[0] as Profile | undefined),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to fetch profile",
-						cause: error,
-					}),
+			Effect.gen(function* () {
+				const [result] = yield* db
+					.select()
+					.from(profiles)
+					.where(eq(profiles.id, id));
+				if (!result) {
+					return yield* Effect.fail(new ProfileNotFoundError({ id }));
+				}
+				return result as Profile;
 			}).pipe(
-				Effect.flatMap((result) =>
-					result
-						? Effect.succeed(result)
-						: Effect.fail(new ProfileNotFoundError({ id })),
+				Effect.mapError((e): ProfileNotFoundError | DatabaseError =>
+					e instanceof ProfileNotFoundError
+						? e
+						: new DatabaseError({
+								message: "Failed to fetch profile",
+								cause: e,
+							}),
 				),
 			);
 
 		const getByEmail: IProfileService["getByEmail"] = (email) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.select()
-						.from(profiles)
-						.where(eq(profiles.email, email))
-						.then((rows) => (rows[0] as Profile | undefined) ?? null),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to fetch profile by email",
-						cause: error,
-					}),
-			});
+			Effect.gen(function* () {
+				const [result] = yield* db
+					.select()
+					.from(profiles)
+					.where(eq(profiles.email, email));
+				return (result as Profile | undefined) ?? null;
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to fetch profile by email",
+							cause: e,
+						}),
+				),
+			);
 
 		const create: IProfileService["create"] = (data) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.insert(profiles)
-						.values(data)
-						.returning()
-						.then((rows) => rows[0] as Profile),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to create profile",
-						cause: error,
-					}),
-			});
+			Effect.gen(function* () {
+				const [result] = yield* db.insert(profiles).values(data).returning();
+				return result as Profile;
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to create profile",
+							cause: e,
+						}),
+				),
+			);
 
 		const upsertByEmail: IProfileService["upsertByEmail"] = (email, data) =>
 			Effect.gen(function* () {
 				const existing = yield* getByEmail(email);
 
 				if (existing) {
-					const updated = yield* Effect.tryPromise({
-						try: () =>
-							db
-								.update(profiles)
-								.set(data)
-								.where(eq(profiles.id, existing.id))
-								.returning()
-								.then((rows) => rows[0] as Profile),
-						catch: (error) =>
-							new DatabaseError({
-								message: "Failed to update profile",
-								cause: error,
-							}),
-					});
-					return updated;
+					const [updated] = yield* db
+						.update(profiles)
+						.set(data)
+						.where(eq(profiles.id, existing.id))
+						.returning();
+					return updated as Profile;
 				}
 
 				return yield* create({ ...data, email });
-			});
+			}).pipe(
+				Effect.mapError((e) =>
+					e instanceof DatabaseError
+						? e
+						: new DatabaseError({
+								message: "Failed to upsert profile",
+								cause: e,
+							}),
+				),
+			);
 
-		const getAll: IProfileService["getAll"] = Effect.tryPromise({
-			try: () =>
-				db
-					.select()
-					.from(profiles)
-					.then((rows) => rows as Profile[]),
-			catch: (error) =>
-				new DatabaseError({
-					message: "Failed to fetch profiles",
-					cause: error,
-				}),
-		});
+		const getAll: IProfileService["getAll"] = Effect.gen(function* () {
+			const rows = yield* db.select().from(profiles);
+			return rows as Profile[];
+		}).pipe(
+			Effect.mapError(
+				(e) =>
+					new DatabaseError({
+						message: "Failed to fetch profiles",
+						cause: e,
+					}),
+			),
+		);
 
 		const getUniqueClasses: IProfileService["getUniqueClasses"] = Effect.gen(
 			function* () {

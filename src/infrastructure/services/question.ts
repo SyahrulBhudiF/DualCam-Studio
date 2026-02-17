@@ -35,92 +35,94 @@ export const QuestionServiceLive = Layer.effect(
 		const getByQuestionnaireId: IQuestionService["getByQuestionnaireId"] = (
 			questionnaireId,
 		) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.select()
-						.from(questions)
-						.where(eq(questions.questionnaireId, questionnaireId))
-						.orderBy(questions.orderNumber)
-						.then((rows) => rows as Question[]),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to fetch questions",
-						cause: error,
-					}),
-			});
+			Effect.gen(function* () {
+				const rows = yield* db
+					.select()
+					.from(questions)
+					.where(eq(questions.questionnaireId, questionnaireId))
+					.orderBy(questions.orderNumber);
+				return rows as Question[];
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to fetch questions",
+							cause: e,
+						}),
+				),
+			);
 
 		const getById: IQuestionService["getById"] = (id) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.select()
-						.from(questions)
-						.where(eq(questions.id, id))
-						.then((rows) => rows[0] as Question | undefined),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to fetch question",
-						cause: error,
-					}),
+			Effect.gen(function* () {
+				const [result] = yield* db
+					.select()
+					.from(questions)
+					.where(eq(questions.id, id));
+				if (!result) {
+					return yield* Effect.fail(new QuestionNotFoundError({ id }));
+				}
+				return result as Question;
 			}).pipe(
-				Effect.flatMap((result) =>
-					result
-						? Effect.succeed(result)
-						: Effect.fail(new QuestionNotFoundError({ id })),
+				Effect.mapError((e): QuestionNotFoundError | DatabaseError =>
+					e instanceof QuestionNotFoundError
+						? e
+						: new DatabaseError({
+								message: "Failed to fetch question",
+								cause: e,
+							}),
 				),
 			);
 
 		const create: IQuestionService["create"] = (data) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.insert(questions)
-						.values(data)
-						.returning()
-						.then((rows) => rows[0] as Question),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to create question",
-						cause: error,
-					}),
-			});
+			Effect.gen(function* () {
+				const [result] = yield* db.insert(questions).values(data).returning();
+				return result as Question;
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to create question",
+							cause: e,
+						}),
+				),
+			);
 
 		const update: IQuestionService["update"] = (id, data) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.update(questions)
-						.set(data)
-						.where(eq(questions.id, id))
-						.returning()
-						.then((rows) => rows[0] as Question | undefined),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to update question",
-						cause: error,
-					}),
+			Effect.gen(function* () {
+				const [result] = yield* db
+					.update(questions)
+					.set(data)
+					.where(eq(questions.id, id))
+					.returning();
+				if (!result) {
+					return yield* Effect.fail(new QuestionNotFoundError({ id }));
+				}
+				return result as Question;
 			}).pipe(
-				Effect.flatMap((result) =>
-					result
-						? Effect.succeed(result)
-						: Effect.fail(new QuestionNotFoundError({ id })),
+				Effect.mapError((e): QuestionNotFoundError | DatabaseError =>
+					e instanceof QuestionNotFoundError
+						? e
+						: new DatabaseError({
+								message: "Failed to update question",
+								cause: e,
+							}),
 				),
 			);
 
 		const deleteQuestions: IQuestionService["delete"] = (ids) =>
-			Effect.tryPromise({
-				try: async () => {
-					for (const id of ids) {
-						await db.delete(questions).where(eq(questions.id, id));
-					}
-				},
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to delete questions",
-						cause: error,
-					}),
-			});
+			Effect.gen(function* () {
+				for (const id of ids) {
+					yield* db.delete(questions).where(eq(questions.id, id));
+				}
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to delete questions",
+							cause: e,
+						}),
+				),
+			);
 
 		return {
 			getByQuestionnaireId,

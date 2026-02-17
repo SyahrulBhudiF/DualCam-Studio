@@ -1,34 +1,34 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1769545335286,
-      "tag": "0000_petite_miss_america",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1770121098684,
-      "tag": "0001_rare_wendell_vaughn",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1770743895145,
-      "tag": "0002_ambitious_firestar",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1770745131921,
-      "tag": "0003_conscious_warstar",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "postgresql",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "7",
+			"when": 1769545335286,
+			"tag": "0000_petite_miss_america",
+			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "7",
+			"when": 1770121098684,
+			"tag": "0001_rare_wendell_vaughn",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1770743895145,
+			"tag": "0002_ambitious_firestar",
+			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "7",
+			"when": 1770745131921,
+			"tag": "0003_conscious_warstar",
+			"breakpoints": true
+		}
+	]
 }
