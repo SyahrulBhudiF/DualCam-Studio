@@ -62,19 +62,10 @@ export const AuthServiceLive = Layer.effect(
 		const signup: IAuthService["signup"] = (email, password) =>
 			Effect.gen(function* () {
 				// Check if user already exists
-				const existingUser = yield* Effect.tryPromise({
-					try: () =>
-						db
-							.select()
-							.from(users)
-							.where(eq(users.email, email))
-							.then((rows) => rows[0] as User | undefined),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to check existing user",
-							cause: error,
-						}),
-				});
+				const [existingUser] = yield* db
+					.select()
+					.from(users)
+					.where(eq(users.email, email));
 
 				if (existingUser) {
 					return yield* Effect.fail(
@@ -93,42 +84,33 @@ export const AuthServiceLive = Layer.effect(
 				});
 
 				// Create user
-				const newUser = yield* Effect.tryPromise({
-					try: () =>
-						db
-							.insert(users)
-							.values({
-								email,
-								passwordHash,
-							} satisfies Omit<NewUser, "id" | "createdAt" | "updatedAt">)
-							.returning()
-							.then((rows) => rows[0] as User),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to create user",
-							cause: error,
-						}),
-				});
+				const [newUser] = yield* db
+					.insert(users)
+					.values({
+						email,
+						passwordHash,
+					} satisfies Omit<NewUser, "id" | "createdAt" | "updatedAt">)
+					.returning();
 
-				return newUser;
-			});
+				return newUser as User;
+			}).pipe(
+				Effect.mapError((e): SignupError | DatabaseError =>
+					e instanceof SignupError
+						? e
+						: new DatabaseError({
+								message: "Failed to signup",
+								cause: e,
+							}),
+				),
+			);
 
 		const login: IAuthService["login"] = (email, password) =>
 			Effect.gen(function* () {
 				// Find user
-				const user = yield* Effect.tryPromise({
-					try: () =>
-						db
-							.select()
-							.from(users)
-							.where(eq(users.email, email))
-							.then((rows) => rows[0] as User | undefined),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to find user",
-							cause: error,
-						}),
-				});
+				const [user] = yield* db
+					.select()
+					.from(users)
+					.where(eq(users.email, email));
 
 				if (!user) {
 					return yield* Effect.fail(
@@ -150,15 +132,7 @@ export const AuthServiceLive = Layer.effect(
 				}
 
 				// Session fixation prevention: delete all existing sessions for this user
-				yield* Effect.tryPromise({
-					try: () =>
-						db.delete(sessions).where(eq(sessions.userId, user.id)),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to clear existing sessions",
-							cause: error,
-						}),
-				});
+				yield* db.delete(sessions).where(eq(sessions.userId, user.id));
 
 				// Piggyback expired session cleanup (fire-and-forget)
 				yield* Effect.fork(deleteExpiredSessions());
@@ -167,36 +141,39 @@ export const AuthServiceLive = Layer.effect(
 				const token = generateToken();
 				const expiresAt = new Date(Date.now() + config.sessionDurationMs);
 
-				const session = yield* Effect.tryPromise({
-					try: () =>
-						db
-							.insert(sessions)
-							.values({
-								userId: user.id,
-								token,
-								expiresAt,
-							} satisfies Omit<NewSession, "id" | "createdAt">)
-							.returning()
-							.then((rows) => rows[0] as Session),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to create session",
-							cause: error,
-						}),
-				});
+				const [session] = yield* db
+					.insert(sessions)
+					.values({
+						userId: user.id,
+						token,
+						expiresAt,
+					} satisfies Omit<NewSession, "id" | "createdAt">)
+					.returning();
 
-				return { user, session };
-			});
+				return { user: user as User, session: session as Session };
+			}).pipe(
+				Effect.mapError((e): InvalidCredentialsError | DatabaseError =>
+					e instanceof InvalidCredentialsError
+						? e
+						: new DatabaseError({
+								message: "Failed to login",
+								cause: e,
+							}),
+				),
+			);
 
 		const logout: IAuthService["logout"] = (token) =>
-			Effect.tryPromise({
-				try: () => db.delete(sessions).where(eq(sessions.token, token)),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to delete session",
-						cause: error,
-					}),
-			}).pipe(Effect.map(() => undefined));
+			Effect.gen(function* () {
+				yield* db.delete(sessions).where(eq(sessions.token, token));
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to delete session",
+							cause: e,
+						}),
+				),
+			);
 
 		const validateSession: IAuthService["validateSession"] = (token) =>
 			Effect.gen(function* () {
@@ -207,24 +184,12 @@ export const AuthServiceLive = Layer.effect(
 				}
 
 				// Find session with user
-				const result = yield* Effect.tryPromise({
-					try: () =>
-						db
-							.select()
-							.from(sessions)
-							.where(
-								and(
-									eq(sessions.token, token),
-									gt(sessions.expiresAt, new Date()),
-								),
-							)
-							.then((rows) => rows[0] as Session | undefined),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to validate session",
-							cause: error,
-						}),
-				});
+				const [result] = yield* db
+					.select()
+					.from(sessions)
+					.where(
+						and(eq(sessions.token, token), gt(sessions.expiresAt, new Date())),
+					);
 
 				if (!result) {
 					return yield* Effect.fail(
@@ -233,19 +198,10 @@ export const AuthServiceLive = Layer.effect(
 				}
 
 				// Get user
-				const user = yield* Effect.tryPromise({
-					try: () =>
-						db
-							.select()
-							.from(users)
-							.where(eq(users.id, result.userId))
-							.then((rows) => rows[0] as User | undefined),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to fetch user",
-							cause: error,
-						}),
-				});
+				const [user] = yield* db
+					.select()
+					.from(users)
+					.where(eq(users.id, (result as Session).userId));
 
 				if (!user) {
 					return yield* Effect.fail(
@@ -253,23 +209,35 @@ export const AuthServiceLive = Layer.effect(
 					);
 				}
 
-				return { user, session: result };
-			});
+				return { user: user as User, session: result as Session };
+			}).pipe(
+				Effect.mapError(
+					(e): SessionExpiredError | TokenError | DatabaseError =>
+						e instanceof SessionExpiredError || e instanceof TokenError
+							? e
+							: new DatabaseError({
+									message: "Failed to validate session",
+									cause: e,
+								}),
+				),
+			);
 
 		const getUserByEmail: IAuthService["getUserByEmail"] = (email) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.select()
-						.from(users)
-						.where(eq(users.email, email))
-						.then((rows) => (rows[0] as User | undefined) ?? null),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to fetch user by email",
-						cause: error,
-					}),
-			});
+			Effect.gen(function* () {
+				const [result] = yield* db
+					.select()
+					.from(users)
+					.where(eq(users.email, email));
+				return (result as User | undefined) ?? null;
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to fetch user by email",
+							cause: e,
+						}),
+				),
+			);
 
 		const refreshSession: IAuthService["refreshSession"] = (token) =>
 			Effect.gen(function* () {
@@ -278,20 +246,11 @@ export const AuthServiceLive = Layer.effect(
 
 				// Update expiration
 				const newExpiresAt = new Date(Date.now() + config.sessionDurationMs);
-				const updated = yield* Effect.tryPromise({
-					try: () =>
-						db
-							.update(sessions)
-							.set({ expiresAt: newExpiresAt })
-							.where(eq(sessions.id, session.id))
-							.returning()
-							.then((rows) => rows[0] as Session | undefined),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to refresh session",
-							cause: error,
-						}),
-				});
+				const [updated] = yield* db
+					.update(sessions)
+					.set({ expiresAt: newExpiresAt })
+					.where(eq(sessions.id, session.id))
+					.returning();
 
 				if (!updated) {
 					return yield* Effect.fail(
@@ -299,19 +258,31 @@ export const AuthServiceLive = Layer.effect(
 					);
 				}
 
-				return updated;
-			});
+				return updated as Session;
+			}).pipe(
+				Effect.mapError(
+					(e): SessionExpiredError | TokenError | DatabaseError =>
+						e instanceof SessionExpiredError || e instanceof TokenError
+							? e
+							: new DatabaseError({
+									message: "Failed to refresh session",
+									cause: e,
+								}),
+				),
+			);
 
 		const deleteExpiredSessions: IAuthService["deleteExpiredSessions"] = () =>
-			Effect.tryPromise({
-				try: () =>
-					db.delete(sessions).where(lt(sessions.expiresAt, new Date())),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to delete expired sessions",
-						cause: error,
-					}),
-			}).pipe(Effect.map(() => undefined));
+			Effect.gen(function* () {
+				yield* db.delete(sessions).where(lt(sessions.expiresAt, new Date()));
+			}).pipe(
+				Effect.mapError(
+					(e) =>
+						new DatabaseError({
+							message: "Failed to delete expired sessions",
+							cause: e,
+						}),
+				),
+			);
 
 		return {
 			signup,

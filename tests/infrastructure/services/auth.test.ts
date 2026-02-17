@@ -1,8 +1,17 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import { Effect, Exit, Layer } from "effect";
+import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
 import { describe, expect, vi, beforeEach } from "vitest";
 import { AuthService, AuthServiceLive } from "@/infrastructure/services/auth";
+
+// Creates an Effect-compatible mock result for yield*
+const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
+	const obj = Object.create(CommitPrototype);
+	obj.commit = () => Effect.succeed(data);
+	if (methods) Object.assign(obj, methods);
+	return obj;
+};
 
 // Mock bcryptjs
 vi.mock("bcryptjs", () => ({
@@ -37,26 +46,20 @@ const createMockDb = () => {
 		sessions: mockSessions,
 		select: vi.fn().mockReturnThis(),
 		from: vi.fn().mockReturnThis(),
-		where: vi.fn().mockImplementation(() => ({
-			then: (resolve: (rows: unknown[]) => void) => {
-				// Return empty by default, tests can override
-				return Promise.resolve([]).then(resolve);
-			},
-		})),
+		where: vi.fn().mockImplementation(() => toEffect([])),
 		insert: vi.fn().mockReturnThis(),
 		values: vi.fn().mockReturnThis(),
-		returning: vi.fn().mockImplementation(() => ({
-			then: (resolve: (rows: unknown[]) => void) => {
-				const newUser = {
+		returning: vi.fn().mockImplementation(() =>
+			toEffect([
+				{
 					id: "test-user-id",
 					email: "test@example.com",
 					passwordHash: "hashed_password",
 					createdAt: new Date(),
 					updatedAt: new Date(),
-				};
-				return Promise.resolve([newUser]).then(resolve);
-			},
-		})),
+				},
+			]),
+		),
 		delete: vi.fn().mockReturnThis(),
 		update: vi.fn().mockReturnThis(),
 		set: vi.fn().mockReturnThis(),
@@ -83,7 +86,10 @@ describe("AuthService", () => {
 
 			return Effect.gen(function* () {
 				const authService = yield* AuthService;
-				const result = yield* authService.signup("test@example.com", "password123");
+				const result = yield* authService.signup(
+					"test@example.com",
+					"password123",
+				);
 
 				expect(result).toBeDefined();
 				expect(result.email).toBe("test@example.com");
@@ -92,19 +98,17 @@ describe("AuthService", () => {
 
 		it.effect("should fail if user already exists", () => {
 			// Mock that user already exists
-			mockDb.where = vi.fn().mockImplementation(() => ({
-				then: (resolve: (rows: unknown[]) => void) => {
-					return Promise.resolve([
-						{
-							id: "existing-id",
-							email: "test@example.com",
-							passwordHash: "hash",
-							createdAt: new Date(),
-							updatedAt: new Date(),
-						},
-					]).then(resolve);
-				},
-			}));
+			mockDb.where = vi.fn().mockImplementation(() =>
+				toEffect([
+					{
+						id: "existing-id",
+						email: "test@example.com",
+						passwordHash: "hash",
+						createdAt: new Date(),
+						updatedAt: new Date(),
+					},
+				]),
+			);
 
 			const testLayer = createTestLayer(mockDb);
 
@@ -123,45 +127,44 @@ describe("AuthService", () => {
 		it.effect("should login successfully with valid credentials", () => {
 			// Mock user exists
 			let callCount = 0;
-			mockDb.where = vi.fn().mockImplementation(() => ({
-				then: (resolve: (rows: unknown[]) => void) => {
-					callCount++;
-					if (callCount === 1) {
-						// First call: finding user
-						return Promise.resolve([
-							{
-								id: "user-id",
-								email: "test@example.com",
-								passwordHash: "hashed_password",
-								createdAt: new Date(),
-								updatedAt: new Date(),
-							},
-						]).then(resolve);
-					}
-					return Promise.resolve([]).then(resolve);
-				},
-			}));
+			mockDb.where = vi.fn().mockImplementation(() => {
+				callCount++;
+				if (callCount === 1) {
+					// First call: finding user
+					return toEffect([
+						{
+							id: "user-id",
+							email: "test@example.com",
+							passwordHash: "hashed_password",
+							createdAt: new Date(),
+							updatedAt: new Date(),
+						},
+					]);
+				}
+				return toEffect([]);
+			});
 
 			// Mock session creation
-			mockDb.returning = vi.fn().mockImplementation(() => ({
-				then: (resolve: (rows: unknown[]) => void) => {
-					return Promise.resolve([
-						{
-							id: "session-id",
-							userId: "user-id",
-							token: "test-token",
-							expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-							createdAt: new Date(),
-						},
-					]).then(resolve);
-				},
-			}));
+			mockDb.returning = vi.fn().mockImplementation(() =>
+				toEffect([
+					{
+						id: "session-id",
+						userId: "user-id",
+						token: "test-token",
+						expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+						createdAt: new Date(),
+					},
+				]),
+			);
 
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
 				const authService = yield* AuthService;
-				const result = yield* authService.login("test@example.com", "password123");
+				const result = yield* authService.login(
+					"test@example.com",
+					"password123",
+				);
 
 				expect(result.user).toBeDefined();
 				expect(result.session).toBeDefined();
@@ -171,11 +174,7 @@ describe("AuthService", () => {
 
 		it.effect("should fail with invalid credentials", () => {
 			// Mock user not found
-			mockDb.where = vi.fn().mockImplementation(() => ({
-				then: (resolve: (rows: unknown[]) => void) => {
-					return Promise.resolve([]).then(resolve);
-				},
-			}));
+			mockDb.where = vi.fn().mockImplementation(() => toEffect([]));
 
 			const testLayer = createTestLayer(mockDb);
 
@@ -204,11 +203,7 @@ describe("AuthService", () => {
 
 		it.effect("should fail with expired session", () => {
 			// Mock no valid session found
-			mockDb.where = vi.fn().mockImplementation(() => ({
-				then: (resolve: (rows: unknown[]) => void) => {
-					return Promise.resolve([]).then(resolve);
-				},
-			}));
+			mockDb.where = vi.fn().mockImplementation(() => toEffect([]));
 
 			const testLayer = createTestLayer(mockDb);
 

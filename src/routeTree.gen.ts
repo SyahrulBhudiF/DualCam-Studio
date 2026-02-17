@@ -119,16 +119,16 @@ export interface FileRoutesByFullPath {
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
   '/admin/': typeof AdminIndexRoute
-  '/questionnaire': typeof QuestionnaireIndexRoute
-  '/success': typeof SuccessIndexRoute
+  '/questionnaire/': typeof QuestionnaireIndexRoute
+  '/success/': typeof SuccessIndexRoute
   '/api/video/$': typeof ApiVideoSplatRoute
-  '/admin/dashboard': typeof AdminDashboardIndexRoute
-  '/admin/questionnaires': typeof AdminQuestionnairesIndexRoute
-  '/admin/responses': typeof AdminResponsesIndexRoute
-  '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
-  '/admin/questionnaires/$questionnaireId': typeof AdminQuestionnairesQuestionnaireIdIndexRoute
-  '/admin/responses/$responseId': typeof AdminResponsesResponseIdIndexRoute
-  '/admin/questionnaires/$questionnaireId/$questionId': typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
+  '/admin/dashboard/': typeof AdminDashboardIndexRoute
+  '/admin/questionnaires/': typeof AdminQuestionnairesIndexRoute
+  '/admin/responses/': typeof AdminResponsesIndexRoute
+  '/questionnaire/segmented/': typeof QuestionnaireSegmentedIndexRoute
+  '/admin/questionnaires/$questionnaireId/': typeof AdminQuestionnairesQuestionnaireIdIndexRoute
+  '/admin/responses/$responseId/': typeof AdminResponsesResponseIdIndexRoute
+  '/admin/questionnaires/$questionnaireId/$questionId/': typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -175,16 +175,16 @@ export interface FileRouteTypes {
     | '/logout'
     | '/signup'
     | '/admin/'
-    | '/questionnaire'
-    | '/success'
+    | '/questionnaire/'
+    | '/success/'
     | '/api/video/$'
-    | '/admin/dashboard'
-    | '/admin/questionnaires'
-    | '/admin/responses'
-    | '/questionnaire/segmented'
-    | '/admin/questionnaires/$questionnaireId'
-    | '/admin/responses/$responseId'
-    | '/admin/questionnaires/$questionnaireId/$questionId'
+    | '/admin/dashboard/'
+    | '/admin/questionnaires/'
+    | '/admin/responses/'
+    | '/questionnaire/segmented/'
+    | '/admin/questionnaires/$questionnaireId/'
+    | '/admin/responses/$responseId/'
+    | '/admin/questionnaires/$questionnaireId/$questionId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -274,14 +274,14 @@ declare module '@tanstack/react-router' {
     '/success/': {
       id: '/success/'
       path: '/success'
-      fullPath: '/success'
+      fullPath: '/success/'
       preLoaderRoute: typeof SuccessIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/questionnaire/': {
       id: '/questionnaire/'
       path: '/questionnaire'
-      fullPath: '/questionnaire'
+      fullPath: '/questionnaire/'
       preLoaderRoute: typeof QuestionnaireIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -295,28 +295,28 @@ declare module '@tanstack/react-router' {
     '/questionnaire/segmented/': {
       id: '/questionnaire/segmented/'
       path: '/questionnaire/segmented'
-      fullPath: '/questionnaire/segmented'
+      fullPath: '/questionnaire/segmented/'
       preLoaderRoute: typeof QuestionnaireSegmentedIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/responses/': {
       id: '/admin/responses/'
       path: '/responses'
-      fullPath: '/admin/responses'
+      fullPath: '/admin/responses/'
       preLoaderRoute: typeof AdminResponsesIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/questionnaires/': {
       id: '/admin/questionnaires/'
       path: '/questionnaires'
-      fullPath: '/admin/questionnaires'
+      fullPath: '/admin/questionnaires/'
       preLoaderRoute: typeof AdminQuestionnairesIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/dashboard/': {
       id: '/admin/dashboard/'
       path: '/dashboard'
-      fullPath: '/admin/dashboard'
+      fullPath: '/admin/dashboard/'
       preLoaderRoute: typeof AdminDashboardIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
@@ -330,21 +330,21 @@ declare module '@tanstack/react-router' {
     '/admin/responses/$responseId/': {
       id: '/admin/responses/$responseId/'
       path: '/responses/$responseId'
-      fullPath: '/admin/responses/$responseId'
+      fullPath: '/admin/responses/$responseId/'
       preLoaderRoute: typeof AdminResponsesResponseIdIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/questionnaires/$questionnaireId/': {
       id: '/admin/questionnaires/$questionnaireId/'
       path: '/questionnaires/$questionnaireId'
-      fullPath: '/admin/questionnaires/$questionnaireId'
+      fullPath: '/admin/questionnaires/$questionnaireId/'
       preLoaderRoute: typeof AdminQuestionnairesQuestionnaireIdIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/admin/questionnaires/$questionnaireId/$questionId/': {
       id: '/admin/questionnaires/$questionnaireId/$questionId/'
       path: '/questionnaires/$questionnaireId/$questionId'
-      fullPath: '/admin/questionnaires/$questionnaireId/$questionId'
+      fullPath: '/admin/questionnaires/$questionnaireId/$questionId/'
       preLoaderRoute: typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }

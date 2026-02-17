@@ -1,11 +1,20 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import { Effect, Exit, Layer } from "effect";
+import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
 import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	QuestionnaireService,
 	QuestionnaireServiceLive,
 } from "@/infrastructure/services/questionnaire";
+
+// Creates an Effect-compatible mock result for yield*
+const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
+	const obj = Object.create(CommitPrototype);
+	obj.commit = () => Effect.succeed(data);
+	if (methods) Object.assign(obj, methods);
+	return obj;
+};
 
 // Create mock database operations
 const createMockDb = () => {
@@ -39,7 +48,6 @@ const createMockDb = () => {
 		update: vi.fn().mockReturnThis(),
 		set: vi.fn().mockReturnThis(),
 		delete: vi.fn().mockReturnThis(),
-		then: vi.fn(),
 	};
 };
 
@@ -53,38 +61,32 @@ const createTestLayer = (
 	},
 ) => {
 	// Setup default behavior
-	mockDb.orderBy = vi.fn().mockImplementation(() => ({
-		then: (resolve: (rows: unknown[]) => void) =>
-			Promise.resolve(overrides?.selectResult ?? mockDb.questionnaires).then(
-				resolve,
-			),
-	}));
+	mockDb.orderBy = vi
+		.fn()
+		.mockImplementation(() =>
+			toEffect(overrides?.selectResult ?? mockDb.questionnaires),
+		);
 
-	mockDb.where = vi.fn().mockImplementation(() => ({
-		then: (resolve: (rows: unknown[]) => void) =>
-			Promise.resolve(
-				overrides?.selectResult ?? [mockDb.questionnaires[0]],
-			).then(resolve),
-		limit: vi.fn().mockImplementation(() => ({
-			then: (resolve: (rows: unknown[]) => void) =>
-				Promise.resolve(
-					overrides?.selectResult ?? [mockDb.questionnaires[1]],
-				).then(resolve),
-		})),
-		returning: vi.fn().mockImplementation(() => ({
-			then: (resolve: (rows: unknown[]) => void) =>
-				Promise.resolve(
-					overrides?.updateResult ? [overrides.updateResult] : [],
-				).then(resolve),
-		})),
-	}));
+	mockDb.where = vi.fn().mockImplementation(() =>
+		toEffect(overrides?.selectResult ?? [mockDb.questionnaires[0]], {
+			limit: vi
+				.fn()
+				.mockImplementation(() =>
+					toEffect(overrides?.selectResult ?? [mockDb.questionnaires[1]]),
+				),
+			returning: vi
+				.fn()
+				.mockImplementation(() =>
+					toEffect(overrides?.updateResult ? [overrides.updateResult] : []),
+				),
+		}),
+	);
 
-	mockDb.returning = vi.fn().mockImplementation(() => ({
-		then: (resolve: (rows: unknown[]) => void) =>
-			Promise.resolve(
-				overrides?.insertResult ? [overrides.insertResult] : [],
-			).then(resolve),
-	}));
+	mockDb.returning = vi
+		.fn()
+		.mockImplementation(() =>
+			toEffect(overrides?.insertResult ? [overrides.insertResult] : []),
+		);
 
 	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
 	return QuestionnaireServiceLive.pipe(Layer.provide(MockPgDrizzle));
@@ -142,10 +144,7 @@ describe("QuestionnaireService", () => {
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
 			// Override where to return empty for not found
-			mockDb.where = vi.fn().mockImplementation(() => ({
-				then: (resolve: (rows: unknown[]) => void) =>
-					Promise.resolve([]).then(resolve),
-			}));
+			mockDb.where = vi.fn().mockImplementation(() => toEffect([]));
 
 			return Effect.gen(function* () {
 				const service = yield* QuestionnaireService;
@@ -209,12 +208,11 @@ describe("QuestionnaireService", () => {
 			const testLayer = createTestLayer(mockDb, { updateResult: undefined });
 
 			// Override to return empty for not found
-			mockDb.where = vi.fn().mockImplementation(() => ({
-				returning: vi.fn().mockImplementation(() => ({
-					then: (resolve: (rows: unknown[]) => void) =>
-						Promise.resolve([]).then(resolve),
-				})),
-			}));
+			mockDb.where = vi.fn().mockImplementation(() =>
+				toEffect([], {
+					returning: vi.fn().mockImplementation(() => toEffect([])),
+				}),
+			);
 
 			return Effect.gen(function* () {
 				const service = yield* QuestionnaireService;

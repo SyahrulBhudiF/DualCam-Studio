@@ -1,11 +1,20 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import { Effect, Layer } from "effect";
+import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
 import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	DashboardService,
 	DashboardServiceLive,
 } from "@/infrastructure/services/dashboard";
+
+// Creates an Effect-compatible mock result for yield*
+const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
+	const obj = Object.create(CommitPrototype);
+	obj.commit = () => Effect.succeed(data);
+	if (methods) Object.assign(obj, methods);
+	return obj;
+};
 
 // Mock data matching the actual DB result shapes
 // Include both 'title' and 'text' so it works for questionnaire stats (uses title) and question stats (uses text)
@@ -17,6 +26,12 @@ const mockQuestionnaireStats = [
 		order: 1,
 		totalResponses: 2,
 		totalScore: "30",
+		// Fields used by getSummary destructuring
+		count: 2,
+		avgScore: "15",
+		// Fields used by getAnalyticsDetails video stats destructuring
+		total: 3,
+		withVideo: 2,
 	},
 	{
 		id: "qn2",
@@ -25,6 +40,10 @@ const mockQuestionnaireStats = [
 		order: 2,
 		totalResponses: 1,
 		totalScore: "15",
+		count: 1,
+		avgScore: "10",
+		total: 2,
+		withVideo: 1,
 	},
 ];
 
@@ -74,11 +93,6 @@ const _mockTimeline = [
 
 const _mockVideoStats = [{ total: 3, withVideo: 2 }];
 
-// Helper to create a thenable object
-const createThenable = <T>(data: T) => ({
-	then: (resolve: (value: T) => void) => Promise.resolve(data).then(resolve),
-});
-
 // Create mock database with chainable query builder
 // This version always returns appropriate mock data for any query pattern
 const createMockDb = () => {
@@ -87,44 +101,40 @@ const createMockDb = () => {
 			from: vi.fn().mockImplementation(() => {
 				// Build complete chain that returns different data based on query pattern
 				const createFullChain = (defaultData: unknown) => {
-					const thenable = createThenable(defaultData);
+					const effectResult = toEffect(defaultData);
 
 					// groupBy chain with optional orderBy
-					const groupByChain = {
-						...thenable,
-						orderBy: vi.fn().mockReturnValue(thenable),
-					};
+					const groupByChain = toEffect(defaultData, {
+						orderBy: vi.fn().mockReturnValue(effectResult),
+					});
 
 					// leftJoin chain (for questionnaire stats, question stats, answer stats)
-					const leftJoinChain = {
-						...thenable,
+					const leftJoinChain = toEffect(defaultData, {
 						groupBy: vi.fn().mockImplementation(() => groupByChain),
-						leftJoin: vi.fn().mockReturnValue({
-							...thenable,
-							groupBy: vi.fn().mockImplementation(() => groupByChain),
-						}),
-					};
+						leftJoin: vi.fn().mockReturnValue(
+							toEffect(defaultData, {
+								groupBy: vi.fn().mockImplementation(() => groupByChain),
+							}),
+						),
+					});
 
 					// innerJoin chain (for class stats)
-					const innerJoinChain = {
-						...thenable,
+					const innerJoinChain = toEffect(defaultData, {
 						groupBy: vi.fn().mockImplementation(() => groupByChain),
-					};
+					});
 
 					// where chain (for filtered queries)
-					const whereChain = {
-						...thenable,
-						orderBy: vi.fn().mockReturnValue(thenable),
-					};
+					const whereChain = toEffect(defaultData, {
+						orderBy: vi.fn().mockReturnValue(effectResult),
+					});
 
-					return {
-						...thenable,
+					return toEffect(defaultData, {
 						leftJoin: vi.fn().mockImplementation(() => leftJoinChain),
 						innerJoin: vi.fn().mockImplementation(() => innerJoinChain),
 						groupBy: vi.fn().mockImplementation(() => groupByChain),
 						where: vi.fn().mockImplementation(() => whereChain),
-						orderBy: vi.fn().mockReturnValue(thenable),
-					};
+						orderBy: vi.fn().mockReturnValue(effectResult),
+					});
 				};
 
 				// Return the chain with questionnaire stats as default
