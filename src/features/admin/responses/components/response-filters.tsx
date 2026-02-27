@@ -68,13 +68,13 @@ export function ResponseFilters({
 		onFilterClear();
 	};
 
-	const hasActiveFilters =
+	const hasActiveFilters = Boolean(
 		questionnaireId !== ALL_VALUE ||
 		className !== ALL_VALUE ||
 		startDate ||
 		endDate ||
-		name;
-
+		name !== ALL_VALUE,
+	);
 	// Show loading skeleton if filterOptions not ready
 	if (!filterOptions) {
 		return (

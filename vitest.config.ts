@@ -3,7 +3,8 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig(({ mode }) => ({
-	plugins: [tsconfigPaths()],
+	// biome-ignore lint/suspicious/noExplicitAny: vite/vitest Plugin type mismatch
+	plugins: [tsconfigPaths() as any],
 	test: {
 		globals: true,
 		environment: "node",

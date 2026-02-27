@@ -206,14 +206,13 @@ export class QuestionnaireService extends Effect.Service<QuestionnaireService>()
 							return result as Questionnaire;
 						}),
 					).pipe(
-						Effect.catchTag("DatabaseError", (e) => Effect.fail(e)),
-						Effect.catchAll((e) =>
-							e instanceof QuestionnaireNotFoundError ? Effect.fail(e) : Effect.fail(
-								new DatabaseError({
-									message: "Failed to update questionnaire",
-									cause: e,
-								})
-							)
+						Effect.mapError((e) =>
+							e instanceof QuestionnaireNotFoundError
+								? e
+								: new DatabaseError({
+										message: "Failed to update questionnaire",
+										cause: e,
+									}),
 						),
 					);
 				}
@@ -281,14 +280,13 @@ export class QuestionnaireService extends Effect.Service<QuestionnaireService>()
 						}
 					}),
 				).pipe(
-					Effect.catchTag("DatabaseError", (e) => Effect.fail(e)),
-					Effect.catchAll((e) =>
-						e instanceof QuestionnaireNotFoundError ? Effect.fail(e) : Effect.fail(
-							new DatabaseError({
-								message: "Failed to activate questionnaire",
-								cause: e,
-							})
-						)
+					Effect.mapError((e) =>
+						e instanceof QuestionnaireNotFoundError
+							? e
+							: new DatabaseError({
+									message: "Failed to activate questionnaire",
+									cause: e,
+								}),
 					),
 				);
 			});
