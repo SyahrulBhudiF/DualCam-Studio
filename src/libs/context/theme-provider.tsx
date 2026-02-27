@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { getCookie, removeCookie, setCookie } from "@/libs/cookie";
 
 type Theme = "dark" | "light" | "system";
@@ -42,22 +42,14 @@ export function ThemeProvider({
 		() => (getCookie(storageKey) as Theme) || defaultTheme,
 	);
 
-	// Optimized: Memoize the resolved theme calculation to prevent unnecessary re-computations
-	const resolvedTheme = useMemo((): ResolvedTheme => {
-		if (theme === "system") {
-			if (
-				typeof window !== "undefined" &&
-				typeof window.matchMedia === "function"
-			) {
-				return window.matchMedia("(prefers-color-scheme: dark)").matches
-					? "dark"
-					: "light";
-			}
-			// On the server or unsupported environments, fall back to light
-			return "light";
-		}
-		return theme as ResolvedTheme;
-	}, [theme]);
+	const resolvedTheme: ResolvedTheme =
+		theme === "system"
+			? typeof window !== "undefined" &&
+				  typeof window.matchMedia === "function" &&
+				  window.matchMedia("(prefers-color-scheme: dark)").matches
+				? "dark"
+				: "light"
+			: (theme as ResolvedTheme);
 
 	useEffect(() => {
 		const root = window.document.documentElement;

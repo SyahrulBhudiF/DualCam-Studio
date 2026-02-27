@@ -1,11 +1,11 @@
-import * as XLSX from "xlsx";
 import type { DashboardProps } from "./types";
 
-export function exportDashboardToExcel({
+export async function exportDashboardToExcel({
 	summary,
 	breakdown,
 	analytics,
-}: DashboardProps) {
+	}: DashboardProps) {
+	const XLSX = await import("xlsx");
 	const summarySheetData = [
 		["Metric", "Value"],
 		["Total Questionnaires", summary?.totalQuestionnaires ?? 0],
@@ -36,8 +36,7 @@ export function exportDashboardToExcel({
 	const questionSheetData = [
 		["Order", "Question", "Average Score"],
 		...(analytics?.questions ?? [])
-			.slice()
-			.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+			.toSorted((a, b) => (a.order ?? 0) - (b.order ?? 0))
 			.map((q) => [q.order ?? "", q.text, q.averageScore]),
 	];
 
