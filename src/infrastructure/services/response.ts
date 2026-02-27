@@ -1,6 +1,6 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import type { SQL } from "drizzle-orm";
-import { and, desc, eq, gte, ilike, lte } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, lte } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
 import type {
 	NewResponse,
@@ -19,6 +19,11 @@ import {
 } from "../db";
 import { DatabaseError, ResponseNotFoundError } from "../errors";
 
+export type VideoSegmentPath = {
+	main: string | null;
+	secondary: string | null;
+} | null;
+
 export interface ResponseWithProfile extends Response {
 	profile: Profile | null;
 	questionnaire: Questionnaire | null;
@@ -30,10 +35,11 @@ export interface ResponseDetail {
 	questionId: string;
 	answerId: string;
 	score: number;
-	videoSegmentPath: unknown;
+	videoSegmentPath: VideoSegmentPath;
 	questionText: string | null;
 	orderNumber: number | null;
 	answerText: string | null;
+	maxScore: number;
 }
 
 export interface ResponseFull extends ResponseWithProfile {
@@ -46,6 +52,11 @@ export interface ResponseFilter {
 	name?: string;
 	startDate?: string;
 	endDate?: string;
+}
+
+/** Escape LIKE wildcard characters to prevent wildcard injection */
+function escapeLikePattern(str: string): string {
+	return str.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
 }
 
 export interface IResponseService {
@@ -142,22 +153,63 @@ export const ResponseServiceLive = Layer.effect(
 					.where(eq(responseDetails.responseId, id))
 					.orderBy(questions.orderNumber);
 
-				const details: ResponseDetail[] = detailRows.map((row) => ({
-					id: row.detail.id,
-					responseId: row.detail.responseId,
-					questionId: row.detail.questionId,
-					answerId: row.detail.answerId,
-					score: row.detail.score,
-					videoSegmentPath: row.detail.videoSegmentPath,
-					questionText: row.question?.questionText ?? null,
-					orderNumber: row.question?.orderNumber ?? null,
-					answerText: row.answer?.answerText ?? null,
-				}));
+				// Get max scores per question for all questions in these details
+				const questionIds = [
+					...new Set(detailRows.map((r) => r.detail.questionId)),
+				];
+				const maxScoreMap = new Map<string, number>();
+
+				if (questionIds.length > 0) {
+					const allAnswers = yield* db
+						.select()
+						.from(answers)
+						.where(inArray(answers.questionId, questionIds));
+
+					for (const ans of allAnswers) {
+						const current = maxScoreMap.get(ans.questionId) ?? 0;
+						if (ans.score > current) {
+							maxScoreMap.set(ans.questionId, ans.score);
+						}
+					}
+				}
+
+				const details: ResponseDetail[] = detailRows.map((row) => {
+					let videoSegmentPath: VideoSegmentPath = null;
+					if (row.detail.videoSegmentPath != null) {
+						if (typeof row.detail.videoSegmentPath === "string") {
+							try {
+								videoSegmentPath = JSON.parse(row.detail.videoSegmentPath);
+							} catch {
+								videoSegmentPath = {
+									main: row.detail.videoSegmentPath,
+									secondary: null,
+								};
+							}
+						} else if (typeof row.detail.videoSegmentPath === "object") {
+							videoSegmentPath =
+								row.detail.videoSegmentPath as VideoSegmentPath;
+						}
+					}
+
+					return {
+						id: row.detail.id,
+						responseId: row.detail.responseId,
+						questionId: row.detail.questionId,
+						answerId: row.detail.answerId,
+						score: row.detail.score,
+						videoSegmentPath,
+						questionText: row.question?.questionText ?? null,
+						orderNumber: row.question?.orderNumber ?? null,
+						answerText: row.answer?.answerText ?? null,
+						maxScore: maxScoreMap.get(row.detail.questionId) ?? row.detail.score,
+					};
+				});
 
 				return {
 					...(responseRow.response as Response),
 					profile: (responseRow.profile as Profile) ?? null,
-					questionnaire: (responseRow.questionnaire as Questionnaire) ?? null,
+					questionnaire:
+						(responseRow.questionnaire as Questionnaire) ?? null,
 					details,
 				};
 			}).pipe(
@@ -224,7 +276,8 @@ export const ResponseServiceLive = Layer.effect(
 					conditions.push(eq(profiles.class, filter.className));
 				}
 				if (filter.name) {
-					conditions.push(ilike(profiles.name, `%${filter.name}%`));
+					const escaped = escapeLikePattern(filter.name);
+					conditions.push(ilike(profiles.name, `%${escaped}%`));
 				}
 
 				let query = db
@@ -285,13 +338,11 @@ export const ResponseServiceLive = Layer.effect(
 				),
 			);
 
+		// CASCADE handles responseDetails deletion automatically
 		const deleteResponses: IResponseService["delete"] = (ids) =>
 			Effect.gen(function* () {
-				for (const id of ids) {
-					yield* db
-						.delete(responseDetails)
-						.where(eq(responseDetails.responseId, id));
-					yield* db.delete(responses).where(eq(responses.id, id));
+				if (ids.length > 0) {
+					yield* db.delete(responses).where(inArray(responses.id, ids));
 				}
 			}).pipe(
 				Effect.mapError(
@@ -341,16 +392,35 @@ export const ResponseServiceLive = Layer.effect(
 					if (!detailsByResponseId.has(responseId)) {
 						detailsByResponseId.set(responseId, []);
 					}
+
+					let videoSegmentPath: VideoSegmentPath = null;
+					if (row.detail.videoSegmentPath != null) {
+						if (typeof row.detail.videoSegmentPath === "string") {
+							try {
+								videoSegmentPath = JSON.parse(row.detail.videoSegmentPath);
+							} catch {
+								videoSegmentPath = {
+									main: row.detail.videoSegmentPath,
+									secondary: null,
+								};
+							}
+						} else if (typeof row.detail.videoSegmentPath === "object") {
+							videoSegmentPath =
+								row.detail.videoSegmentPath as VideoSegmentPath;
+						}
+					}
+
 					detailsByResponseId.get(responseId)?.push({
 						id: row.detail.id,
 						responseId: row.detail.responseId,
 						questionId: row.detail.questionId,
 						answerId: row.detail.answerId,
 						score: row.detail.score,
-						videoSegmentPath: row.detail.videoSegmentPath,
+						videoSegmentPath,
 						questionText: row.question?.questionText ?? null,
 						orderNumber: row.question?.orderNumber ?? null,
 						answerText: row.answer?.answerText ?? null,
+						maxScore: row.detail.score, // approximate for bulk — exact would need extra query
 					});
 				}
 

@@ -2,21 +2,21 @@ import * as path from "node:path";
 import { FileSystem } from "@effect/platform";
 import { NodeFileSystem } from "@effect/platform-node";
 import { Context, Effect, Layer } from "effect";
-import { DatabaseError } from "../errors";
+import { FileError } from "../errors/file";
 
 export interface IFileUploadService {
 	readonly ensureDirectory: (
 		dirPath: string,
-	) => Effect.Effect<void, DatabaseError>;
+	) => Effect.Effect<void, FileError>;
 	readonly saveFile: (
 		filePath: string,
 		content: Buffer,
-	) => Effect.Effect<void, DatabaseError>;
+	) => Effect.Effect<void, FileError>;
 	readonly uploadChunk: (data: {
 		folderName: string;
 		fileName: string;
 		fileBase64: string;
-	}) => Effect.Effect<{ success: boolean; path: string }, DatabaseError>;
+	}) => Effect.Effect<{ success: boolean; path: string }, FileError>;
 	readonly getUploadRoot: Effect.Effect<string, never>;
 }
 
@@ -40,7 +40,7 @@ export const FileUploadServiceLive = Layer.effect(
 			}).pipe(
 				Effect.mapError(
 					(error) =>
-						new DatabaseError({
+						new FileError({
 							message: `Failed to ensure directory: ${dirPath}`,
 							cause: error,
 						}),
@@ -51,7 +51,7 @@ export const FileUploadServiceLive = Layer.effect(
 			fs.writeFile(filePath, new Uint8Array(content)).pipe(
 				Effect.mapError(
 					(error) =>
-						new DatabaseError({
+						new FileError({
 							message: `Failed to save file: ${filePath}`,
 							cause: error,
 						}),

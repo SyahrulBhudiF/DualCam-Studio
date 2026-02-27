@@ -1,4 +1,5 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
+import { PgClient } from "@effect/sql-pg";
 import { Effect, Exit, Layer } from "effect";
 import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
@@ -89,7 +90,12 @@ const createTestLayer = (
 		);
 
 	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return QuestionnaireServiceLive.pipe(Layer.provide(MockPgDrizzle));
+	const MockPgClient = Layer.succeed(PgClient.PgClient, {
+		withTransaction: (effect: any) => effect,
+	} as never);
+	return QuestionnaireServiceLive.pipe(
+		Layer.provide(Layer.merge(MockPgDrizzle, MockPgClient)),
+	);
 };
 
 describe("QuestionnaireService", () => {

@@ -1,5 +1,5 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { eq } from "drizzle-orm";
+import { eq, isNotNull } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
 import type { NewProfile, Profile } from "../db";
 import { profiles } from "../db";
@@ -125,13 +125,23 @@ export const ProfileServiceLive = Layer.effect(
 
 		const getUniqueClasses: IProfileService["getUniqueClasses"] = Effect.gen(
 			function* () {
-				const allProfiles = yield* getAll;
-				const classes = new Set<string>();
-				for (const p of allProfiles) {
-					if (p.class) classes.add(p.class);
-				}
-				return Array.from(classes).sort();
+				const rows = yield* db
+					.selectDistinct({ class: profiles.class })
+					.from(profiles)
+					.where(isNotNull(profiles.class));
+
+				return rows
+					.map((r) => r.class as string)
+					.sort();
 			},
+		).pipe(
+			Effect.mapError(
+				(e) =>
+					new DatabaseError({
+						message: "Failed to fetch unique classes",
+						cause: e,
+					}),
+			),
 		);
 
 		return {

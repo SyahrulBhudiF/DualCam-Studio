@@ -167,15 +167,10 @@ describe("AnswerService", () => {
 
 	describe("getByIds", () => {
 		it.effect("should return multiple answers by ids", () => {
-			// Setup mock for getByIds which iterates through ids
-			let callCount = 0;
-			mockDb.where = vi.fn().mockImplementation(() => {
-				const answer = mockDb.answers[callCount];
-				callCount++;
-				return toEffect(answer ? [answer] : []);
-			});
-
 			const testLayer = createTestLayer(mockDb);
+			mockDb.where = vi.fn().mockImplementation(() =>
+				toEffect([mockDb.answers[0], mockDb.answers[1]]),
+			);
 
 			return Effect.gen(function* () {
 				const service = yield* AnswerService;

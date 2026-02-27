@@ -1,5 +1,5 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
 import type { Answer, NewAnswer } from "../db";
 import { answers } from "../db";
@@ -74,15 +74,12 @@ export const AnswerServiceLive = Layer.effect(
 
 		const getByIds: IAnswerService["getByIds"] = (ids) =>
 			Effect.gen(function* () {
-				const results: Answer[] = [];
-				for (const id of ids) {
-					const [row] = yield* db
-						.select()
-						.from(answers)
-						.where(eq(answers.id, id));
-					if (row) results.push(row as Answer);
-				}
-				return results;
+				if (ids.length === 0) return [];
+				const rows = yield* db
+					.select()
+					.from(answers)
+					.where(inArray(answers.id, ids));
+				return rows as Answer[];
 			}).pipe(
 				Effect.mapError(
 					(e) =>
@@ -131,8 +128,8 @@ export const AnswerServiceLive = Layer.effect(
 
 		const deleteAnswers: IAnswerService["delete"] = (ids) =>
 			Effect.gen(function* () {
-				for (const id of ids) {
-					yield* db.delete(answers).where(eq(answers.id, id));
+				if (ids.length > 0) {
+					yield* db.delete(answers).where(inArray(answers.id, ids));
 				}
 			}).pipe(
 				Effect.mapError(

@@ -45,6 +45,7 @@ const createMockDb = () => {
 	return {
 		profiles: mockProfiles,
 		select: vi.fn().mockReturnThis(),
+		selectDistinct: vi.fn().mockReturnThis(),
 		from: vi.fn().mockReturnThis(),
 		where: vi.fn().mockReturnThis(),
 		insert: vi.fn().mockReturnThis(),
@@ -75,6 +76,16 @@ const createTestLayer = (
 				),
 		}),
 	);
+
+	mockDb.selectDistinct = vi.fn().mockImplementation(() => ({
+		from: vi.fn().mockImplementation(() => ({
+			where: vi
+				.fn()
+				.mockImplementation(() =>
+					toEffect(overrides?.selectResult ?? [{ class: "Class A" }]),
+				),
+		})),
+	}));
 
 	mockDb.where = vi.fn().mockImplementation(() =>
 		toEffect(overrides?.selectResult ?? [mockDb.profiles[0]], {
@@ -305,8 +316,9 @@ describe("ProfileService", () => {
 
 	describe("getUniqueClasses", () => {
 		it.effect("should return unique classes sorted", () => {
+			const mockClasses = [{ class: "Class A" }, { class: "Class B" }];
 			const testLayer = createTestLayer(mockDb, {
-				getAllResult: mockDb.profiles,
+				selectResult: mockClasses,
 			});
 
 			return Effect.gen(function* () {
@@ -318,7 +330,9 @@ describe("ProfileService", () => {
 		});
 
 		it.effect("should return empty array when no profiles", () => {
-			const testLayer = createTestLayer(mockDb, { getAllResult: [] });
+			const testLayer = createTestLayer(mockDb, {
+				selectResult: [],
+			});
 
 			return Effect.gen(function* () {
 				const service = yield* ProfileService;

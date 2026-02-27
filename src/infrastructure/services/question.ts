@@ -1,5 +1,5 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
 import type { NewQuestion, Question } from "../db";
 import { questions } from "../db";
@@ -111,8 +111,8 @@ export const QuestionServiceLive = Layer.effect(
 
 		const deleteQuestions: IQuestionService["delete"] = (ids) =>
 			Effect.gen(function* () {
-				for (const id of ids) {
-					yield* db.delete(questions).where(eq(questions.id, id));
+				if (ids.length > 0) {
+					yield* db.delete(questions).where(inArray(questions.id, ids));
 				}
 			}).pipe(
 				Effect.mapError(
