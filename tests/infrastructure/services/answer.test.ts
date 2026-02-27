@@ -1,11 +1,20 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import { Effect, Exit, Layer } from "effect";
+import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
 import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	AnswerService,
-	AnswerServiceLive,
+	
 } from "@/infrastructure/services/answer";
+
+// Creates an Effect-compatible mock result for yield*
+const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
+	const obj = Object.create(CommitPrototype);
+	obj.commit = () => Effect.succeed(data);
+	if (methods) Object.assign(obj, methods);
+	return obj;
+};
 
 // Create mock database operations
 const createMockDb = () => {
@@ -45,7 +54,6 @@ const createMockDb = () => {
 		update: vi.fn().mockReturnThis(),
 		set: vi.fn().mockReturnThis(),
 		delete: vi.fn().mockReturnThis(),
-		then: vi.fn(),
 	};
 };
 
@@ -58,43 +66,41 @@ const createTestLayer = (
 		updateResult?: unknown;
 	},
 ) => {
-	mockDb.orderBy = vi.fn().mockImplementation(() => ({
-		then: (resolve: (rows: unknown[]) => void) =>
-			Promise.resolve(
+	mockDb.orderBy = vi
+		.fn()
+		.mockImplementation(() =>
+			toEffect(
 				overrides?.selectResult ??
 					mockDb.answers.filter((a) => a.questionId === "q1"),
-			).then(resolve),
-	}));
-
-	mockDb.where = vi.fn().mockImplementation(() => ({
-		then: (resolve: (rows: unknown[]) => void) =>
-			Promise.resolve(overrides?.selectResult ?? [mockDb.answers[0]]).then(
-				resolve,
 			),
-		orderBy: vi.fn().mockImplementation(() => ({
-			then: (resolve: (rows: unknown[]) => void) =>
-				Promise.resolve(
-					overrides?.selectResult ??
-						mockDb.answers.filter((a) => a.questionId === "q1"),
-				).then(resolve),
-		})),
-		returning: vi.fn().mockImplementation(() => ({
-			then: (resolve: (rows: unknown[]) => void) =>
-				Promise.resolve(
-					overrides?.updateResult ? [overrides.updateResult] : [],
-				).then(resolve),
-		})),
-	}));
+		);
 
-	mockDb.returning = vi.fn().mockImplementation(() => ({
-		then: (resolve: (rows: unknown[]) => void) =>
-			Promise.resolve(
-				overrides?.insertResult ? [overrides.insertResult] : [],
-			).then(resolve),
-	}));
+	mockDb.where = vi.fn().mockImplementation(() =>
+		toEffect(overrides?.selectResult ?? [mockDb.answers[0]], {
+			orderBy: vi
+				.fn()
+				.mockImplementation(() =>
+					toEffect(
+						overrides?.selectResult ??
+							mockDb.answers.filter((a) => a.questionId === "q1"),
+					),
+				),
+			returning: vi
+				.fn()
+				.mockImplementation(() =>
+					toEffect(overrides?.updateResult ? [overrides.updateResult] : []),
+				),
+		}),
+	);
+
+	mockDb.returning = vi
+		.fn()
+		.mockImplementation(() =>
+			toEffect(overrides?.insertResult ? [overrides.insertResult] : []),
+		);
 
 	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return AnswerServiceLive.pipe(Layer.provide(MockPgDrizzle));
+	return AnswerService.Default.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("AnswerService", () => {
@@ -146,10 +152,7 @@ describe("AnswerService", () => {
 		});
 
 		it.effect("should fail when answer not found", () => {
-			mockDb.where = vi.fn().mockImplementation(() => ({
-				then: (resolve: (rows: unknown[]) => void) =>
-					Promise.resolve([]).then(resolve),
-			}));
+			mockDb.where = vi.fn().mockImplementation(() => toEffect([]));
 
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
@@ -164,17 +167,10 @@ describe("AnswerService", () => {
 
 	describe("getByIds", () => {
 		it.effect("should return multiple answers by ids", () => {
-			// Setup mock for getByIds which iterates through ids
-			let callCount = 0;
-			mockDb.where = vi.fn().mockImplementation(() => ({
-				then: (resolve: (rows: unknown[]) => void) => {
-					const answer = mockDb.answers[callCount];
-					callCount++;
-					return Promise.resolve(answer ? [answer] : []).then(resolve);
-				},
-			}));
-
 			const testLayer = createTestLayer(mockDb);
+			mockDb.where = vi.fn().mockImplementation(() =>
+				toEffect([mockDb.answers[0], mockDb.answers[1]]),
+			);
 
 			return Effect.gen(function* () {
 				const service = yield* AnswerService;
@@ -251,12 +247,11 @@ describe("AnswerService", () => {
 		});
 
 		it.effect("should fail when updating non-existent answer", () => {
-			mockDb.where = vi.fn().mockImplementation(() => ({
-				returning: vi.fn().mockImplementation(() => ({
-					then: (resolve: (rows: unknown[]) => void) =>
-						Promise.resolve([]).then(resolve),
-				})),
-			}));
+			mockDb.where = vi.fn().mockImplementation(() =>
+				toEffect([], {
+					returning: vi.fn().mockImplementation(() => toEffect([])),
+				}),
+			);
 
 			const testLayer = createTestLayer(mockDb, { updateResult: undefined });
 

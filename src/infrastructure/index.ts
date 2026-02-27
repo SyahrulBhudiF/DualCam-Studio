@@ -1,5 +1,10 @@
 // Config
-export { AuthConfig, DatabaseConfig, RateLimitConfig, SessionConfig } from "./config";
+export {
+	AuthConfig,
+	DatabaseConfig,
+	RateLimitConfig,
+	SessionConfig,
+} from "./config";
 
 // Runtime
 export { runEffect, runEffectExit } from "./runtime";

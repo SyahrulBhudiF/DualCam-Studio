@@ -1,11 +1,20 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import { Effect, Exit, Layer } from "effect";
+import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
 import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	ProfileService,
-	ProfileServiceLive,
+	
 } from "@/infrastructure/services/profile";
+
+// Creates an Effect-compatible mock result for yield*
+const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
+	const obj = Object.create(CommitPrototype);
+	obj.commit = () => Effect.succeed(data);
+	if (methods) Object.assign(obj, methods);
+	return obj;
+};
 
 // Create mock database operations
 const createMockDb = () => {
@@ -36,6 +45,7 @@ const createMockDb = () => {
 	return {
 		profiles: mockProfiles,
 		select: vi.fn().mockReturnThis(),
+		selectDistinct: vi.fn().mockReturnThis(),
 		from: vi.fn().mockReturnThis(),
 		where: vi.fn().mockReturnThis(),
 		insert: vi.fn().mockReturnThis(),
@@ -43,7 +53,6 @@ const createMockDb = () => {
 		returning: vi.fn().mockReturnThis(),
 		update: vi.fn().mockReturnThis(),
 		set: vi.fn().mockReturnThis(),
-		then: vi.fn(),
 	};
 };
 
@@ -58,39 +67,44 @@ const createTestLayer = (
 	},
 ) => {
 	// Mock for getAll - select().from(profiles)
-	mockDb.from = vi.fn().mockImplementation(() => ({
-		then: (resolve: (rows: unknown[]) => void) =>
-			Promise.resolve(overrides?.getAllResult ?? mockDb.profiles).then(resolve),
-		where: vi.fn().mockImplementation(() => ({
-			then: (resolve: (rows: unknown[]) => void) =>
-				Promise.resolve(overrides?.selectResult ?? [mockDb.profiles[0]]).then(
-					resolve,
+	mockDb.from = vi.fn().mockImplementation(() =>
+		toEffect(overrides?.getAllResult ?? mockDb.profiles, {
+			where: vi
+				.fn()
+				.mockImplementation(() =>
+					toEffect(overrides?.selectResult ?? [mockDb.profiles[0]]),
+				),
+		}),
+	);
+
+	mockDb.selectDistinct = vi.fn().mockImplementation(() => ({
+		from: vi.fn().mockImplementation(() => ({
+			where: vi
+				.fn()
+				.mockImplementation(() =>
+					toEffect(overrides?.selectResult ?? [{ class: "Class A" }]),
 				),
 		})),
 	}));
 
-	mockDb.where = vi.fn().mockImplementation(() => ({
-		then: (resolve: (rows: unknown[]) => void) =>
-			Promise.resolve(overrides?.selectResult ?? [mockDb.profiles[0]]).then(
-				resolve,
-			),
-		returning: vi.fn().mockImplementation(() => ({
-			then: (resolve: (rows: unknown[]) => void) =>
-				Promise.resolve(
-					overrides?.updateResult ? [overrides.updateResult] : [],
-				).then(resolve),
-		})),
-	}));
+	mockDb.where = vi.fn().mockImplementation(() =>
+		toEffect(overrides?.selectResult ?? [mockDb.profiles[0]], {
+			returning: vi
+				.fn()
+				.mockImplementation(() =>
+					toEffect(overrides?.updateResult ? [overrides.updateResult] : []),
+				),
+		}),
+	);
 
-	mockDb.returning = vi.fn().mockImplementation(() => ({
-		then: (resolve: (rows: unknown[]) => void) =>
-			Promise.resolve(
-				overrides?.insertResult ? [overrides.insertResult] : [],
-			).then(resolve),
-	}));
+	mockDb.returning = vi
+		.fn()
+		.mockImplementation(() =>
+			toEffect(overrides?.insertResult ? [overrides.insertResult] : []),
+		);
 
 	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return ProfileServiceLive.pipe(Layer.provide(MockPgDrizzle));
+	return ProfileService.Default.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("ProfileService", () => {
@@ -117,12 +131,11 @@ describe("ProfileService", () => {
 		});
 
 		it.effect("should fail when profile not found", () => {
-			mockDb.from = vi.fn().mockImplementation(() => ({
-				where: vi.fn().mockImplementation(() => ({
-					then: (resolve: (rows: unknown[]) => void) =>
-						Promise.resolve([]).then(resolve),
-				})),
-			}));
+			mockDb.from = vi.fn().mockImplementation(() =>
+				toEffect([], {
+					where: vi.fn().mockImplementation(() => toEffect([])),
+				}),
+			);
 
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
@@ -150,12 +163,11 @@ describe("ProfileService", () => {
 		});
 
 		it.effect("should return null when email not found", () => {
-			mockDb.from = vi.fn().mockImplementation(() => ({
-				where: vi.fn().mockImplementation(() => ({
-					then: (resolve: (rows: unknown[]) => void) =>
-						Promise.resolve([]).then(resolve),
-				})),
-			}));
+			mockDb.from = vi.fn().mockImplementation(() =>
+				toEffect([], {
+					where: vi.fn().mockImplementation(() => toEffect([])),
+				}),
+			);
 
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
@@ -207,21 +219,21 @@ describe("ProfileService", () => {
 			};
 
 			// Mock to find existing user and then update
-			mockDb.from = vi.fn().mockImplementation(() => ({
-				then: (resolve: (rows: unknown[]) => void) =>
-					Promise.resolve(mockDb.profiles).then(resolve),
-				where: vi.fn().mockImplementation(() => ({
-					then: (resolve: (rows: unknown[]) => void) =>
-						Promise.resolve([mockDb.profiles[0]]).then(resolve),
-				})),
-			}));
+			mockDb.from = vi.fn().mockImplementation(() =>
+				toEffect(mockDb.profiles, {
+					where: vi
+						.fn()
+						.mockImplementation(() => toEffect([mockDb.profiles[0]])),
+				}),
+			);
 
-			mockDb.where = vi.fn().mockImplementation(() => ({
-				returning: vi.fn().mockImplementation(() => ({
-					then: (resolve: (rows: unknown[]) => void) =>
-						Promise.resolve([updatedProfile]).then(resolve),
-				})),
-			}));
+			mockDb.where = vi.fn().mockImplementation(() =>
+				toEffect([], {
+					returning: vi
+						.fn()
+						.mockImplementation(() => toEffect([updatedProfile])),
+				}),
+			);
 
 			const testLayer = createTestLayer(mockDb, {
 				selectResult: [mockDb.profiles[0]],
@@ -249,19 +261,15 @@ describe("ProfileService", () => {
 			};
 
 			// Mock to not find existing user, then create
-			mockDb.from = vi.fn().mockImplementation(() => ({
-				then: (resolve: (rows: unknown[]) => void) =>
-					Promise.resolve([]).then(resolve),
-				where: vi.fn().mockImplementation(() => ({
-					then: (resolve: (rows: unknown[]) => void) =>
-						Promise.resolve([]).then(resolve),
-				})),
-			}));
+			mockDb.from = vi.fn().mockImplementation(() =>
+				toEffect([], {
+					where: vi.fn().mockImplementation(() => toEffect([])),
+				}),
+			);
 
-			mockDb.returning = vi.fn().mockImplementation(() => ({
-				then: (resolve: (rows: unknown[]) => void) =>
-					Promise.resolve([newProfile]).then(resolve),
-			}));
+			mockDb.returning = vi
+				.fn()
+				.mockImplementation(() => toEffect([newProfile]));
 
 			const testLayer = createTestLayer(mockDb, {
 				selectResult: [],
@@ -288,7 +296,7 @@ describe("ProfileService", () => {
 
 			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				const result = yield* service.getAll;
+				const result = yield* service.getAll();
 
 				expect(result).toHaveLength(3);
 			}).pipe(Effect.provide(testLayer));
@@ -299,7 +307,7 @@ describe("ProfileService", () => {
 
 			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				const result = yield* service.getAll;
+				const result = yield* service.getAll();
 
 				expect(result).toHaveLength(0);
 			}).pipe(Effect.provide(testLayer));
@@ -308,24 +316,27 @@ describe("ProfileService", () => {
 
 	describe("getUniqueClasses", () => {
 		it.effect("should return unique classes sorted", () => {
+			const mockClasses = [{ class: "Class A" }, { class: "Class B" }];
 			const testLayer = createTestLayer(mockDb, {
-				getAllResult: mockDb.profiles,
+				selectResult: mockClasses,
 			});
 
 			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				const result = yield* service.getUniqueClasses;
+				const result = yield* service.getUniqueClasses();
 
 				expect(result).toEqual(["Class A", "Class B"]);
 			}).pipe(Effect.provide(testLayer));
 		});
 
 		it.effect("should return empty array when no profiles", () => {
-			const testLayer = createTestLayer(mockDb, { getAllResult: [] });
+			const testLayer = createTestLayer(mockDb, {
+				selectResult: [],
+			});
 
 			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				const result = yield* service.getUniqueClasses;
+				const result = yield* service.getUniqueClasses();
 
 				expect(result).toHaveLength(0);
 			}).pipe(Effect.provide(testLayer));

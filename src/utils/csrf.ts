@@ -1,7 +1,4 @@
-import {
-	getRequestHeader,
-	getRequestUrl,
-} from "@tanstack/react-start/server";
+import { getRequestHeader, getRequestUrl } from "@tanstack/react-start/server";
 import { Effect } from "effect";
 import { CsrfError } from "@/infrastructure/errors/auth";
 
@@ -33,8 +30,6 @@ export const verifyCsrfOrigin = Effect.gen(function* () {
 	const requestHost = new URL(requestUrl).host;
 
 	if (originHost !== requestHost) {
-		return yield* Effect.fail(
-			new CsrfError({ message: "Origin mismatch" }),
-		);
+		return yield* Effect.fail(new CsrfError({ message: "Origin mismatch" }));
 	}
 });

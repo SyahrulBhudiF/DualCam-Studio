@@ -1,4 +1,4 @@
-import { Schema } from "@effect/schema";
+import { Schema } from "effect";
 import { createServerFn } from "@tanstack/react-start";
 import { Effect } from "effect";
 import {
@@ -12,12 +12,14 @@ import {
 	FinalSubmitSchema,
 	UploadChunkSchema,
 } from "@/infrastructure/schemas/questionnaire";
+import { verifyCsrfOrigin } from "@/utils/csrf";
 
 export const uploadVideoChunk = createServerFn({ method: "POST" })
 	.inputValidator(Schema.decodeUnknownSync(UploadChunkSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* verifyCsrfOrigin;
 				const service = yield* FileUploadService;
 
 				return yield* service.uploadChunk({
@@ -34,6 +36,8 @@ export const submitSegmentedResponse = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* verifyCsrfOrigin;
+
 				const answerService = yield* AnswerService;
 				const profileService = yield* ProfileService;
 				const responseService = yield* ResponseService;

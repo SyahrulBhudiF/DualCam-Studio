@@ -1,11 +1,20 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import { Effect, Exit, Layer } from "effect";
+import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
 import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	ResponseService,
-	ResponseServiceLive,
+	
 } from "@/infrastructure/services/response";
+
+// Creates an Effect-compatible mock result for yield*
+const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
+	const obj = Object.create(CommitPrototype);
+	obj.commit = () => Effect.succeed(data);
+	if (methods) Object.assign(obj, methods);
+	return obj;
+};
 
 // Create mock database operations
 const createMockDb = () => {
@@ -63,7 +72,6 @@ const createMockDb = () => {
 		values: vi.fn().mockReturnThis(),
 		returning: vi.fn().mockReturnThis(),
 		delete: vi.fn().mockReturnThis(),
-		then: vi.fn(),
 	};
 };
 
@@ -89,105 +97,62 @@ const createTestLayer = (
 	const joinedResponses = createJoinedResponses(mockDb);
 
 	// Mock the full query chain for leftJoin queries
-	const createQueryChain = (defaultResult: unknown[]) => ({
-		leftJoin: vi.fn().mockReturnValue({
-			leftJoin: vi.fn().mockReturnValue({
-				orderBy: vi.fn().mockReturnValue({
-					then: (resolve: (rows: unknown[]) => void) =>
-						Promise.resolve(overrides?.responsesResult ?? defaultResult).then(
-							resolve,
-						),
-				}),
-				where: vi.fn().mockReturnValue({
-					orderBy: vi.fn().mockReturnValue({
-						then: (resolve: (rows: unknown[]) => void) =>
-							Promise.resolve(overrides?.responsesResult ?? defaultResult).then(
-								resolve,
+	const createQueryChain = (defaultResult: unknown[]) => {
+		const data = overrides?.responsesResult ?? defaultResult;
+		const singleData = overrides?.emptyResponse ? undefined : data[0];
+
+		return toEffect(data, {
+			leftJoin: vi.fn().mockReturnValue(
+				toEffect(data, {
+					leftJoin: vi.fn().mockReturnValue(
+						toEffect(data, {
+							orderBy: vi.fn().mockReturnValue(toEffect(data)),
+							where: vi.fn().mockReturnValue(
+								toEffect(singleData !== undefined ? [singleData] : [], {
+									orderBy: vi.fn().mockReturnValue(toEffect(data)),
+								}),
 							),
-					}),
-					then: (resolve: (rows: unknown) => void) =>
-						Promise.resolve(
-							overrides?.emptyResponse
-								? undefined
-								: (overrides?.responsesResult ?? defaultResult)[0],
-						).then(resolve),
-				}),
-				then: (resolve: (rows: unknown[]) => void) =>
-					Promise.resolve(overrides?.responsesResult ?? defaultResult).then(
-						resolve,
+						}),
 					),
-			}),
-			orderBy: vi.fn().mockReturnValue({
-				then: (resolve: (rows: unknown[]) => void) =>
-					Promise.resolve(overrides?.responsesResult ?? defaultResult).then(
-						resolve,
+					orderBy: vi.fn().mockReturnValue(toEffect(data)),
+					where: vi.fn().mockReturnValue(
+						toEffect(singleData !== undefined ? [singleData] : [], {
+							orderBy: vi.fn().mockReturnValue(toEffect(data)),
+						}),
 					),
-			}),
-			where: vi.fn().mockReturnValue({
-				orderBy: vi.fn().mockReturnValue({
-					then: (resolve: (rows: unknown[]) => void) =>
-						Promise.resolve(overrides?.responsesResult ?? defaultResult).then(
-							resolve,
-						),
 				}),
-				then: (resolve: (rows: unknown) => void) =>
-					Promise.resolve(
-						overrides?.emptyResponse
-							? undefined
-							: (overrides?.responsesResult ?? defaultResult)[0],
-					).then(resolve),
-			}),
-			then: (resolve: (rows: unknown[]) => void) =>
-				Promise.resolve(overrides?.responsesResult ?? defaultResult).then(
-					resolve,
-				),
-		}),
-		where: vi.fn().mockReturnValue({
-			then: (resolve: (rows: unknown[]) => void) =>
-				Promise.resolve(overrides?.responsesResult ?? defaultResult).then(
-					resolve,
-				),
-		}),
-		orderBy: vi.fn().mockReturnValue({
-			then: (resolve: (rows: unknown[]) => void) =>
-				Promise.resolve(overrides?.responsesResult ?? defaultResult).then(
-					resolve,
-				),
-		}),
-		then: (resolve: (rows: unknown[]) => void) =>
-			Promise.resolve(overrides?.responsesResult ?? defaultResult).then(
-				resolve,
 			),
-	});
+			where: vi.fn().mockReturnValue(toEffect(data)),
+			orderBy: vi.fn().mockReturnValue(toEffect(data)),
+		});
+	};
 
 	mockDb.select = vi.fn().mockImplementation(() => ({
 		from: vi.fn().mockImplementation(() => createQueryChain(joinedResponses)),
 	}));
 
-	mockDb.returning = vi.fn().mockImplementation(() => ({
-		then: (resolve: (rows: unknown[]) => void) =>
-			Promise.resolve(
-				overrides?.insertResult ? [overrides.insertResult] : [],
-			).then(resolve),
-	}));
+	mockDb.returning = vi
+		.fn()
+		.mockImplementation(() =>
+			toEffect(overrides?.insertResult ? [overrides.insertResult] : []),
+		);
 
-	mockDb.values = vi.fn().mockImplementation(() => ({
-		returning: mockDb.returning,
-		then: (resolve: () => void) => Promise.resolve().then(resolve),
-	}));
+	mockDb.values = vi.fn().mockImplementation(() =>
+		toEffect(undefined, {
+			returning: mockDb.returning,
+		}),
+	);
 
 	mockDb.insert = vi.fn().mockImplementation(() => ({
 		values: mockDb.values,
 	}));
 
 	mockDb.delete = vi.fn().mockImplementation(() => ({
-		where: vi.fn().mockImplementation(() => ({
-			then: (resolve: () => void) => Promise.resolve().then(resolve),
-		})),
+		where: vi.fn().mockImplementation(() => toEffect(undefined)),
 	}));
 
 	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return ResponseServiceLive.pipe(Layer.provide(MockPgDrizzle));
+	return ResponseService.Default.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("ResponseService", () => {
@@ -199,20 +164,23 @@ describe("ResponseService", () => {
 	});
 
 	describe("getAll", () => {
-		it.effect("should return all responses with profiles and questionnaires", () => {
-			const testLayer = createTestLayer(mockDb);
+		it.effect(
+			"should return all responses with profiles and questionnaires",
+			() => {
+				const testLayer = createTestLayer(mockDb);
 
-			return Effect.gen(function* () {
-				const service = yield* ResponseService;
-				const result = yield* service.getAll;
+				return Effect.gen(function* () {
+					const service = yield* ResponseService;
+					const result = yield* service.getAll();
 
-				expect(result).toBeDefined();
-				expect(Array.isArray(result)).toBe(true);
-				expect(result.length).toBe(2);
-				expect(result[0].profile).toBeDefined();
-				expect(result[0].questionnaire).toBeDefined();
-			}).pipe(Effect.provide(testLayer));
-		});
+					expect(result).toBeDefined();
+					expect(Array.isArray(result)).toBe(true);
+					expect(result.length).toBe(2);
+					expect(result[0].profile).toBeDefined();
+					expect(result[0].questionnaire).toBeDefined();
+				}).pipe(Effect.provide(testLayer));
+			},
+		);
 	});
 
 	describe("getById", () => {

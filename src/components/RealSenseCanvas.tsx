@@ -47,7 +47,9 @@ export const RealSenseCanvas = forwardRef<
 		const ctx = canvas.getContext("2d", { alpha: false });
 		if (!ctx) return;
 
-		wsRef.current = new WebSocket("ws://localhost:8080");
+		wsRef.current = new WebSocket(
+			import.meta.env.VITE_REALSENSE_WS_URL ?? "ws://localhost:8080",
+		);
 		const img = new Image();
 
 		wsRef.current.onopen = () => {

@@ -1,7 +1,7 @@
 import { Schema } from "effect";
 
-export class DatabaseError extends Schema.TaggedError<DatabaseError>()(
-	"DatabaseError",
+export class FileError extends Schema.TaggedError<FileError>()(
+	"FileError",
 	{
 		message: Schema.String,
 		cause: Schema.optional(Schema.Unknown),
