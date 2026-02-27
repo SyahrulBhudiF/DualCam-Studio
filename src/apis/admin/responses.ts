@@ -215,7 +215,7 @@ export const getAllResponsesWithDetails = createServerFn({
 						answerText: d.answerText,
 						score: d.score,
 					}))
-					.sort((a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0)),
+					.toSorted((a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0)),
 			}));
 		}),
 	);
@@ -230,9 +230,9 @@ export const getFilterOptions = createServerFn({ method: "GET" }).handler(
 				const profileService = yield* ProfileService;
 
 				const [questionnaires, profiles, uniqueClasses] = yield* Effect.all([
-					questionnaireService.getAll,
-					profileService.getAll,
-					profileService.getUniqueClasses,
+					questionnaireService.getAll(),
+					profileService.getAll(),
+					profileService.getUniqueClasses(),
 				]);
 
 				return {
