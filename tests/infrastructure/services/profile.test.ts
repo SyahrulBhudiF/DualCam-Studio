@@ -5,7 +5,7 @@ import { it } from "@effect/vitest";
 import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	ProfileService,
-	ProfileServiceLive,
+	
 } from "@/infrastructure/services/profile";
 
 // Creates an Effect-compatible mock result for yield*
@@ -104,7 +104,7 @@ const createTestLayer = (
 		);
 
 	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return ProfileServiceLive.pipe(Layer.provide(MockPgDrizzle));
+	return ProfileService.Default.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("ProfileService", () => {
@@ -296,7 +296,7 @@ describe("ProfileService", () => {
 
 			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				const result = yield* service.getAll;
+				const result = yield* service.getAll();
 
 				expect(result).toHaveLength(3);
 			}).pipe(Effect.provide(testLayer));
@@ -307,7 +307,7 @@ describe("ProfileService", () => {
 
 			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				const result = yield* service.getAll;
+				const result = yield* service.getAll();
 
 				expect(result).toHaveLength(0);
 			}).pipe(Effect.provide(testLayer));
@@ -323,7 +323,7 @@ describe("ProfileService", () => {
 
 			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				const result = yield* service.getUniqueClasses;
+				const result = yield* service.getUniqueClasses();
 
 				expect(result).toEqual(["Class A", "Class B"]);
 			}).pipe(Effect.provide(testLayer));
@@ -336,7 +336,7 @@ describe("ProfileService", () => {
 
 			return Effect.gen(function* () {
 				const service = yield* ProfileService;
-				const result = yield* service.getUniqueClasses;
+				const result = yield* service.getUniqueClasses();
 
 				expect(result).toHaveLength(0);
 			}).pipe(Effect.provide(testLayer));

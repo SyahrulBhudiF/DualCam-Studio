@@ -1,65 +1,65 @@
 import * as path from "node:path";
 import { FileSystem } from "@effect/platform";
 import { NodeFileSystem } from "@effect/platform-node";
-import { Context, Effect, Layer } from "effect";
+import { Effect, Layer } from "effect";
 import { FileError } from "../errors/file";
 
-export interface IFileUploadService {
-	readonly ensureDirectory: (
-		dirPath: string,
-	) => Effect.Effect<void, FileError>;
-	readonly saveFile: (
-		filePath: string,
-		content: Buffer,
-	) => Effect.Effect<void, FileError>;
-	readonly uploadChunk: (data: {
-		folderName: string;
-		fileName: string;
-		fileBase64: string;
-	}) => Effect.Effect<{ success: boolean; path: string }, FileError>;
-	readonly getUploadRoot: Effect.Effect<string, never>;
-}
+export class FileUploadService extends Effect.Service<FileUploadService>()(
+	"FileUploadService",
+	{
+		accessors: true,
+		dependencies: [],
+		effect: Effect.gen(function* () {
+			const fs = yield* FileSystem.FileSystem;
+			const uploadRoot = path.join(process.cwd(), "video_uploads");
 
-export class FileUploadService extends Context.Tag("FileUploadService")<
-	FileUploadService,
-	IFileUploadService
->() {}
-
-export const FileUploadServiceLive = Layer.effect(
-	FileUploadService,
-	Effect.gen(function* () {
-		const fs = yield* FileSystem.FileSystem;
-		const uploadRoot = path.join(process.cwd(), "video_uploads");
-
-		const ensureDirectory: IFileUploadService["ensureDirectory"] = (dirPath) =>
-			Effect.gen(function* () {
-				const exists = yield* fs.exists(dirPath);
-				if (!exists) {
-					yield* fs.makeDirectory(dirPath, { recursive: true });
-				}
-			}).pipe(
-				Effect.mapError(
-					(error) =>
-						new FileError({
-							message: `Failed to ensure directory: ${dirPath}`,
-							cause: error,
-						}),
-				),
+			const ensureDirectory = Effect.fn("FileUploadService.ensureDirectory")(
+				function* (dirPath: string) {
+					const exists = yield* fs.exists(dirPath).pipe(
+						Effect.mapError(
+							(error) =>
+								new FileError({
+									message: `Failed to ensure directory: ${dirPath}`,
+									cause: error,
+								}),
+						),
+					);
+					if (!exists) {
+						yield* fs.makeDirectory(dirPath, { recursive: true }).pipe(
+							Effect.mapError(
+								(error) =>
+									new FileError({
+										message: `Failed to ensure directory: ${dirPath}`,
+										cause: error,
+									}),
+							),
+						);
+					}
+				},
 			);
 
-		const saveFile: IFileUploadService["saveFile"] = (filePath, content) =>
-			fs.writeFile(filePath, new Uint8Array(content)).pipe(
-				Effect.mapError(
-					(error) =>
-						new FileError({
-							message: `Failed to save file: ${filePath}`,
-							cause: error,
-						}),
-				),
-			);
+			const saveFile = Effect.fn("FileUploadService.saveFile")(function* (
+				filePath: string,
+				content: Buffer,
+			) {
+				return yield* fs.writeFile(filePath, new Uint8Array(content)).pipe(
+					Effect.mapError(
+						(error) =>
+							new FileError({
+								message: `Failed to save file: ${filePath}`,
+								cause: error,
+							}),
+					),
+				);
+			});
 
-		const uploadChunk: IFileUploadService["uploadChunk"] = (data) =>
-			Effect.gen(function* () {
+			const uploadChunk = Effect.fn("FileUploadService.uploadChunk")(function* (
+				data: {
+					folderName: string;
+					fileName: string;
+					fileBase64: string;
+				},
+			) {
 				const userFolder = path.join(uploadRoot, data.folderName);
 				yield* ensureDirectory(uploadRoot);
 				yield* ensureDirectory(userFolder);
@@ -81,14 +81,18 @@ export const FileUploadServiceLive = Layer.effect(
 				};
 			});
 
-		const getUploadRoot: IFileUploadService["getUploadRoot"] =
-			Effect.succeed(uploadRoot);
+			const getUploadRoot = Effect.fn("FileUploadService.getUploadRoot")(
+				function* () {
+					return uploadRoot;
+				},
+			);
 
-		return {
-			ensureDirectory,
-			saveFile,
-			uploadChunk,
-			getUploadRoot,
-		};
-	}),
-).pipe(Layer.provide(NodeFileSystem.layer));
+			return {
+				ensureDirectory,
+				saveFile,
+				uploadChunk,
+				getUploadRoot,
+			};
+		}),
+	},
+) {}

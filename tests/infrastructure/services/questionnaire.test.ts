@@ -6,7 +6,7 @@ import { it } from "@effect/vitest";
 import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	QuestionnaireService,
-	QuestionnaireServiceLive,
+	
 } from "@/infrastructure/services/questionnaire";
 
 // Creates an Effect-compatible mock result for yield*
@@ -93,7 +93,7 @@ const createTestLayer = (
 	const MockPgClient = Layer.succeed(PgClient.PgClient, {
 		withTransaction: (effect: any) => effect,
 	} as never);
-	return QuestionnaireServiceLive.pipe(
+	return QuestionnaireService.Default.pipe(
 		Layer.provide(Layer.merge(MockPgDrizzle, MockPgClient)),
 	);
 };
@@ -112,7 +112,7 @@ describe("QuestionnaireService", () => {
 
 			return Effect.gen(function* () {
 				const service = yield* QuestionnaireService;
-				const result = yield* service.getAll;
+				const result = yield* service.getAll();
 
 				expect(result).toHaveLength(2);
 				expect(result[0].title).toBe("Test Questionnaire 1");
@@ -124,7 +124,7 @@ describe("QuestionnaireService", () => {
 
 			return Effect.gen(function* () {
 				const service = yield* QuestionnaireService;
-				const result = yield* service.getAll;
+				const result = yield* service.getAll();
 
 				expect(result).toHaveLength(0);
 			}).pipe(Effect.provide(testLayer));

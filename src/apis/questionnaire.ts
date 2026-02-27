@@ -18,7 +18,7 @@ export const getActiveQuestionnaire = createServerFn({ method: "GET" }).handler(
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* QuestionnaireService;
-				const result = yield* service.getActive;
+				const result = yield* service.getActive();
 
 				return {
 					questionnaire: {
@@ -55,7 +55,7 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
 				const responseService = yield* ResponseService;
 
 				const folderName = data.folderName;
-				const uploadRoot = yield* fileUploadService.getUploadRoot;
+				const uploadRoot = yield* fileUploadService.getUploadRoot();
 
 				// Ensure directories exist
 				yield* fileUploadService.ensureDirectory(uploadRoot);

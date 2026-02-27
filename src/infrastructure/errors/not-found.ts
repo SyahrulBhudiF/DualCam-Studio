@@ -1,43 +1,51 @@
-import { Data } from "effect";
+import { Schema } from "effect";
 
-export class QuestionnaireNotFoundError extends Data.TaggedError(
+export class QuestionnaireNotFoundError extends Schema.TaggedError<QuestionnaireNotFoundError>()(
 	"QuestionnaireNotFoundError",
-)<{
-	readonly id: string;
-	readonly message?: string;
-}> {}
+	{
+		id: Schema.String,
+		message: Schema.optional(Schema.String),
+	},
+) {}
 
-export class QuestionNotFoundError extends Data.TaggedError(
+export class QuestionNotFoundError extends Schema.TaggedError<QuestionNotFoundError>()(
 	"QuestionNotFoundError",
-)<{
-	readonly id: string;
-	readonly message?: string;
-}> {}
+	{
+		id: Schema.String,
+		message: Schema.optional(Schema.String),
+	},
+) {}
 
-export class AnswerNotFoundError extends Data.TaggedError(
+export class AnswerNotFoundError extends Schema.TaggedError<AnswerNotFoundError>()(
 	"AnswerNotFoundError",
-)<{
-	readonly id: string;
-	readonly message?: string;
-}> {}
+	{
+		id: Schema.String,
+		message: Schema.optional(Schema.String),
+	},
+) {}
 
-export class ProfileNotFoundError extends Data.TaggedError(
+export class ProfileNotFoundError extends Schema.TaggedError<ProfileNotFoundError>()(
 	"ProfileNotFoundError",
-)<{
-	readonly id?: string;
-	readonly email?: string;
-	readonly message?: string;
-}> {}
+	{
+		id: Schema.optional(Schema.String),
+		email: Schema.optional(Schema.String),
+		message: Schema.optional(Schema.String),
+	},
+) {}
 
-export class ResponseNotFoundError extends Data.TaggedError(
+export class ResponseNotFoundError extends Schema.TaggedError<ResponseNotFoundError>()(
 	"ResponseNotFoundError",
-)<{
-	readonly id: string;
-	readonly message?: string;
-}> {}
+	{
+		id: Schema.String,
+		message: Schema.optional(Schema.String),
+	},
+) {}
 
-export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<{
-	readonly id?: string;
-	readonly email?: string;
-	readonly message?: string;
-}> {}
+export class UserNotFoundError extends Schema.TaggedError<UserNotFoundError>()(
+	"UserNotFoundError",
+	{
+		id: Schema.optional(Schema.String),
+		email: Schema.optional(Schema.String),
+		message: Schema.optional(Schema.String),
+	},
+) {}

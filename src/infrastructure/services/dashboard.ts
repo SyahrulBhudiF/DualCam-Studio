@@ -1,6 +1,6 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import { avg, count, countDistinct, eq, sql, sum } from "drizzle-orm";
-import { Context, Effect, Layer } from "effect";
+import { Effect } from "effect";
 import {
 	answers,
 	profiles,
@@ -68,24 +68,15 @@ export interface AnalyticsDetails {
 	};
 }
 
-export interface IDashboardService {
-	readonly getSummary: Effect.Effect<DashboardSummary, DatabaseError>;
-	readonly getBreakdown: Effect.Effect<DashboardBreakdown, DatabaseError>;
-	readonly getAnalyticsDetails: Effect.Effect<AnalyticsDetails, DatabaseError>;
-}
+export class DashboardService extends Effect.Service<DashboardService>()(
+	"DashboardService",
+	{
+		accessors: true,
+		dependencies: [],
+		effect: Effect.gen(function* () {
+			const db = yield* PgDrizzle;
 
-export class DashboardService extends Context.Tag("DashboardService")<
-	DashboardService,
-	IDashboardService
->() {}
-
-export const DashboardServiceLive = Layer.effect(
-	DashboardService,
-	Effect.gen(function* () {
-		const db = yield* PgDrizzle;
-
-		const getSummary: IDashboardService["getSummary"] = Effect.gen(
-			function* () {
+			const getSummary = Effect.fn("DashboardService.getSummary")(function* () {
 				const [
 					[{ count: totalQuestionnaires }],
 					[{ count: activeQuestionnaires }],
@@ -94,9 +85,7 @@ export const DashboardServiceLive = Layer.effect(
 				] = yield* Effect.all(
 					[
 						// Count total questionnaires
-						db
-							.select({ count: count() })
-							.from(questionnaires),
+						db.select({ count: count() }).from(questionnaires),
 						// Count active questionnaires
 						db
 							.select({ count: count() })
@@ -115,6 +104,14 @@ export const DashboardServiceLive = Layer.effect(
 							.from(profiles),
 					],
 					{ concurrency: "unbounded" },
+				).pipe(
+					Effect.mapError(
+						(e) =>
+							new DatabaseError({
+								message: "Failed to fetch dashboard summary",
+								cause: e,
+							}),
+					),
 				);
 
 				return {
@@ -124,61 +121,51 @@ export const DashboardServiceLive = Layer.effect(
 					averageScore: Number(avgScore) || 0,
 					totalClasses,
 				};
-			},
-		).pipe(
-			Effect.mapError(
-				(e) =>
-					new DatabaseError({
-						message: "Failed to fetch dashboard summary",
-						cause: e,
-					}),
-			),
-		);
+			});
 
-		const getBreakdown: IDashboardService["getBreakdown"] = Effect.gen(
-			function* () {
-				const [questionnaireRows, classRows] = yield* Effect.all(
-					[
-						// Questionnaire stats using SQL GROUP BY
-						db
-							.select({
-								id: questionnaires.id,
-								title: questionnaires.title,
-								totalResponses: count(responses.id),
-								totalScore: sum(responses.totalScore),
-							})
-							.from(questionnaires)
-							.leftJoin(
-								responses,
-								eq(questionnaires.id, responses.questionnaireId),
-							)
-							.groupBy(questionnaires.id, questionnaires.title),
-						// Class stats using SQL GROUP BY with JOIN
-						db
-							.select({
-								className: profiles.class,
-								totalResponses: count(responses.id),
-								totalScore: sum(responses.totalScore),
-							})
-							.from(responses)
-							.innerJoin(profiles, eq(responses.userId, profiles.id))
-							.groupBy(profiles.class),
-					],
-					{ concurrency: "unbounded" },
-				);
+			const getBreakdown = Effect.fn("DashboardService.getBreakdown")(
+				function* () {
+					const [questionnaireRows, classRows] = yield* Effect.all(
+						[
+							// Questionnaire stats using SQL GROUP BY
+							db
+								.select({
+									id: questionnaires.id,
+									title: questionnaires.title,
+									totalResponses: count(responses.id),
+									totalScore: sum(responses.totalScore),
+								})
+								.from(questionnaires)
+								.leftJoin(
+									responses,
+									eq(questionnaires.id, responses.questionnaireId),
+								)
+								.groupBy(questionnaires.id, questionnaires.title),
+							// Class stats using SQL GROUP BY with JOIN
+							db
+								.select({
+									className: profiles.class,
+									totalResponses: count(responses.id),
+									totalScore: sum(responses.totalScore),
+								})
+								.from(responses)
+								.innerJoin(profiles, eq(responses.userId, profiles.id))
+								.groupBy(profiles.class),
+						],
+						{ concurrency: "unbounded" },
+					).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch dashboard breakdown",
+									cause: e,
+								}),
+						),
+					);
 
-				const questionnaireStats = questionnaireRows.map((r) => ({
-					id: r.id,
-					title: r.title,
-					totalResponses: r.totalResponses,
-					averageScore:
-						r.totalResponses > 0 ? Number(r.totalScore) / r.totalResponses : 0,
-				}));
-
-				const classStats = classRows
-					.filter((r) => r.className !== null)
-					.map((r) => ({
-						className: r.className as string,
+					const questionnaireStats = questionnaireRows.map((r) => ({
+						id: r.id,
+						title: r.title,
 						totalResponses: r.totalResponses,
 						averageScore:
 							r.totalResponses > 0
@@ -186,23 +173,27 @@ export const DashboardServiceLive = Layer.effect(
 								: 0,
 					}));
 
-				return {
-					questionnaires: questionnaireStats,
-					classes: classStats,
-				};
-			},
-		).pipe(
-			Effect.mapError(
-				(e) =>
-					new DatabaseError({
-						message: "Failed to fetch dashboard breakdown",
-						cause: e,
-					}),
-			),
-		);
+					const classStats = classRows
+						.filter((r) => r.className !== null)
+						.map((r) => ({
+							className: r.className as string,
+							totalResponses: r.totalResponses,
+							averageScore:
+								r.totalResponses > 0
+									? Number(r.totalScore) / r.totalResponses
+									: 0,
+						}));
 
-		const getAnalyticsDetails: IDashboardService["getAnalyticsDetails"] =
-			Effect.gen(function* () {
+					return {
+						questionnaires: questionnaireStats,
+						classes: classStats,
+					};
+				},
+			);
+
+			const getAnalyticsDetails = Effect.fn(
+				"DashboardService.getAnalyticsDetails",
+			)(function* () {
 				const [questionRows, answerRows, timelineRows, [{ total, withVideo }]] =
 					yield* Effect.all(
 						[
@@ -239,7 +230,11 @@ export const DashboardServiceLive = Layer.effect(
 									responseDetails,
 									eq(answers.id, responseDetails.answerId),
 								)
-								.groupBy(answers.id, answers.answerText, answers.questionId),
+								.groupBy(
+									answers.id,
+									answers.answerText,
+									answers.questionId,
+								),
 							// Timeline using SQL GROUP BY with date truncation
 							db
 								.select({
@@ -261,6 +256,14 @@ export const DashboardServiceLive = Layer.effect(
 								.from(responses),
 						],
 						{ concurrency: "unbounded" },
+					).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch analytics details",
+									cause: e,
+								}),
+						),
 					);
 
 				const questionStats = questionRows.map((r) => ({
@@ -296,20 +299,13 @@ export const DashboardServiceLive = Layer.effect(
 					timeline,
 					video: { withVideo, total },
 				};
-			}).pipe(
-				Effect.mapError(
-					(e) =>
-						new DatabaseError({
-							message: "Failed to fetch analytics details",
-							cause: e,
-						}),
-				),
-			);
+			});
 
-		return {
-			getSummary,
-			getBreakdown,
-			getAnalyticsDetails,
-		};
-	}),
-);
+			return {
+				getSummary,
+				getBreakdown,
+				getAnalyticsDetails,
+			};
+		}),
+	},
+) {}

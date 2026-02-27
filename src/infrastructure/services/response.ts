@@ -1,7 +1,7 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import type { SQL } from "drizzle-orm";
 import { and, desc, eq, gte, ilike, inArray, lte } from "drizzle-orm";
-import { Context, Effect, Layer } from "effect";
+import { Effect } from "effect";
 import type {
 	NewResponse,
 	NewResponseDetail,
@@ -59,70 +59,47 @@ function escapeLikePattern(str: string): string {
 	return str.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
 }
 
-export interface IResponseService {
-	readonly getAll: Effect.Effect<ResponseWithProfile[], DatabaseError>;
-	readonly getById: (
-		id: string,
-	) => Effect.Effect<ResponseFull, ResponseNotFoundError | DatabaseError>;
-	readonly getByQuestionnaireId: (
-		questionnaireId: string,
-	) => Effect.Effect<ResponseWithProfile[], DatabaseError>;
-	readonly getFiltered: (
-		filter: ResponseFilter,
-	) => Effect.Effect<ResponseWithProfile[], DatabaseError>;
-	readonly create: (
-		data: Omit<NewResponse, "id" | "createdAt">,
-		details: Omit<NewResponseDetail, "id" | "responseId">[],
-	) => Effect.Effect<Response, DatabaseError>;
-	readonly delete: (ids: string[]) => Effect.Effect<void, DatabaseError>;
-	readonly getAllWithDetails: Effect.Effect<
-		ResponseFull[],
-		ResponseNotFoundError | DatabaseError
-	>;
-}
+export class ResponseService extends Effect.Service<ResponseService>()(
+	"ResponseService",
+	{
+		accessors: true,
+		dependencies: [],
+		effect: Effect.gen(function* () {
+			const db = yield* PgDrizzle;
 
-export class ResponseService extends Context.Tag("ResponseService")<
-	ResponseService,
-	IResponseService
->() {}
+			const getAll = Effect.fn("ResponseService.getAll")(function* () {
+				const rows = yield* db
+					.select({
+						response: responses,
+						profile: profiles,
+						questionnaire: questionnaires,
+					})
+					.from(responses)
+					.leftJoin(profiles, eq(responses.userId, profiles.id))
+					.leftJoin(
+						questionnaires,
+						eq(responses.questionnaireId, questionnaires.id),
+					)
+					.orderBy(desc(responses.createdAt)).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch responses",
+									cause: e,
+								}),
+						),
+					);
 
-export const ResponseServiceLive = Layer.effect(
-	ResponseService,
-	Effect.gen(function* () {
-		const db = yield* PgDrizzle;
+				return rows.map((row) => ({
+					...(row.response as Response),
+					profile: (row.profile as Profile) ?? null,
+					questionnaire: (row.questionnaire as Questionnaire) ?? null,
+				}));
+			});
 
-		const getAll: IResponseService["getAll"] = Effect.gen(function* () {
-			const rows = yield* db
-				.select({
-					response: responses,
-					profile: profiles,
-					questionnaire: questionnaires,
-				})
-				.from(responses)
-				.leftJoin(profiles, eq(responses.userId, profiles.id))
-				.leftJoin(
-					questionnaires,
-					eq(responses.questionnaireId, questionnaires.id),
-				)
-				.orderBy(desc(responses.createdAt));
-
-			return rows.map((row) => ({
-				...(row.response as Response),
-				profile: (row.profile as Profile) ?? null,
-				questionnaire: (row.questionnaire as Questionnaire) ?? null,
-			}));
-		}).pipe(
-			Effect.mapError(
-				(e) =>
-					new DatabaseError({
-						message: "Failed to fetch responses",
-						cause: e,
-					}),
-			),
-		);
-
-		const getById: IResponseService["getById"] = (id) =>
-			Effect.gen(function* () {
+			const getById = Effect.fn("ResponseService.getById")(function* (
+				id: string,
+			) {
 				const [responseRow] = yield* db
 					.select({
 						response: responses,
@@ -135,7 +112,15 @@ export const ResponseServiceLive = Layer.effect(
 						questionnaires,
 						eq(responses.questionnaireId, questionnaires.id),
 					)
-					.where(eq(responses.id, id));
+					.where(eq(responses.id, id)).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch response",
+									cause: e,
+								}),
+						),
+					);
 
 				if (!responseRow) {
 					return yield* Effect.fail(new ResponseNotFoundError({ id }));
@@ -151,7 +136,15 @@ export const ResponseServiceLive = Layer.effect(
 					.leftJoin(questions, eq(responseDetails.questionId, questions.id))
 					.leftJoin(answers, eq(responseDetails.answerId, answers.id))
 					.where(eq(responseDetails.responseId, id))
-					.orderBy(questions.orderNumber);
+					.orderBy(questions.orderNumber).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch response details",
+									cause: e,
+								}),
+						),
+					);
 
 				// Get max scores per question for all questions in these details
 				const questionIds = [
@@ -163,7 +156,15 @@ export const ResponseServiceLive = Layer.effect(
 					const allAnswers = yield* db
 						.select()
 						.from(answers)
-						.where(inArray(answers.questionId, questionIds));
+						.where(inArray(answers.questionId, questionIds)).pipe(
+							Effect.mapError(
+								(e) =>
+									new DatabaseError({
+										message: "Failed to fetch answers for scoring",
+										cause: e,
+									}),
+							),
+						);
 
 					for (const ans of allAnswers) {
 						const current = maxScoreMap.get(ans.questionId) ?? 0;
@@ -208,25 +209,14 @@ export const ResponseServiceLive = Layer.effect(
 				return {
 					...(responseRow.response as Response),
 					profile: (responseRow.profile as Profile) ?? null,
-					questionnaire:
-						(responseRow.questionnaire as Questionnaire) ?? null,
+					questionnaire: (responseRow.questionnaire as Questionnaire) ?? null,
 					details,
 				};
-			}).pipe(
-				Effect.mapError((e): ResponseNotFoundError | DatabaseError =>
-					e instanceof ResponseNotFoundError
-						? e
-						: new DatabaseError({
-								message: "Failed to fetch response",
-								cause: e,
-							}),
-				),
-			);
+			});
 
-		const getByQuestionnaireId: IResponseService["getByQuestionnaireId"] = (
-			questionnaireId,
-		) =>
-			Effect.gen(function* () {
+			const getByQuestionnaireId = Effect.fn(
+				"ResponseService.getByQuestionnaireId",
+			)(function* (questionnaireId: string) {
 				const rows = yield* db
 					.select({
 						response: responses,
@@ -240,25 +230,26 @@ export const ResponseServiceLive = Layer.effect(
 						eq(responses.questionnaireId, questionnaires.id),
 					)
 					.where(eq(responses.questionnaireId, questionnaireId))
-					.orderBy(desc(responses.createdAt));
+					.orderBy(desc(responses.createdAt)).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch responses",
+									cause: e,
+								}),
+						),
+					);
 
 				return rows.map((row) => ({
 					...(row.response as Response),
 					profile: (row.profile as Profile) ?? null,
 					questionnaire: (row.questionnaire as Questionnaire) ?? null,
 				}));
-			}).pipe(
-				Effect.mapError(
-					(e) =>
-						new DatabaseError({
-							message: "Failed to fetch responses",
-							cause: e,
-						}),
-				),
-			);
+			});
 
-		const getFiltered: IResponseService["getFiltered"] = (filter) =>
-			Effect.gen(function* () {
+			const getFiltered = Effect.fn("ResponseService.getFiltered")(function* (
+				filter: ResponseFilter,
+			) {
 				const conditions: SQL[] = [];
 
 				if (filter.questionnaireId) {
@@ -297,26 +288,36 @@ export const ResponseServiceLive = Layer.effect(
 					query = query.where(and(...conditions)) as typeof query;
 				}
 
-				const rows = yield* query.orderBy(desc(responses.createdAt));
+				const rows = yield* query.orderBy(desc(responses.createdAt)).pipe(
+					Effect.mapError(
+						(e) =>
+							new DatabaseError({
+								message: "Failed to fetch filtered responses",
+								cause: e,
+							}),
+					),
+				);
 
 				return rows.map((row) => ({
 					...(row.response as Response),
 					profile: (row.profile as Profile) ?? null,
 					questionnaire: (row.questionnaire as Questionnaire) ?? null,
 				}));
-			}).pipe(
-				Effect.mapError(
-					(e) =>
-						new DatabaseError({
-							message: "Failed to fetch filtered responses",
-							cause: e,
-						}),
-				),
-			);
+			});
 
-		const create: IResponseService["create"] = (data, details) =>
-			Effect.gen(function* () {
-				const [response] = yield* db.insert(responses).values(data).returning();
+			const create = Effect.fn("ResponseService.create")(function* (
+				data: Omit<NewResponse, "id" | "createdAt">,
+				details: Omit<NewResponseDetail, "id" | "responseId">[],
+			) {
+				const [response] = yield* db.insert(responses).values(data).returning().pipe(
+					Effect.mapError(
+						(e) =>
+							new DatabaseError({
+								message: "Failed to create response",
+								cause: e,
+							}),
+					),
+				);
 
 				if (details.length > 0) {
 					yield* db.insert(responseDetails).values(
@@ -324,132 +325,137 @@ export const ResponseServiceLive = Layer.effect(
 							...d,
 							responseId: (response as Response).id,
 						})),
+					).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to create response details",
+									cause: e,
+								}),
+						),
 					);
 				}
 
 				return response as Response;
-			}).pipe(
-				Effect.mapError(
-					(e) =>
-						new DatabaseError({
-							message: "Failed to create response",
-							cause: e,
-						}),
-				),
-			);
+			});
 
-		// CASCADE handles responseDetails deletion automatically
-		const deleteResponses: IResponseService["delete"] = (ids) =>
-			Effect.gen(function* () {
+			// CASCADE handles responseDetails deletion automatically
+			const deleteResponses = Effect.fn("ResponseService.delete")(function* (
+				ids: string[],
+			) {
 				if (ids.length > 0) {
-					yield* db.delete(responses).where(inArray(responses.id, ids));
+					yield* db.delete(responses).where(inArray(responses.id, ids)).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to delete responses",
+									cause: e,
+								}),
+						),
+					);
 				}
-			}).pipe(
-				Effect.mapError(
-					(e) =>
-						new DatabaseError({
-							message: "Failed to delete responses",
-							cause: e,
-						}),
-				),
+			});
+
+			const getAllWithDetails = Effect.fn("ResponseService.getAllWithDetails")(
+				function* () {
+					// Fetch all responses with profile and questionnaire, and all details in parallel
+					const [responseRows, allDetails] = yield* Effect.all(
+						[
+							db
+								.select({
+									response: responses,
+									profile: profiles,
+									questionnaire: questionnaires,
+								})
+								.from(responses)
+								.leftJoin(profiles, eq(responses.userId, profiles.id))
+								.leftJoin(
+									questionnaires,
+									eq(responses.questionnaireId, questionnaires.id),
+								)
+								.orderBy(desc(responses.createdAt)),
+							db
+								.select({
+									detail: responseDetails,
+									question: questions,
+									answer: answers,
+								})
+								.from(responseDetails)
+								.leftJoin(
+									questions,
+									eq(responseDetails.questionId, questions.id),
+								)
+								.leftJoin(answers, eq(responseDetails.answerId, answers.id)),
+						],
+						{ concurrency: "unbounded" },
+					).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch responses with details",
+									cause: e,
+								}),
+						),
+					);
+
+					// Group details by response ID
+					const detailsByResponseId = new Map<string, ResponseDetail[]>();
+					for (const row of allDetails) {
+						const responseId = row.detail.responseId;
+						if (!detailsByResponseId.has(responseId)) {
+							detailsByResponseId.set(responseId, []);
+						}
+
+						let videoSegmentPath: VideoSegmentPath = null;
+						if (row.detail.videoSegmentPath != null) {
+							if (typeof row.detail.videoSegmentPath === "string") {
+								try {
+									videoSegmentPath = JSON.parse(row.detail.videoSegmentPath);
+								} catch {
+									videoSegmentPath = {
+										main: row.detail.videoSegmentPath,
+										secondary: null,
+									};
+								}
+							} else if (typeof row.detail.videoSegmentPath === "object") {
+								videoSegmentPath =
+									row.detail.videoSegmentPath as VideoSegmentPath;
+							}
+						}
+
+						detailsByResponseId.get(responseId)?.push({
+							id: row.detail.id,
+							responseId: row.detail.responseId,
+							questionId: row.detail.questionId,
+							answerId: row.detail.answerId,
+							score: row.detail.score,
+							videoSegmentPath,
+							questionText: row.question?.questionText ?? null,
+							orderNumber: row.question?.orderNumber ?? null,
+							answerText: row.answer?.answerText ?? null,
+							maxScore: row.detail.score, // approximate for bulk — exact would need extra query
+						});
+					}
+
+					// Combine responses with their details
+					return responseRows.map((row) => ({
+						...(row.response as Response),
+						profile: (row.profile as Profile) ?? null,
+						questionnaire: (row.questionnaire as Questionnaire) ?? null,
+						details: detailsByResponseId.get(row.response.id) ?? [],
+					}));
+				},
 			);
 
-		const getAllWithDetails: IResponseService["getAllWithDetails"] = Effect.gen(
-			function* () {
-				// Fetch all responses with profile and questionnaire, and all details in parallel
-				const [responseRows, allDetails] = yield* Effect.all(
-					[
-						db
-							.select({
-								response: responses,
-								profile: profiles,
-								questionnaire: questionnaires,
-							})
-							.from(responses)
-							.leftJoin(profiles, eq(responses.userId, profiles.id))
-							.leftJoin(
-								questionnaires,
-								eq(responses.questionnaireId, questionnaires.id),
-							)
-							.orderBy(desc(responses.createdAt)),
-						db
-							.select({
-								detail: responseDetails,
-								question: questions,
-								answer: answers,
-							})
-							.from(responseDetails)
-							.leftJoin(questions, eq(responseDetails.questionId, questions.id))
-							.leftJoin(answers, eq(responseDetails.answerId, answers.id)),
-					],
-					{ concurrency: "unbounded" },
-				);
-
-				// Group details by response ID
-				const detailsByResponseId = new Map<string, ResponseDetail[]>();
-				for (const row of allDetails) {
-					const responseId = row.detail.responseId;
-					if (!detailsByResponseId.has(responseId)) {
-						detailsByResponseId.set(responseId, []);
-					}
-
-					let videoSegmentPath: VideoSegmentPath = null;
-					if (row.detail.videoSegmentPath != null) {
-						if (typeof row.detail.videoSegmentPath === "string") {
-							try {
-								videoSegmentPath = JSON.parse(row.detail.videoSegmentPath);
-							} catch {
-								videoSegmentPath = {
-									main: row.detail.videoSegmentPath,
-									secondary: null,
-								};
-							}
-						} else if (typeof row.detail.videoSegmentPath === "object") {
-							videoSegmentPath =
-								row.detail.videoSegmentPath as VideoSegmentPath;
-						}
-					}
-
-					detailsByResponseId.get(responseId)?.push({
-						id: row.detail.id,
-						responseId: row.detail.responseId,
-						questionId: row.detail.questionId,
-						answerId: row.detail.answerId,
-						score: row.detail.score,
-						videoSegmentPath,
-						questionText: row.question?.questionText ?? null,
-						orderNumber: row.question?.orderNumber ?? null,
-						answerText: row.answer?.answerText ?? null,
-						maxScore: row.detail.score, // approximate for bulk — exact would need extra query
-					});
-				}
-
-				// Combine responses with their details
-				return responseRows.map((row) => ({
-					...(row.response as Response),
-					profile: (row.profile as Profile) ?? null,
-					questionnaire: (row.questionnaire as Questionnaire) ?? null,
-					details: detailsByResponseId.get(row.response.id) ?? [],
-				}));
-			},
-		).pipe(
-			Effect.mapError(
-				(e) =>
-					new DatabaseError({
-						message: "Failed to fetch responses with details",
-						cause: e,
-					}),
-			),
-		);
-
-		return {
-			getAll,
-			getById,
-			getByQuestionnaireId,
-			getFiltered,
-			create,
-			delete: deleteResponses,
-			getAllWithDetails,
-		};
-	}),
-);
+			return {
+				getAll,
+				getById,
+				getByQuestionnaireId,
+				getFiltered,
+				create,
+				delete: deleteResponses,
+				getAllWithDetails,
+			};
+		}),
+	},
+) {}

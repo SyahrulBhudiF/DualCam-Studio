@@ -20,7 +20,7 @@ export const getResponses = createServerFn({ method: "GET" }).handler(
 			Effect.gen(function* () {
 				yield* requireAuth;
 				const service = yield* ResponseService;
-				const responses = yield* service.getAll;
+				const responses = yield* service.getAll();
 
 				return responses.map((r) => ({
 					id: r.id,
@@ -189,7 +189,7 @@ export const getAllResponsesWithDetails = createServerFn({
 		Effect.gen(function* () {
 			yield* requireAuth;
 			const service = yield* ResponseService;
-			const responses = yield* service.getAllWithDetails;
+			const responses = yield* service.getAllWithDetails();
 
 			return responses.map((r) => ({
 				id: r.id,

@@ -1,135 +1,119 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import { eq, inArray } from "drizzle-orm";
-import { Context, Effect, Layer } from "effect";
+import { Effect } from "effect";
 import type { NewQuestion, Question } from "../db";
 import { questions } from "../db";
 import { DatabaseError, QuestionNotFoundError } from "../errors";
 
-export interface IQuestionService {
-	readonly getByQuestionnaireId: (
-		questionnaireId: string,
-	) => Effect.Effect<Question[], DatabaseError>;
-	readonly getById: (
-		id: string,
-	) => Effect.Effect<Question, QuestionNotFoundError | DatabaseError>;
-	readonly create: (
-		data: Omit<NewQuestion, "id">,
-	) => Effect.Effect<Question, DatabaseError>;
-	readonly update: (
-		id: string,
-		data: Partial<Omit<NewQuestion, "id" | "questionnaireId">>,
-	) => Effect.Effect<Question, QuestionNotFoundError | DatabaseError>;
-	readonly delete: (ids: string[]) => Effect.Effect<void, DatabaseError>;
-}
+export class QuestionService extends Effect.Service<QuestionService>()(
+	"QuestionService",
+	{
+		accessors: true,
+		dependencies: [],
+		effect: Effect.gen(function* () {
+			const db = yield* PgDrizzle;
 
-export class QuestionService extends Context.Tag("QuestionService")<
-	QuestionService,
-	IQuestionService
->() {}
-
-export const QuestionServiceLive = Layer.effect(
-	QuestionService,
-	Effect.gen(function* () {
-		const db = yield* PgDrizzle;
-
-		const getByQuestionnaireId: IQuestionService["getByQuestionnaireId"] = (
-			questionnaireId,
-		) =>
-			Effect.gen(function* () {
+			const getByQuestionnaireId = Effect.fn(
+				"QuestionService.getByQuestionnaireId",
+			)(function* (questionnaireId: string) {
 				const rows = yield* db
 					.select()
 					.from(questions)
 					.where(eq(questions.questionnaireId, questionnaireId))
-					.orderBy(questions.orderNumber);
+					.orderBy(questions.orderNumber).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch questions",
+									cause: e,
+								}),
+						),
+					);
 				return rows as Question[];
-			}).pipe(
-				Effect.mapError(
-					(e) =>
-						new DatabaseError({
-							message: "Failed to fetch questions",
-							cause: e,
-						}),
-				),
-			);
+			});
 
-		const getById: IQuestionService["getById"] = (id) =>
-			Effect.gen(function* () {
+			const getById = Effect.fn("QuestionService.getById")(function* (
+				id: string,
+			) {
 				const [result] = yield* db
 					.select()
 					.from(questions)
-					.where(eq(questions.id, id));
+					.where(eq(questions.id, id)).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch question",
+									cause: e,
+								}),
+						),
+					);
 				if (!result) {
 					return yield* Effect.fail(new QuestionNotFoundError({ id }));
 				}
 				return result as Question;
-			}).pipe(
-				Effect.mapError((e): QuestionNotFoundError | DatabaseError =>
-					e instanceof QuestionNotFoundError
-						? e
-						: new DatabaseError({
-								message: "Failed to fetch question",
+			});
+
+			const create = Effect.fn("QuestionService.create")(function* (
+				data: Omit<NewQuestion, "id">,
+			) {
+				const [result] = yield* db.insert(questions).values(data).returning().pipe(
+					Effect.mapError(
+						(e) =>
+							new DatabaseError({
+								message: "Failed to create question",
 								cause: e,
 							}),
-				),
-			);
-
-		const create: IQuestionService["create"] = (data) =>
-			Effect.gen(function* () {
-				const [result] = yield* db.insert(questions).values(data).returning();
+					),
+				);
 				return result as Question;
-			}).pipe(
-				Effect.mapError(
-					(e) =>
-						new DatabaseError({
-							message: "Failed to create question",
-							cause: e,
-						}),
-				),
-			);
+			});
 
-		const update: IQuestionService["update"] = (id, data) =>
-			Effect.gen(function* () {
+			const update = Effect.fn("QuestionService.update")(function* (
+				id: string,
+				data: Partial<Omit<NewQuestion, "id" | "questionnaireId">>,
+			) {
 				const [result] = yield* db
 					.update(questions)
 					.set(data)
 					.where(eq(questions.id, id))
-					.returning();
+					.returning().pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to update question",
+									cause: e,
+								}),
+						),
+					);
 				if (!result) {
 					return yield* Effect.fail(new QuestionNotFoundError({ id }));
 				}
 				return result as Question;
-			}).pipe(
-				Effect.mapError((e): QuestionNotFoundError | DatabaseError =>
-					e instanceof QuestionNotFoundError
-						? e
-						: new DatabaseError({
-								message: "Failed to update question",
-								cause: e,
-							}),
-				),
-			);
+			});
 
-		const deleteQuestions: IQuestionService["delete"] = (ids) =>
-			Effect.gen(function* () {
+			const deleteQuestions = Effect.fn("QuestionService.delete")(function* (
+				ids: string[],
+			) {
 				if (ids.length > 0) {
-					yield* db.delete(questions).where(inArray(questions.id, ids));
+					yield* db.delete(questions).where(inArray(questions.id, ids)).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to delete questions",
+									cause: e,
+								}),
+						),
+					);
 				}
-			}).pipe(
-				Effect.mapError(
-					(e) =>
-						new DatabaseError({
-							message: "Failed to delete questions",
-							cause: e,
-						}),
-				),
-			);
+			});
 
-		return {
-			getByQuestionnaireId,
-			getById,
-			create,
-			update,
-			delete: deleteQuestions,
-		};
-	}),
-);
+			return {
+				getByQuestionnaireId,
+				getById,
+				create,
+				update,
+				delete: deleteQuestions,
+			};
+		}),
+	},
+) {}

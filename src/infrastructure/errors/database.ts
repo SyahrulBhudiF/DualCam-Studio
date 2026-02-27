@@ -1,6 +1,9 @@
-import { Data } from "effect";
+import { Schema } from "effect";
 
-export class DatabaseError extends Data.TaggedError("DatabaseError")<{
-	readonly message: string;
-	readonly cause?: unknown;
-}> {}
+export class DatabaseError extends Schema.TaggedError<DatabaseError>()(
+	"DatabaseError",
+	{
+		message: Schema.String,
+		cause: Schema.optional(Schema.Unknown),
+	},
+) {}
