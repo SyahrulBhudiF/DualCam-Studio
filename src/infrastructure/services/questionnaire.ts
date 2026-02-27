@@ -1,101 +1,71 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { eq } from "drizzle-orm";
-import { Context, Effect, Layer } from "effect";
+import { PgClient } from "@effect/sql-pg";
+import { eq, inArray } from "drizzle-orm";
+import { Effect } from "effect";
 import type { NewQuestionnaire, Questionnaire } from "../db";
 import { answers, questionnaires, questions } from "../db";
 import { DatabaseError, QuestionnaireNotFoundError } from "../errors";
 
-export interface IQuestionnaireService {
-	readonly getAll: Effect.Effect<Questionnaire[], DatabaseError>;
-	readonly getById: (
-		id: string,
-	) => Effect.Effect<Questionnaire, QuestionnaireNotFoundError | DatabaseError>;
-	readonly getActive: Effect.Effect<
-		{
-			questionnaire: Questionnaire;
-			questions: Array<{
-				id: string;
-				questionText: string;
-				orderNumber: number;
-				answers: Array<{ id: string; answerText: string; score: number }>;
-			}>;
-		},
-		QuestionnaireNotFoundError | DatabaseError
-	>;
-	readonly create: (
-		data: Omit<NewQuestionnaire, "id" | "createdAt">,
-	) => Effect.Effect<Questionnaire, DatabaseError>;
-	readonly update: (
-		id: string,
-		data: Partial<Omit<NewQuestionnaire, "id" | "createdAt">>,
-	) => Effect.Effect<Questionnaire, QuestionnaireNotFoundError | DatabaseError>;
-	readonly delete: (ids: string[]) => Effect.Effect<void, DatabaseError>;
-	readonly setActive: (
-		id: string,
-	) => Effect.Effect<void, QuestionnaireNotFoundError | DatabaseError>;
-}
+export class QuestionnaireService extends Effect.Service<QuestionnaireService>()(
+	"QuestionnaireService",
+	{
+		accessors: true,
+		dependencies: [],
+		effect: Effect.gen(function* () {
+			const db = yield* PgDrizzle;
+			const sql = yield* PgClient.PgClient;
 
-export class QuestionnaireService extends Context.Tag("QuestionnaireService")<
-	QuestionnaireService,
-	IQuestionnaireService
->() {}
-
-export const QuestionnaireServiceLive = Layer.effect(
-	QuestionnaireService,
-	Effect.gen(function* () {
-		const db = yield* PgDrizzle;
-
-		const getAll: IQuestionnaireService["getAll"] = Effect.tryPromise({
-			try: () =>
-				db
+			const getAll = Effect.fn("QuestionnaireService.getAll")(function* () {
+				const rows = yield* db
 					.select()
 					.from(questionnaires)
-					.orderBy(questionnaires.createdAt)
-					.then((rows) => rows as Questionnaire[]),
-			catch: (error) =>
-				new DatabaseError({
-					message: "Failed to fetch questionnaires",
-					cause: error,
-				}),
-		});
+					.orderBy(questionnaires.createdAt).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch questionnaires",
+									cause: e,
+								}),
+						),
+					);
+				return rows as Questionnaire[];
+			});
 
-		const getById: IQuestionnaireService["getById"] = (id) =>
-			Effect.tryPromise({
-				try: () =>
-					db
-						.select()
-						.from(questionnaires)
-						.where(eq(questionnaires.id, id))
-						.then((rows) => rows[0] as Questionnaire | undefined),
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to fetch questionnaire",
-						cause: error,
-					}),
-			}).pipe(
-				Effect.flatMap((result) =>
-					result
-						? Effect.succeed(result)
-						: Effect.fail(new QuestionnaireNotFoundError({ id })),
-				),
-			);
+			const getById = Effect.fn("QuestionnaireService.getById")(function* (
+				id: string,
+			) {
+				const [result] = yield* db
+					.select()
+					.from(questionnaires)
+					.where(eq(questionnaires.id, id)).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch questionnaire",
+									cause: e,
+								}),
+						),
+					);
+				if (!result) {
+					return yield* Effect.fail(new QuestionnaireNotFoundError({ id }));
+				}
+				return result as Questionnaire;
+			});
 
-		const getActive: IQuestionnaireService["getActive"] = Effect.gen(
-			function* () {
-				const questionnaire = yield* Effect.tryPromise({
-					try: () =>
-						db
-							.select()
-							.from(questionnaires)
-							.where(eq(questionnaires.isActive, true))
-							.limit(1)
-							.then((rows) => rows[0] as Questionnaire | undefined),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to fetch active questionnaire",
-							cause: error,
-						}),
-				});
+			const getActive = Effect.fn("QuestionnaireService.getActive")(function* () {
+				const [questionnaire] = yield* db
+					.select()
+					.from(questionnaires)
+					.where(eq(questionnaires.isActive, true))
+					.limit(1).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch active questionnaire",
+									cause: e,
+								}),
+						),
+					);
 
 				if (!questionnaire) {
 					return yield* Effect.fail(
@@ -104,23 +74,25 @@ export const QuestionnaireServiceLive = Layer.effect(
 				}
 
 				// Fetch questions with their answers in a single JOIN query
-				const rows = yield* Effect.tryPromise({
-					try: () =>
-						db
-							.select({
-								question: questions,
-								answer: answers,
-							})
-							.from(questions)
-							.leftJoin(answers, eq(questions.id, answers.questionId))
-							.where(eq(questions.questionnaireId, questionnaire.id))
-							.orderBy(questions.orderNumber),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to fetch questions with answers",
-							cause: error,
-						}),
-				});
+				const rows = yield* db
+					.select({
+						question: questions,
+						answer: answers,
+					})
+					.from(questions)
+					.leftJoin(answers, eq(questions.id, answers.questionId))
+					.where(
+						eq(questions.questionnaireId, (questionnaire as Questionnaire).id),
+					)
+					.orderBy(questions.orderNumber).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch active questionnaire questions",
+									cause: e,
+								}),
+						),
+					);
 
 				// Group answers by question
 				const questionMap = new Map<
@@ -129,7 +101,11 @@ export const QuestionnaireServiceLive = Layer.effect(
 						id: string;
 						questionText: string;
 						orderNumber: number;
-						answers: Array<{ id: string; answerText: string; score: number }>;
+						answers: Array<{
+							id: string;
+							answerText: string;
+							score: number;
+						}>;
 					}
 				>();
 
@@ -153,142 +129,179 @@ export const QuestionnaireServiceLive = Layer.effect(
 				}
 
 				return {
-					questionnaire,
+					questionnaire: questionnaire as Questionnaire,
 					questions: Array.from(questionMap.values()),
 				};
-			},
-		);
-
-		const create: IQuestionnaireService["create"] = (data) =>
-			Effect.gen(function* () {
-				if (data.isActive) {
-					yield* Effect.tryPromise({
-						try: () =>
-							db
-								.update(questionnaires)
-								.set({ isActive: false })
-								.where(eq(questionnaires.isActive, true)),
-						catch: (error) =>
-							new DatabaseError({
-								message: "Failed to deactivate questionnaires",
-								cause: error,
-							}),
-					});
-				}
-
-				const result = yield* Effect.tryPromise({
-					try: () =>
-						db
-							.insert(questionnaires)
-							.values(data)
-							.returning()
-							.then((rows) => rows[0] as Questionnaire),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to create questionnaire",
-							cause: error,
-						}),
-				});
-
-				return result;
 			});
 
-		const update: IQuestionnaireService["update"] = (id, data) =>
-			Effect.gen(function* () {
+			const create = Effect.fn("QuestionnaireService.create")(function* (
+				data: Omit<NewQuestionnaire, "id" | "createdAt">,
+			) {
 				if (data.isActive) {
-					yield* Effect.tryPromise({
-						try: () =>
-							db
+					// Use transaction for atomic deactivate-all + create
+					return yield* sql.withTransaction(
+						Effect.gen(function* () {
+							yield* db
 								.update(questionnaires)
 								.set({ isActive: false })
-								.where(eq(questionnaires.isActive, true)),
-						catch: (error) =>
-							new DatabaseError({
-								message: "Failed to deactivate questionnaires",
-								cause: error,
-							}),
-					});
+								.where(eq(questionnaires.isActive, true));
+
+							const [result] = yield* db
+								.insert(questionnaires)
+								.values(data)
+								.returning();
+							return result as Questionnaire;
+						}),
+					).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to create questionnaire",
+									cause: e,
+								}),
+						),
+					);
 				}
 
-				const result = yield* Effect.tryPromise({
-					try: () =>
-						db
-							.update(questionnaires)
-							.set(data)
-							.where(eq(questionnaires.id, id))
-							.returning()
-							.then((rows) => rows[0] as Questionnaire | undefined),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to update questionnaire",
-							cause: error,
+				const [result] = yield* db
+					.insert(questionnaires)
+					.values(data)
+					.returning().pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to create questionnaire",
+									cause: e,
+								}),
+						),
+					);
+				return result as Questionnaire;
+			});
+
+			const update = Effect.fn("QuestionnaireService.update")(function* (
+				id: string,
+				data: Partial<Omit<NewQuestionnaire, "id" | "createdAt">>,
+			) {
+				if (data.isActive) {
+					// Use transaction for atomic deactivate-all + update
+					return yield* sql.withTransaction(
+						Effect.gen(function* () {
+							yield* db
+								.update(questionnaires)
+								.set({ isActive: false })
+								.where(eq(questionnaires.isActive, true));
+
+							const [result] = yield* db
+								.update(questionnaires)
+								.set(data)
+								.where(eq(questionnaires.id, id))
+								.returning();
+
+							if (!result) {
+								return yield* Effect.fail(
+									new QuestionnaireNotFoundError({ id }),
+								);
+							}
+
+							return result as Questionnaire;
 						}),
-				});
+					).pipe(
+						Effect.catchTag("DatabaseError", (e) => Effect.fail(e)),
+						Effect.catchAll((e) =>
+							e instanceof QuestionnaireNotFoundError ? Effect.fail(e) : Effect.fail(
+								new DatabaseError({
+									message: "Failed to update questionnaire",
+									cause: e,
+								})
+							)
+						),
+					);
+				}
+
+				const [result] = yield* db
+					.update(questionnaires)
+					.set(data)
+					.where(eq(questionnaires.id, id))
+					.returning().pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to update questionnaire",
+									cause: e,
+								}),
+						),
+					);
 
 				if (!result) {
 					return yield* Effect.fail(new QuestionnaireNotFoundError({ id }));
 				}
 
-				return result;
+				return result as Questionnaire;
 			});
 
-		const deleteQuestionnaires: IQuestionnaireService["delete"] = (ids) =>
-			Effect.tryPromise({
-				try: async () => {
-					for (const id of ids) {
-						await db.delete(questionnaires).where(eq(questionnaires.id, id));
-					}
-				},
-				catch: (error) =>
-					new DatabaseError({
-						message: "Failed to delete questionnaires",
-						cause: error,
-					}),
+			const deleteQuestionnaires = Effect.fn("QuestionnaireService.delete")(function* (
+				ids: string[],
+			) {
+				if (ids.length > 0) {
+					yield* db
+						.delete(questionnaires)
+						.where(inArray(questionnaires.id, ids)).pipe(
+							Effect.mapError(
+								(e) =>
+									new DatabaseError({
+										message: "Failed to delete questionnaires",
+										cause: e,
+									}),
+							),
+						);
+				}
 			});
 
-		const setActive: IQuestionnaireService["setActive"] = (id) =>
-			Effect.gen(function* () {
-				yield* Effect.tryPromise({
-					try: () =>
-						db
+			const setActive = Effect.fn("QuestionnaireService.setActive")(function* (
+				id: string,
+			) {
+				// Use transaction for atomic deactivate-all + activate-one
+				yield* sql.withTransaction(
+					Effect.gen(function* () {
+						yield* db
 							.update(questionnaires)
 							.set({ isActive: false })
-							.where(eq(questionnaires.isActive, true)),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to deactivate questionnaires",
-							cause: error,
-						}),
-				});
+							.where(eq(questionnaires.isActive, true));
 
-				const result = yield* Effect.tryPromise({
-					try: () =>
-						db
+						const [result] = yield* db
 							.update(questionnaires)
 							.set({ isActive: true })
 							.where(eq(questionnaires.id, id))
-							.returning()
-							.then((rows) => rows[0]),
-					catch: (error) =>
-						new DatabaseError({
-							message: "Failed to activate questionnaire",
-							cause: error,
-						}),
-				});
+							.returning();
 
-				if (!result) {
-					return yield* Effect.fail(new QuestionnaireNotFoundError({ id }));
-				}
+						if (!result) {
+							return yield* Effect.fail(
+								new QuestionnaireNotFoundError({ id }),
+							);
+						}
+					}),
+				).pipe(
+					Effect.catchTag("DatabaseError", (e) => Effect.fail(e)),
+					Effect.catchAll((e) =>
+						e instanceof QuestionnaireNotFoundError ? Effect.fail(e) : Effect.fail(
+							new DatabaseError({
+								message: "Failed to activate questionnaire",
+								cause: e,
+							})
+						)
+					),
+				);
 			});
 
-		return {
-			getAll,
-			getById,
-			getActive,
-			create,
-			update,
-			delete: deleteQuestionnaires,
-			setActive,
-		};
-	}),
-);
+			return {
+				getAll,
+				getById,
+				getActive,
+				create,
+				update,
+				delete: deleteQuestionnaires,
+				setActive,
+			};
+		}),
+	},
+) {}

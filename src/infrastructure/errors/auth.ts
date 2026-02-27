@@ -1,36 +1,53 @@
-import { Data } from "effect";
+import { Schema } from "effect";
 
-export class UnauthorizedError extends Data.TaggedError("UnauthorizedError")<{
-	readonly message: string;
-}> {}
+export class UnauthorizedError extends Schema.TaggedError<UnauthorizedError>()(
+	"UnauthorizedError",
+	{
+		message: Schema.String,
+	}
+) {}
 
-export class InvalidCredentialsError extends Data.TaggedError(
+export class InvalidCredentialsError extends Schema.TaggedError<InvalidCredentialsError>()(
 	"InvalidCredentialsError",
-)<{
-	readonly message: string;
-}> {}
+	{
+		message: Schema.String,
+	}
+) {}
 
-export class SessionExpiredError extends Data.TaggedError(
+export class SessionExpiredError extends Schema.TaggedError<SessionExpiredError>()(
 	"SessionExpiredError",
-)<{
-	readonly message: string;
-}> {}
+	{
+		message: Schema.String,
+	}
+) {}
 
-export class SignupError extends Data.TaggedError("SignupError")<{
-	readonly message: string;
-	readonly cause?: unknown;
-}> {}
+export class SignupError extends Schema.TaggedError<SignupError>()(
+	"SignupError",
+	{
+		message: Schema.String,
+		cause: Schema.optional(Schema.Unknown),
+	}
+) {}
 
-export class TokenError extends Data.TaggedError("TokenError")<{
-	readonly message: string;
-	readonly cause?: unknown;
-}> {}
+export class TokenError extends Schema.TaggedError<TokenError>()(
+	"TokenError",
+	{
+		message: Schema.String,
+		cause: Schema.optional(Schema.Unknown),
+	}
+) {}
 
-export class RateLimitError extends Data.TaggedError("RateLimitError")<{
-	readonly message: string;
-	readonly retryAfterMs: number;
-}> {}
+export class RateLimitError extends Schema.TaggedError<RateLimitError>()(
+	"RateLimitError",
+	{
+		message: Schema.String,
+		retryAfterMs: Schema.Number,
+	}
+) {}
 
-export class CsrfError extends Data.TaggedError("CsrfError")<{
-	readonly message: string;
-}> {}
+export class CsrfError extends Schema.TaggedError<CsrfError>()(
+	"CsrfError",
+	{
+		message: Schema.String,
+	}
+) {}

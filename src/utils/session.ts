@@ -5,12 +5,34 @@ import {
 } from "@tanstack/react-start/server";
 import { Effect } from "effect";
 import { SessionConfig } from "@/infrastructure/config";
+import { AuthService } from "@/infrastructure/services/auth";
+import { UnauthorizedError } from "@/infrastructure/errors/auth";
 
 // Get the session token from cookies
 export const getSessionToken = Effect.gen(function* () {
 	const config = yield* SessionConfig;
 	const cookies = getCookies();
 	return cookies[config.cookieName] as string | undefined;
+});
+
+// Require authenticated session — fails with UnauthorizedError if not logged in
+export const requireAuth = Effect.gen(function* () {
+	const token = yield* getSessionToken;
+
+	if (!token) {
+		return yield* Effect.fail(
+			new UnauthorizedError({ message: "Authentication required" }),
+		);
+	}
+
+	const authService = yield* AuthService;
+	const result = yield* authService.validateSession(token).pipe(
+		Effect.mapError(
+			() => new UnauthorizedError({ message: "Invalid or expired session" }),
+		),
+	);
+
+	return result;
 });
 
 // Set the session cookie with secure options

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { Schema } from "@effect/schema";
+import { Schema } from "effect";
 import { createServerFn } from "@tanstack/react-start";
 import { Effect } from "effect";
 import {
@@ -11,13 +11,14 @@ import {
 	runEffect,
 } from "@/infrastructure";
 import { SubmissionSchema } from "@/infrastructure/schemas/questionnaire";
+import { verifyCsrfOrigin } from "@/utils/csrf";
 
 export const getActiveQuestionnaire = createServerFn({ method: "GET" }).handler(
 	async () => {
 		return runEffect(
 			Effect.gen(function* () {
 				const service = yield* QuestionnaireService;
-				const result = yield* service.getActive;
+				const result = yield* service.getActive();
 
 				return {
 					questionnaire: {
@@ -46,13 +47,15 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* verifyCsrfOrigin;
+
 				const fileUploadService = yield* FileUploadService;
 				const answerService = yield* AnswerService;
 				const profileService = yield* ProfileService;
 				const responseService = yield* ResponseService;
 
 				const folderName = data.folderName;
-				const uploadRoot = yield* fileUploadService.getUploadRoot;
+				const uploadRoot = yield* fileUploadService.getUploadRoot();
 
 				// Ensure directories exist
 				yield* fileUploadService.ensureDirectory(uploadRoot);

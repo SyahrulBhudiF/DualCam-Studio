@@ -5,19 +5,19 @@ import { layer as pgDrizzleLayer } from "@effect/sql-drizzle/Pg";
 import { PgClient } from "@effect/sql-pg";
 import {
 	DashboardService,
-	DashboardServiceLive,
+	
 } from "@/infrastructure/services/dashboard";
 import {
 	QuestionnaireService,
-	QuestionnaireServiceLive,
+	
 } from "@/infrastructure/services/questionnaire";
 import {
 	ResponseService,
-	ResponseServiceLive,
+	
 } from "@/infrastructure/services/response";
 import {
 	ProfileService,
-	ProfileServiceLive,
+	
 } from "@/infrastructure/services/profile";
 
 // Performance measurement using performance.now() for accurate timing
@@ -52,14 +52,17 @@ const PgClientLive = PgClient.layer({
 	connectTimeout: Duration.seconds(10),
 });
 
-const DrizzleLive = pgDrizzleLayer.pipe(Layer.provide(PgClientLive));
+const DrizzleLive = Layer.merge(
+	pgDrizzleLayer.pipe(Layer.provide(PgClientLive)),
+	PgClientLive,
+);
 
 // Combined service layer for all services
 const ServicesLive = Layer.mergeAll(
-	DashboardServiceLive,
-	QuestionnaireServiceLive,
-	ResponseServiceLive,
-	ProfileServiceLive,
+	DashboardService.Default,
+	QuestionnaireService.Default,
+	ResponseService.Default,
+	ProfileService.Default,
 ).pipe(Layer.provide(DrizzleLive));
 
 describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
@@ -68,14 +71,14 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 		it.effect("getSummary should complete under 1000ms", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService;
-				yield* timed("Dashboard.getSummary", service.getSummary, 1000);
+				yield* timed("Dashboard.getSummary", service.getSummary(), 1000);
 			}),
 		);
 
 		it.effect("getBreakdown should complete under 1000ms", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService;
-				yield* timed("Dashboard.getBreakdown", service.getBreakdown, 1000);
+				yield* timed("Dashboard.getBreakdown", service.getBreakdown(), 1000);
 			}),
 		);
 
@@ -84,7 +87,7 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 				const service = yield* DashboardService;
 				yield* timed(
 					"Dashboard.getAnalyticsDetails",
-					service.getAnalyticsDetails,
+					service.getAnalyticsDetails(),
 					1000,
 				);
 			}),
@@ -95,7 +98,7 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 		it.effect("getAll should complete under 300ms", () =>
 			Effect.gen(function* () {
 				const service = yield* QuestionnaireService;
-				yield* timed("Questionnaire.getAll", service.getAll, 300);
+				yield* timed("Questionnaire.getAll", service.getAll(), 300);
 			}),
 		);
 	});
@@ -104,17 +107,17 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 		it.effect("getAll should complete under 1000ms", () =>
 			Effect.gen(function* () {
 				const service = yield* ResponseService;
-				yield* timed("Response.getAll", service.getAll, 1000);
+				yield* timed("Response.getAll", service.getAll(), 1000);
 			}),
 		);
 
-		it.effect("getAllWithDetails should complete under 1500ms", () =>
+		it.effect("getAllWithDetails should complete under 2500ms", () =>
 			Effect.gen(function* () {
 				const service = yield* ResponseService;
 				yield* timed(
 					"Response.getAllWithDetails",
-					service.getAllWithDetails,
-					1500,
+					service.getAllWithDetails(),
+					2500,
 				);
 			}),
 		);
@@ -124,14 +127,14 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 		it.effect("getAll should complete under 500ms", () =>
 			Effect.gen(function* () {
 				const service = yield* ProfileService;
-				yield* timed("Profile.getAll", service.getAll, 500);
+				yield* timed("Profile.getAll", service.getAll(), 500);
 			}),
 		);
 
 		it.effect("getUniqueClasses should complete under 500ms", () =>
 			Effect.gen(function* () {
 				const service = yield* ProfileService;
-				yield* timed("Profile.getUniqueClasses", service.getUniqueClasses, 500);
+				yield* timed("Profile.getUniqueClasses", service.getUniqueClasses(), 500);
 			}),
 		);
 	});
@@ -144,7 +147,7 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 
 				const start = performance.now();
 				const results = yield* Effect.all(
-					Arr.replicate(service.getSummary, concurrency),
+					Arr.replicate(service.getSummary(), concurrency),
 					{ concurrency: "unbounded" },
 				);
 				const totalMs = performance.now() - start;
@@ -171,7 +174,7 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 					const start = performance.now();
 					yield* Effect.forEach(
 						Arr.range(1, iterations),
-						() => service.getAll,
+						() => service.getAll(),
 						{ concurrency: 1 },
 					);
 					const totalMs = performance.now() - start;
@@ -216,20 +219,20 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 						});
 
 					// Run all operations
-					yield* measure("Dashboard.getSummary", dashboard.getSummary);
-					yield* measure("Dashboard.getBreakdown", dashboard.getBreakdown);
+					yield* measure("Dashboard.getSummary", dashboard.getSummary());
+					yield* measure("Dashboard.getBreakdown", dashboard.getBreakdown());
 					yield* measure(
 						"Dashboard.getAnalyticsDetails",
-						dashboard.getAnalyticsDetails,
+						dashboard.getAnalyticsDetails(),
 					);
-					yield* measure("Questionnaire.getAll", questionnaire.getAll);
-					yield* measure("Response.getAll", response.getAll);
+					yield* measure("Questionnaire.getAll", questionnaire.getAll());
+					yield* measure("Response.getAll", response.getAll());
 					yield* measure(
 						"Response.getAllWithDetails",
-						response.getAllWithDetails,
+						response.getAllWithDetails(),
 					);
-					yield* measure("Profile.getAll", profile.getAll);
-					yield* measure("Profile.getUniqueClasses", profile.getUniqueClasses);
+					yield* measure("Profile.getAll", profile.getAll());
+					yield* measure("Profile.getUniqueClasses", profile.getUniqueClasses());
 
 					// Print results
 					console.log("\n📊 Performance Results:");

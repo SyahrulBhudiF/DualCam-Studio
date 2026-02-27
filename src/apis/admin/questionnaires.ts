@@ -1,4 +1,4 @@
-import { Schema } from "@effect/schema";
+import { Schema } from "effect";
 import { createServerFn } from "@tanstack/react-start";
 import { Effect } from "effect";
 import {
@@ -17,14 +17,16 @@ import {
 	UpdateQuestionSchema,
 	UUID,
 } from "@/infrastructure/schemas/questionnaire";
+import { requireAuth } from "@/utils/session";
 
 // Questionnaire APIs
 export const getQuestionnaires = createServerFn({ method: "GET" }).handler(
 	async () => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* QuestionnaireService;
-				const results = yield* service.getAll;
+				const results = yield* service.getAll();
 				return results.map((q) => ({
 					...q,
 					createdAt: q.createdAt.toISOString(),
@@ -39,6 +41,7 @@ export const getQuestionnaireById = createServerFn({ method: "GET" })
 	.handler(async ({ data: id }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* QuestionnaireService;
 				const q = yield* service.getById(id);
 				return {
@@ -54,6 +57,7 @@ export const createQuestionnaire = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* QuestionnaireService;
 
 				return yield* service.create({
@@ -71,6 +75,7 @@ export const updateQuestionnaire = createServerFn({ method: "POST" })
 		const { id, ...updates } = data;
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* QuestionnaireService;
 
 				return yield* service.update(id, {
@@ -87,6 +92,7 @@ export const deleteQuestionnaires = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* QuestionnaireService;
 
 				return yield* service.delete(data.ids);
@@ -99,6 +105,7 @@ export const setQuestionnaireActive = createServerFn({ method: "POST" })
 	.handler(async ({ data: id }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* QuestionnaireService;
 
 				return yield* service.setActive(id);
@@ -112,12 +119,13 @@ export const getQuestionsByQuestionnaireId = createServerFn({ method: "GET" })
 	.handler(async ({ data: questionnaireId }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* QuestionService;
 				const results = yield* service.getByQuestionnaireId(questionnaireId);
 
 				return results.map((q) => ({
 					...q,
-					createdAt: new Date().toISOString(),
+					createdAt: q.createdAt.toISOString(),
 				}));
 			}),
 		);
@@ -128,12 +136,13 @@ export const getQuestionById = createServerFn({ method: "GET" })
 	.handler(async ({ data: id }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* QuestionService;
 				const q = yield* service.getById(id);
 
 				return {
 					...q,
-					createdAt: new Date().toISOString(),
+					createdAt: q.createdAt.toISOString(),
 				};
 			}),
 		);
@@ -144,6 +153,7 @@ export const createQuestion = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* QuestionService;
 
 				return yield* service.create({
@@ -161,6 +171,7 @@ export const updateQuestion = createServerFn({ method: "POST" })
 		const { id, ...updates } = data;
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* QuestionService;
 
 				return yield* service.update(id, {
@@ -176,6 +187,7 @@ export const deleteQuestions = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* QuestionService;
 
 				return yield* service.delete(data.ids);
@@ -189,12 +201,13 @@ export const getAnswersByQuestionId = createServerFn({ method: "GET" })
 	.handler(async ({ data: questionId }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* AnswerService;
 				const results = yield* service.getByQuestionId(questionId);
 
 				return results.map((a) => ({
 					...a,
-					createdAt: new Date().toISOString(),
+					createdAt: a.createdAt.toISOString(),
 				}));
 			}),
 		);
@@ -205,6 +218,7 @@ export const createAnswer = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* AnswerService;
 
 				return yield* service.create({
@@ -222,6 +236,7 @@ export const updateAnswer = createServerFn({ method: "POST" })
 		const { id, ...updates } = data;
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* AnswerService;
 
 				return yield* service.update(id, {
@@ -237,6 +252,7 @@ export const deleteAnswers = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* AnswerService;
 
 				return yield* service.delete(data.ids);

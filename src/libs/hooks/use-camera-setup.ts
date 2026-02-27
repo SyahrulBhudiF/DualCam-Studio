@@ -18,45 +18,28 @@ export interface RecordingOptions {
 	fileName?: string;
 }
 
-function useCameraUnit(defaultDeviceId = "") {
-	const [deviceId, setDeviceId] = useState(defaultDeviceId);
-	const [isReady, setReady] = useState(false);
-	const [stream, setStream] = useState<MediaStream | null>(null);
-
-	const videoRef = useRef<HTMLVideoElement | null>(null);
-	const recorderRef = useRef<MediaRecorder | null>(null);
-	const chunksRef = useRef<Blob[]>([]);
-
-	// Auto-attach stream to video element
-	useEffect(() => {
-		if (videoRef.current && stream) {
-			videoRef.current.srcObject = stream;
-		}
-	}, [stream]);
-
-	return {
-		deviceId,
-		setDeviceId,
-		isReady,
-		setReady,
-		stream,
-		setStream,
-		videoRef,
-		recorderRef,
-		chunksRef,
-	};
-}
-
 export function useCameraSetup() {
 	const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
 	const [isRecording, setIsRecording] = useState(false);
+	const [mainReady, setMainReady] = useState(false);
+	const [secReady, setSecReady] = useState(false);
+	const [deviceIdMain, setDeviceIdMain] = useState("");
+	const [deviceIdSec, setDeviceIdSec] = useState("ws-realsense");
 
 	const isStartingRef = useRef(false);
 
-	const main = useCameraUnit("");
-	const sec = useCameraUnit("ws-realsense");
+	const videoRefMain = useRef<HTMLVideoElement | null>(null);
+	const videoRefSec = useRef<HTMLVideoElement | null>(null);
 	const realSenseRef = useRef<RealSenseHandle | null>(null);
 
+	const mainStreamRef = useRef<MediaStream | null>(null);
+	const secStreamRef = useRef<MediaStream | null>(null);
+	const mainRecorderRef = useRef<MediaRecorder | null>(null);
+	const secRecorderRef = useRef<MediaRecorder | null>(null);
+	const mainChunksRef = useRef<Blob[]>([]);
+	const secChunksRef = useRef<Blob[]>([]);
+
+	// Enumerate devices once
 	useEffect(() => {
 		const getDevices = async () => {
 			try {
@@ -64,7 +47,7 @@ export function useCameraSetup() {
 				const devices = await navigator.mediaDevices.enumerateDevices();
 				const cameras = devices.filter((d) => d.kind === "videoinput");
 				setVideoDevices(cameras);
-				if (cameras.length > 0) main.setDeviceId(cameras[0].deviceId);
+				if (cameras.length > 0) setDeviceIdMain(cameras[0].deviceId);
 			} catch (err) {
 				console.error(err);
 			}
@@ -72,90 +55,129 @@ export function useCameraSetup() {
 		getDevices();
 	}, []);
 
+	// Main camera setup
 	useEffect(() => {
-		if (!main.deviceId) return;
+		if (!deviceIdMain) return;
+		let cancelled = false;
+
 		const startMain = async () => {
 			try {
 				const stream = await navigator.mediaDevices.getUserMedia({
 					video: {
-						deviceId: { exact: main.deviceId },
+						deviceId: { exact: deviceIdMain },
 						width: { ideal: 640 },
 						height: { ideal: 480 },
 					},
 					audio: true,
 				});
-				main.setStream(stream);
+
+				if (cancelled) {
+					stream.getTracks().forEach((t) => t.stop());
+					return;
+				}
+
+				mainStreamRef.current = stream;
+				if (videoRefMain.current) {
+					videoRefMain.current.srcObject = stream;
+				}
+
 				const mediaRecorder = new MediaRecorder(stream);
-				main.chunksRef.current = [];
+				mainChunksRef.current = [];
 				mediaRecorder.ondataavailable = (event) => {
-					if (event.data.size > 0) main.chunksRef.current.push(event.data);
+					if (event.data.size > 0) mainChunksRef.current.push(event.data);
 				};
-				main.recorderRef.current = mediaRecorder;
-				main.setReady(true);
+				mainRecorderRef.current = mediaRecorder;
+				setMainReady(true);
 			} catch (err) {
 				console.error(err);
 			}
 		};
 		startMain();
-		return () => main.stream?.getTracks().forEach((t) => t.stop());
-	}, [main.deviceId]);
 
+		return () => {
+			cancelled = true;
+			mainStreamRef.current?.getTracks().forEach((t) => t.stop());
+			mainStreamRef.current = null;
+			mainRecorderRef.current = null;
+			setMainReady(false);
+		};
+	}, [deviceIdMain]);
+
+	// Secondary camera setup
 	useEffect(() => {
-		if (sec.deviceId === "ws-realsense") {
-			sec.setReady(true);
+		if (deviceIdSec === "ws-realsense") {
+			// RealSense readiness is set externally via setSecReady
 			return;
 		}
-		if (!sec.deviceId) return;
+		if (!deviceIdSec) return;
+		let cancelled = false;
+
 		const startSec = async () => {
 			try {
 				const stream = await navigator.mediaDevices.getUserMedia({
 					video: {
-						deviceId: { exact: sec.deviceId },
+						deviceId: { exact: deviceIdSec },
 						width: { ideal: 640 },
 						height: { ideal: 480 },
 					},
 					audio: false,
 				});
-				sec.setStream(stream);
+
+				if (cancelled) {
+					stream.getTracks().forEach((t) => t.stop());
+					return;
+				}
+
+				secStreamRef.current = stream;
+				if (videoRefSec.current) {
+					videoRefSec.current.srcObject = stream;
+				}
+
 				const mediaRecorder = new MediaRecorder(stream, {
 					mimeType: "video/webm",
 				});
-				sec.chunksRef.current = [];
+				secChunksRef.current = [];
 				mediaRecorder.ondataavailable = (event) => {
-					if (event.data.size > 0) sec.chunksRef.current.push(event.data);
+					if (event.data.size > 0) secChunksRef.current.push(event.data);
 				};
-				sec.recorderRef.current = mediaRecorder;
-				sec.setReady(true);
+				secRecorderRef.current = mediaRecorder;
+				setSecReady(true);
 			} catch (err) {
 				console.error(err);
 			}
 		};
 		startSec();
-		return () => sec.stream?.getTracks().forEach((t) => t.stop());
-	}, [sec.deviceId]);
+
+		return () => {
+			cancelled = true;
+			secStreamRef.current?.getTracks().forEach((t) => t.stop());
+			secStreamRef.current = null;
+			secRecorderRef.current = null;
+			setSecReady(false);
+		};
+	}, [deviceIdSec]);
 
 	const startRecording = useCallback(
 		(options: RecordingOptions) => {
-			// Prevent double start if state hasn't updated but button is pressed again
 			if (isStartingRef.current) return;
 			isStartingRef.current = true;
 
 			if (
-				main.recorderRef.current &&
-				main.recorderRef.current.state === "inactive"
+				mainRecorderRef.current &&
+				mainRecorderRef.current.state === "inactive"
 			) {
-				main.chunksRef.current = [];
-				main.recorderRef.current.start(1000);
+				mainChunksRef.current = [];
+				mainRecorderRef.current.start(1000);
 			}
 
-			if (sec.deviceId === "ws-realsense") {
+			if (deviceIdSec === "ws-realsense") {
 				realSenseRef.current?.startRecording(options);
 			} else if (
-				sec.recorderRef.current &&
-				sec.recorderRef.current.state === "inactive"
+				secRecorderRef.current &&
+				secRecorderRef.current.state === "inactive"
 			) {
-				sec.chunksRef.current = [];
-				sec.recorderRef.current.start(1000);
+				secChunksRef.current = [];
+				secRecorderRef.current.start(1000);
 			}
 
 			setIsRecording(true);
@@ -164,33 +186,31 @@ export function useCameraSetup() {
 				isStartingRef.current = false;
 			}, 500);
 		},
-		[sec.deviceId],
+		[deviceIdSec],
 	);
 
 	const stopRecording = useCallback(async () => {
-		await stopRecorderSafe(main.recorderRef.current);
+		await stopRecorderSafe(mainRecorderRef.current);
 
-		if (sec.deviceId === "ws-realsense") {
+		if (deviceIdSec === "ws-realsense") {
 			realSenseRef.current?.stopRecording();
 		} else {
-			await stopRecorderSafe(sec.recorderRef.current);
+			await stopRecorderSafe(secRecorderRef.current);
 		}
 
 		setIsRecording(false);
 		isStartingRef.current = false;
 
 		return {
-			blobMain: new Blob(main.chunksRef.current, { type: "video/webm" }),
+			blobMain: new Blob(mainChunksRef.current, { type: "video/webm" }),
 			blobSec:
-				sec.deviceId !== "ws-realsense"
-					? new Blob(sec.chunksRef.current, { type: "video/webm" })
+				deviceIdSec !== "ws-realsense"
+					? new Blob(secChunksRef.current, { type: "video/webm" })
 					: null,
 		};
-	}, [sec.deviceId]);
+	}, [deviceIdSec]);
 
-	const allReady =
-		main.isReady &&
-		(sec.deviceId === "ws-realsense" ? sec.isReady : sec.isReady);
+	const allReady = mainReady && secReady;
 
 	return {
 		videoDevices,
@@ -199,17 +219,17 @@ export function useCameraSetup() {
 		startRecording,
 		stopRecording,
 
-		deviceIdMain: main.deviceId,
-		setDeviceIdMain: main.setDeviceId,
-		videoRefMain: main.videoRef,
-		streamMain: main.stream,
+		deviceIdMain,
+		setDeviceIdMain,
+		videoRefMain,
+		streamMain: mainStreamRef.current,
 
-		deviceIdSec: sec.deviceId,
-		setDeviceIdSec: sec.setDeviceId,
-		videoRefSec: sec.videoRef,
-		streamSec: sec.stream,
-		secReady: sec.isReady,
-		setSecReady: sec.setReady,
+		deviceIdSec,
+		setDeviceIdSec,
+		videoRefSec,
+		streamSec: secStreamRef.current,
+		secReady,
+		setSecReady,
 
 		realSenseRef,
 	};
