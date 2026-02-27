@@ -121,7 +121,7 @@ export class ProfileService extends Effect.Service<ProfileService>()(
 							),
 						);
 
-					return rows.map((r) => r.class as string).sort();
+					return rows.map((r) => r.class as string).toSorted();
 				},
 			);
 

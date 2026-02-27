@@ -9,7 +9,7 @@ import {
 	useReactTable,
 } from "@tanstack/react-table";
 import { Trash } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { deleteResponses } from "@/apis/admin/responses";
 import {
@@ -56,7 +56,7 @@ export function ResponseList({
 		},
 	});
 
-	const columns = getResponseColumns();
+	const columns = useMemo(() => getResponseColumns(), []);
 
 	const tableData = filteredData ?? data ?? [];
 

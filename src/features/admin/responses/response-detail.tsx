@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { useMemo } from "react";
 import { Main } from "@/components/layout/main";
 import { Button } from "@/components/ui/button";
 import { ProfileCard } from "./components/profile-card";
@@ -191,10 +192,14 @@ function parseVideoData(
 }
 
 export function ResponseDetail({ response }: ResponseDetailProps) {
-	const videoData = parseVideoData(
-		response.videoPath,
-		response.details,
-		response.profile?.name ?? null,
+	const videoData = useMemo(
+		() =>
+			parseVideoData(
+				response.videoPath,
+				response.details,
+				response.profile?.name ?? null,
+			),
+		[response.videoPath, response.details, response.profile?.name],
 	);
 
 	return (

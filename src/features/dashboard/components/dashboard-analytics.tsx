@@ -6,6 +6,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { DashboardAnalysisChart } from "./dashboard-analysis-chart";
+import { useMemo } from "react";
 import type { AnalyticsData } from "./types";
 
 type DashboardAnalyticsProps = {
@@ -17,6 +18,16 @@ export function DashboardAnalytics({
 	analytics,
 	isLoading,
 }: DashboardAnalyticsProps) {
+	const sortedQuestions = useMemo(
+		() =>
+			analytics?.questions
+				.toSorted((a, b) => (a.order ?? 0) - (b.order ?? 0))
+				.map((q) => ({
+					label: q.order != null ? `${q.order}. ${q.text}` : q.text,
+					value: Math.round(q.averageScore * 10) / 10,
+				})) ?? [],
+		[analytics?.questions],
+	);
 	return (
 		<>
 			<div className="grid gap-4 lg:grid-cols-7">
@@ -24,15 +35,7 @@ export function DashboardAnalytics({
 					<DashboardAnalysisChart
 						title="Question Performance"
 						subtitle="Rata-rata skor per pertanyaan"
-						data={
-							analytics?.questions
-								.slice()
-								.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-								.map((q) => ({
-									label: q.order != null ? `${q.order}. ${q.text}` : q.text,
-									value: Math.round(q.averageScore * 10) / 10,
-								})) ?? []
-						}
+						data={sortedQuestions}
 						maxValue={4}
 						isLoading={isLoading}
 						emptyMessage="Belum ada data pertanyaan."

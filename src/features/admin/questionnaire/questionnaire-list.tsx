@@ -10,7 +10,7 @@ import {
 	useReactTable,
 } from "@tanstack/react-table";
 import { Plus, Trash } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
 	createQuestionnaire,
@@ -92,15 +92,19 @@ export function QuestionnaireList({
 		},
 	});
 
-	const columns = getQuestionnaireColumns(
-		() => {},
-		(item) =>
-			updateMutation.mutate({
-				data: {
-					id: item.id,
-					isActive: !item.isActive,
-				},
-			}),
+	const columns = useMemo(
+		() =>
+			getQuestionnaireColumns(
+				() => {},
+				(item) =>
+					updateMutation.mutate({
+						data: {
+							id: item.id,
+							isActive: !item.isActive,
+						},
+					}),
+			),
+		[updateMutation.mutate],
 	);
 
 	const table = useReactTable({
