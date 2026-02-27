@@ -1,4 +1,4 @@
-import { Schema } from "@effect/schema";
+import { Schema } from "effect";
 import { createServerFn } from "@tanstack/react-start";
 import { Effect } from "effect";
 import {
@@ -12,11 +12,13 @@ import {
 	ResponseFilterSchema,
 	UUID,
 } from "@/infrastructure/schemas/questionnaire";
+import { requireAuth } from "@/utils/session";
 
 export const getResponses = createServerFn({ method: "GET" }).handler(
 	async () => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* ResponseService;
 				const responses = yield* service.getAll;
 
@@ -50,6 +52,7 @@ export const getResponseById = createServerFn({ method: "GET" })
 	.handler(async ({ data: id }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* ResponseService;
 				const r = yield* service.getById(id);
 
@@ -78,24 +81,18 @@ export const getResponseById = createServerFn({ method: "GET" })
 							}
 						: null,
 					details: r.details.map((d) => {
-						let videoSegmentPath: string | null = null;
-						if (d.videoSegmentPath != null) {
-							if (typeof d.videoSegmentPath === "string") {
-								videoSegmentPath = d.videoSegmentPath;
-							} else if (typeof d.videoSegmentPath === "object") {
-								videoSegmentPath = JSON.stringify(d.videoSegmentPath);
-							}
-						}
 						return {
 							id: d.id,
 							questionId: d.questionId,
 							answerId: d.answerId,
 							score: d.score,
-							videoSegmentPath,
+							videoSegmentPath: d.videoSegmentPath
+								? JSON.stringify(d.videoSegmentPath)
+								: null,
 							questionText: d.questionText,
 							orderNumber: d.orderNumber,
 							answerText: d.answerText,
-							maxScore: d.score,
+							maxScore: d.maxScore,
 						};
 					}),
 				};
@@ -108,6 +105,7 @@ export const getResponsesByQuestionnaireId = createServerFn({ method: "GET" })
 	.handler(async ({ data: questionnaireId }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* ResponseService;
 				const responses = yield* service.getByQuestionnaireId(questionnaireId);
 
@@ -138,6 +136,7 @@ export const deleteResponses = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* ResponseService;
 				return yield* service.delete(data.ids);
 			}),
@@ -149,6 +148,7 @@ export const getResponsesFiltered = createServerFn({ method: "POST" })
 	.handler(async ({ data: filters }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* ResponseService;
 				const responses = yield* service.getFiltered({
 					questionnaireId: filters.questionnaireId,
@@ -187,6 +187,7 @@ export const getAllResponsesWithDetails = createServerFn({
 }).handler(async () => {
 	return runEffect(
 		Effect.gen(function* () {
+			yield* requireAuth;
 			const service = yield* ResponseService;
 			const responses = yield* service.getAllWithDetails;
 
@@ -224,6 +225,7 @@ export const getFilterOptions = createServerFn({ method: "GET" }).handler(
 	async () => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const questionnaireService = yield* QuestionnaireService;
 				const profileService = yield* ProfileService;
 

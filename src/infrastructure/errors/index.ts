@@ -9,11 +9,10 @@ export {
 } from "./auth";
 
 export {
-	ConnectionError,
 	DatabaseError,
-	QueryError,
-	TransactionError,
 } from "./database";
+
+export { FileError } from "./file";
 
 export {
 	AnswerNotFoundError,
@@ -36,11 +35,9 @@ import type {
 	UnauthorizedError,
 } from "./auth";
 import type {
-	ConnectionError,
 	DatabaseError,
-	QueryError,
-	TransactionError,
 } from "./database";
+import type { FileError } from "./file";
 import type {
 	AnswerNotFoundError,
 	ProfileNotFoundError,
@@ -53,9 +50,7 @@ import type { ParseError, ValidationError } from "./validation";
 
 export type AppError =
 	| DatabaseError
-	| ConnectionError
-	| QueryError
-	| TransactionError
+	| FileError
 	| UnauthorizedError
 	| InvalidCredentialsError
 	| SessionExpiredError

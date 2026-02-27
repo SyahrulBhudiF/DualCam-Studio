@@ -52,7 +52,10 @@ const PgClientLive = PgClient.layer({
 	connectTimeout: Duration.seconds(10),
 });
 
-const DrizzleLive = pgDrizzleLayer.pipe(Layer.provide(PgClientLive));
+const DrizzleLive = Layer.merge(
+	pgDrizzleLayer.pipe(Layer.provide(PgClientLive)),
+	PgClientLive,
+);
 
 // Combined service layer for all services
 const ServicesLive = Layer.mergeAll(

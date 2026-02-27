@@ -1,5 +1,6 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { eq } from "drizzle-orm";
+import { PgClient } from "@effect/sql-pg";
+import { eq, inArray } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
 import type { NewQuestionnaire, Questionnaire } from "../db";
 import { answers, questionnaires, questions } from "../db";
@@ -44,6 +45,7 @@ export const QuestionnaireServiceLive = Layer.effect(
 	QuestionnaireService,
 	Effect.gen(function* () {
 		const db = yield* PgDrizzle;
+		const sql = yield* PgClient.PgClient;
 
 		const getAll: IQuestionnaireService["getAll"] = Effect.gen(function* () {
 			const rows = yield* db
@@ -162,10 +164,21 @@ export const QuestionnaireServiceLive = Layer.effect(
 		const create: IQuestionnaireService["create"] = (data) =>
 			Effect.gen(function* () {
 				if (data.isActive) {
-					yield* db
-						.update(questionnaires)
-						.set({ isActive: false })
-						.where(eq(questionnaires.isActive, true));
+					// Use transaction for atomic deactivate-all + create
+					return yield* sql.withTransaction(
+						Effect.gen(function* () {
+							yield* db
+								.update(questionnaires)
+								.set({ isActive: false })
+								.where(eq(questionnaires.isActive, true));
+
+							const [result] = yield* db
+								.insert(questionnaires)
+								.values(data)
+								.returning();
+							return result as Questionnaire;
+						}),
+					);
 				}
 
 				const [result] = yield* db
@@ -186,10 +199,29 @@ export const QuestionnaireServiceLive = Layer.effect(
 		const update: IQuestionnaireService["update"] = (id, data) =>
 			Effect.gen(function* () {
 				if (data.isActive) {
-					yield* db
-						.update(questionnaires)
-						.set({ isActive: false })
-						.where(eq(questionnaires.isActive, true));
+					// Use transaction for atomic deactivate-all + update
+					return yield* sql.withTransaction(
+						Effect.gen(function* () {
+							yield* db
+								.update(questionnaires)
+								.set({ isActive: false })
+								.where(eq(questionnaires.isActive, true));
+
+							const [result] = yield* db
+								.update(questionnaires)
+								.set(data)
+								.where(eq(questionnaires.id, id))
+								.returning();
+
+							if (!result) {
+								return yield* Effect.fail(
+									new QuestionnaireNotFoundError({ id }),
+								);
+							}
+
+							return result as Questionnaire;
+						}),
+					);
 				}
 
 				const [result] = yield* db
@@ -216,8 +248,10 @@ export const QuestionnaireServiceLive = Layer.effect(
 
 		const deleteQuestionnaires: IQuestionnaireService["delete"] = (ids) =>
 			Effect.gen(function* () {
-				for (const id of ids) {
-					yield* db.delete(questionnaires).where(eq(questionnaires.id, id));
+				if (ids.length > 0) {
+					yield* db
+						.delete(questionnaires)
+						.where(inArray(questionnaires.id, ids));
 				}
 			}).pipe(
 				Effect.mapError(
@@ -231,20 +265,27 @@ export const QuestionnaireServiceLive = Layer.effect(
 
 		const setActive: IQuestionnaireService["setActive"] = (id) =>
 			Effect.gen(function* () {
-				yield* db
-					.update(questionnaires)
-					.set({ isActive: false })
-					.where(eq(questionnaires.isActive, true));
+				// Use transaction for atomic deactivate-all + activate-one
+				yield* sql.withTransaction(
+					Effect.gen(function* () {
+						yield* db
+							.update(questionnaires)
+							.set({ isActive: false })
+							.where(eq(questionnaires.isActive, true));
 
-				const [result] = yield* db
-					.update(questionnaires)
-					.set({ isActive: true })
-					.where(eq(questionnaires.id, id))
-					.returning();
+						const [result] = yield* db
+							.update(questionnaires)
+							.set({ isActive: true })
+							.where(eq(questionnaires.id, id))
+							.returning();
 
-				if (!result) {
-					return yield* Effect.fail(new QuestionnaireNotFoundError({ id }));
-				}
+						if (!result) {
+							return yield* Effect.fail(
+								new QuestionnaireNotFoundError({ id }),
+							);
+						}
+					}),
+				);
 			}).pipe(
 				Effect.mapError((e): QuestionnaireNotFoundError | DatabaseError =>
 					e instanceof QuestionnaireNotFoundError
