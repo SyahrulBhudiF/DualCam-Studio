@@ -3,7 +3,7 @@ import { Effect, Exit, Layer } from "effect";
 import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
 import { describe, expect, vi, beforeEach } from "vitest";
-import { AuthService, AuthServiceLive } from "@/infrastructure/services/auth";
+import { AuthService } from "@/infrastructure/services/auth";
 
 // Creates an Effect-compatible mock result for yield*
 const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
@@ -69,7 +69,7 @@ const createMockDb = () => {
 // Create a test layer with mocked database
 const createTestLayer = (mockDb: ReturnType<typeof createMockDb>) => {
 	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return AuthServiceLive.pipe(Layer.provide(MockPgDrizzle));
+	return AuthService.Default.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("AuthService", () => {

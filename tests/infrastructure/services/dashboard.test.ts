@@ -5,7 +5,7 @@ import { it } from "@effect/vitest";
 import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	DashboardService,
-	DashboardServiceLive,
+	
 } from "@/infrastructure/services/dashboard";
 
 // Creates an Effect-compatible mock result for yield*
@@ -151,7 +151,7 @@ const createMockDb = () => {
 const createTestLayer = () => {
 	const { db } = createMockDb();
 	const MockPgDrizzle = Layer.succeed(PgDrizzle, db as never);
-	return DashboardServiceLive.pipe(Layer.provide(MockPgDrizzle));
+	return DashboardService.Default.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("DashboardService", () => {
@@ -163,7 +163,7 @@ describe("DashboardService", () => {
 		it.effect("should return dashboard summary", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService;
-				const result = yield* service.getSummary;
+				const result = yield* service.getSummary();
 
 				expect(result).toBeDefined();
 				expect(typeof result.totalQuestionnaires).toBe("number");
@@ -177,7 +177,7 @@ describe("DashboardService", () => {
 		it.effect("should calculate average score", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService;
-				const result = yield* service.getSummary;
+				const result = yield* service.getSummary();
 
 				expect(typeof result.averageScore).toBe("number");
 				expect(result.averageScore).toBeGreaterThanOrEqual(0);
@@ -189,7 +189,7 @@ describe("DashboardService", () => {
 		it.effect("should return questionnaire breakdown", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService;
-				const result = yield* service.getBreakdown;
+				const result = yield* service.getBreakdown();
 
 				expect(result).toBeDefined();
 				expect(Array.isArray(result.questionnaires)).toBe(true);
@@ -200,7 +200,7 @@ describe("DashboardService", () => {
 		it.effect("should return questionnaire stats with correct structure", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService;
-				const result = yield* service.getBreakdown;
+				const result = yield* service.getBreakdown();
 
 				expect(result.questionnaires.length).toBeGreaterThan(0);
 				for (const q of result.questionnaires) {
@@ -215,7 +215,7 @@ describe("DashboardService", () => {
 		it.effect("should calculate class stats correctly", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService;
-				const result = yield* service.getBreakdown;
+				const result = yield* service.getBreakdown();
 
 				expect(result.classes.length).toBeGreaterThanOrEqual(0);
 			}).pipe(Effect.provide(createTestLayer())),
@@ -226,7 +226,7 @@ describe("DashboardService", () => {
 		it.effect("should return analytics details", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService;
-				const result = yield* service.getAnalyticsDetails;
+				const result = yield* service.getAnalyticsDetails();
 
 				expect(result).toBeDefined();
 				expect(Array.isArray(result.questions)).toBe(true);
@@ -239,7 +239,7 @@ describe("DashboardService", () => {
 		it.effect("should calculate video stats", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService;
-				const result = yield* service.getAnalyticsDetails;
+				const result = yield* service.getAnalyticsDetails();
 
 				expect(typeof result.video.withVideo).toBe("number");
 				expect(typeof result.video.total).toBe("number");
@@ -250,7 +250,7 @@ describe("DashboardService", () => {
 		it.effect("should generate timeline entries", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService;
-				const result = yield* service.getAnalyticsDetails;
+				const result = yield* service.getAnalyticsDetails();
 
 				expect(Array.isArray(result.timeline)).toBe(true);
 				for (const entry of result.timeline) {
@@ -264,7 +264,7 @@ describe("DashboardService", () => {
 		it.effect("should calculate question stats", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService;
-				const result = yield* service.getAnalyticsDetails;
+				const result = yield* service.getAnalyticsDetails();
 
 				expect(Array.isArray(result.questions)).toBe(true);
 				for (const q of result.questions) {

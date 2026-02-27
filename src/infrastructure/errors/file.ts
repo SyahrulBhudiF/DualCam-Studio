@@ -1,6 +1,9 @@
-import { Data } from "effect";
+import { Schema } from "effect";
 
-export class FileError extends Data.TaggedError("FileError")<{
-	readonly message: string;
-	readonly cause?: unknown;
-}> {}
+export class FileError extends Schema.TaggedError<FileError>()(
+	"FileError",
+	{
+		message: Schema.String,
+		cause: Schema.optional(Schema.Unknown),
+	},
+) {}

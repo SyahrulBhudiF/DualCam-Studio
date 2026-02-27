@@ -1,92 +1,76 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import { eq, isNotNull } from "drizzle-orm";
-import { Context, Effect, Layer } from "effect";
+import { Effect } from "effect";
 import type { NewProfile, Profile } from "../db";
 import { profiles } from "../db";
 import { DatabaseError, ProfileNotFoundError } from "../errors";
 
-export interface IProfileService {
-	readonly getById: (
-		id: string,
-	) => Effect.Effect<Profile, ProfileNotFoundError | DatabaseError>;
-	readonly getByEmail: (
-		email: string,
-	) => Effect.Effect<Profile | null, DatabaseError>;
-	readonly create: (
-		data: Omit<NewProfile, "id" | "createdAt">,
-	) => Effect.Effect<Profile, DatabaseError>;
-	readonly upsertByEmail: (
-		email: string,
-		data: Omit<NewProfile, "id" | "createdAt" | "email">,
-	) => Effect.Effect<Profile, DatabaseError>;
-	readonly getAll: Effect.Effect<Profile[], DatabaseError>;
-	readonly getUniqueClasses: Effect.Effect<string[], DatabaseError>;
-}
+export class ProfileService extends Effect.Service<ProfileService>()(
+	"ProfileService",
+	{
+		accessors: true,
+		dependencies: [],
+		effect: Effect.gen(function* () {
+			const db = yield* PgDrizzle;
 
-export class ProfileService extends Context.Tag("ProfileService")<
-	ProfileService,
-	IProfileService
->() {}
-
-export const ProfileServiceLive = Layer.effect(
-	ProfileService,
-	Effect.gen(function* () {
-		const db = yield* PgDrizzle;
-
-		const getById: IProfileService["getById"] = (id) =>
-			Effect.gen(function* () {
+			const getById = Effect.fn("ProfileService.getById")(function* (
+				id: string,
+			) {
 				const [result] = yield* db
 					.select()
 					.from(profiles)
-					.where(eq(profiles.id, id));
+					.where(eq(profiles.id, id)).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch profile",
+									cause: e,
+								}),
+						),
+					);
 				if (!result) {
 					return yield* Effect.fail(new ProfileNotFoundError({ id }));
 				}
 				return result as Profile;
-			}).pipe(
-				Effect.mapError((e): ProfileNotFoundError | DatabaseError =>
-					e instanceof ProfileNotFoundError
-						? e
-						: new DatabaseError({
-								message: "Failed to fetch profile",
-								cause: e,
-							}),
-				),
-			);
+			});
 
-		const getByEmail: IProfileService["getByEmail"] = (email) =>
-			Effect.gen(function* () {
+			const getByEmail = Effect.fn("ProfileService.getByEmail")(function* (
+				email: string,
+			) {
 				const [result] = yield* db
 					.select()
 					.from(profiles)
-					.where(eq(profiles.email, email));
+					.where(eq(profiles.email, email)).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch profile by email",
+									cause: e,
+								}),
+						),
+					);
 				return (result as Profile | undefined) ?? null;
-			}).pipe(
-				Effect.mapError(
-					(e) =>
-						new DatabaseError({
-							message: "Failed to fetch profile by email",
-							cause: e,
-						}),
-				),
-			);
+			});
 
-		const create: IProfileService["create"] = (data) =>
-			Effect.gen(function* () {
-				const [result] = yield* db.insert(profiles).values(data).returning();
+			const create = Effect.fn("ProfileService.create")(function* (
+				data: Omit<NewProfile, "id" | "createdAt">,
+			) {
+				const [result] = yield* db.insert(profiles).values(data).returning().pipe(
+					Effect.mapError(
+						(e) =>
+							new DatabaseError({
+								message: "Failed to create profile",
+								cause: e,
+							}),
+					),
+				);
 				return result as Profile;
-			}).pipe(
-				Effect.mapError(
-					(e) =>
-						new DatabaseError({
-							message: "Failed to create profile",
-							cause: e,
-						}),
-				),
-			);
+			});
 
-		const upsertByEmail: IProfileService["upsertByEmail"] = (email, data) =>
-			Effect.gen(function* () {
+			const upsertByEmail = Effect.fn("ProfileService.upsertByEmail")(function* (
+				email: string,
+				data: Omit<NewProfile, "id" | "createdAt" | "email">,
+			) {
 				const existing = yield* getByEmail(email);
 
 				if (existing) {
@@ -94,63 +78,61 @@ export const ProfileServiceLive = Layer.effect(
 						.update(profiles)
 						.set(data)
 						.where(eq(profiles.id, existing.id))
-						.returning();
+						.returning().pipe(
+							Effect.mapError(
+								(e) =>
+									new DatabaseError({
+										message: "Failed to upsert profile",
+										cause: e,
+									}),
+							),
+						);
 					return updated as Profile;
 				}
 
 				return yield* create({ ...data, email });
-			}).pipe(
-				Effect.mapError((e) =>
-					e instanceof DatabaseError
-						? e
-						: new DatabaseError({
-								message: "Failed to upsert profile",
+			});
+
+			const getAll = Effect.fn("ProfileService.getAll")(function* () {
+				const rows = yield* db.select().from(profiles).pipe(
+					Effect.mapError(
+						(e) =>
+							new DatabaseError({
+								message: "Failed to fetch profiles",
 								cause: e,
 							}),
-				),
+					),
+				);
+				return rows as Profile[];
+			});
+
+			const getUniqueClasses = Effect.fn("ProfileService.getUniqueClasses")(
+				function* () {
+					const rows = yield* db
+						.selectDistinct({ class: profiles.class })
+						.from(profiles)
+						.where(isNotNull(profiles.class)).pipe(
+							Effect.mapError(
+								(e) =>
+									new DatabaseError({
+										message: "Failed to fetch unique classes",
+										cause: e,
+									}),
+							),
+						);
+
+					return rows.map((r) => r.class as string).sort();
+				},
 			);
 
-		const getAll: IProfileService["getAll"] = Effect.gen(function* () {
-			const rows = yield* db.select().from(profiles);
-			return rows as Profile[];
-		}).pipe(
-			Effect.mapError(
-				(e) =>
-					new DatabaseError({
-						message: "Failed to fetch profiles",
-						cause: e,
-					}),
-			),
-		);
-
-		const getUniqueClasses: IProfileService["getUniqueClasses"] = Effect.gen(
-			function* () {
-				const rows = yield* db
-					.selectDistinct({ class: profiles.class })
-					.from(profiles)
-					.where(isNotNull(profiles.class));
-
-				return rows
-					.map((r) => r.class as string)
-					.sort();
-			},
-		).pipe(
-			Effect.mapError(
-				(e) =>
-					new DatabaseError({
-						message: "Failed to fetch unique classes",
-						cause: e,
-					}),
-			),
-		);
-
-		return {
-			getById,
-			getByEmail,
-			create,
-			upsertByEmail,
-			getAll,
-			getUniqueClasses,
-		};
-	}),
-);
+			return {
+				getById,
+				getByEmail,
+				create,
+				upsertByEmail,
+				getAll,
+				getUniqueClasses,
+			};
+		}),
+	},
+) {}

@@ -26,7 +26,7 @@ export const getQuestionnaires = createServerFn({ method: "GET" }).handler(
 			Effect.gen(function* () {
 				yield* requireAuth;
 				const service = yield* QuestionnaireService;
-				const results = yield* service.getAll;
+				const results = yield* service.getAll();
 				return results.map((q) => ({
 					...q,
 					createdAt: q.createdAt.toISOString(),

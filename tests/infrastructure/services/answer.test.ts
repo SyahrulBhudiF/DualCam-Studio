@@ -5,7 +5,7 @@ import { it } from "@effect/vitest";
 import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	AnswerService,
-	AnswerServiceLive,
+	
 } from "@/infrastructure/services/answer";
 
 // Creates an Effect-compatible mock result for yield*
@@ -100,7 +100,7 @@ const createTestLayer = (
 		);
 
 	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return AnswerServiceLive.pipe(Layer.provide(MockPgDrizzle));
+	return AnswerService.Default.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("AnswerService", () => {

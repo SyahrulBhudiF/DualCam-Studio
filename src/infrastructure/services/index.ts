@@ -1,13 +1,14 @@
 import { Layer } from "effect";
-import { AnswerServiceLive } from "./answer";
-import { AuthServiceLive } from "./auth";
-import { DashboardServiceLive } from "./dashboard";
-import { FileUploadServiceLive } from "./file-upload";
-import { ProfileServiceLive } from "./profile";
-import { QuestionServiceLive } from "./question";
-import { QuestionnaireServiceLive } from "./questionnaire";
-import { RateLimitServiceLive } from "./rate-limit";
-import { ResponseServiceLive } from "./response";
+import { NodeFileSystem } from "@effect/platform-node";
+import { AnswerService } from "./answer";
+import { AuthService } from "./auth";
+import { DashboardService } from "./dashboard";
+import { FileUploadService } from "./file-upload";
+import { ProfileService } from "./profile";
+import { QuestionService } from "./question";
+import { QuestionnaireService } from "./questionnaire";
+import { RateLimitService } from "./rate-limit";
+import { ResponseService } from "./response";
 
 export { AnswerService } from "./answer";
 export { AuthService } from "./auth";
@@ -20,13 +21,13 @@ export { RateLimitService } from "./rate-limit";
 export { ResponseService } from "./response";
 
 export const AllServicesLive = Layer.mergeAll(
-	QuestionnaireServiceLive,
-	QuestionServiceLive,
-	AnswerServiceLive,
-	ProfileServiceLive,
-	ResponseServiceLive,
-	DashboardServiceLive,
-	FileUploadServiceLive,
-	AuthServiceLive,
-	RateLimitServiceLive,
+	QuestionnaireService.Default,
+	QuestionService.Default,
+	AnswerService.Default,
+	ProfileService.Default,
+	ResponseService.Default,
+	DashboardService.Default,
+	FileUploadService.Default.pipe(Layer.provide(NodeFileSystem.layer)),
+	AuthService.Default,
+	RateLimitService.Default,
 );

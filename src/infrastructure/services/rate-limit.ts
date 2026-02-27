@@ -1,32 +1,21 @@
 import { PgDrizzle } from "@effect/sql-drizzle/Pg";
 import { eq, lt, sql } from "drizzle-orm";
-import { Context, Effect, Layer } from "effect";
+import { Effect } from "effect";
 import { RateLimitConfig } from "../config";
 import { rateLimits } from "../db";
 import { DatabaseError } from "../errors";
 import { RateLimitError } from "../errors/auth";
 
-export interface IRateLimitService {
-	readonly check: (
-		key: string,
-	) => Effect.Effect<void, RateLimitError | DatabaseError>;
+export class RateLimitService extends Effect.Service<RateLimitService>()(
+	"RateLimitService",
+	{
+		accessors: true,
+		dependencies: [],
+		effect: Effect.gen(function* () {
+			const db = yield* PgDrizzle;
+			const config = yield* RateLimitConfig;
 
-	readonly cleanup: () => Effect.Effect<void, DatabaseError>;
-}
-
-export class RateLimitService extends Context.Tag("RateLimitService")<
-	RateLimitService,
-	IRateLimitService
->() {}
-
-export const RateLimitServiceLive = Layer.effect(
-	RateLimitService,
-	Effect.gen(function* () {
-		const db = yield* PgDrizzle;
-		const config = yield* RateLimitConfig;
-
-		const check: IRateLimitService["check"] = (key) =>
-			Effect.gen(function* () {
+			const check = Effect.fn("RateLimitService.check")(function* (key: string) {
 				const now = new Date();
 				const expiresAt = new Date(now.getTime() + config.windowMs);
 
@@ -47,13 +36,29 @@ export const RateLimitServiceLive = Layer.effect(
 								ELSE ${rateLimits.expiresAt}
 							END`,
 						},
-					});
+					}).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to update rate limit",
+									cause: e,
+								}),
+						),
+					);
 
 				// Now check if over limit
 				const [entry] = yield* db
 					.select()
 					.from(rateLimits)
-					.where(eq(rateLimits.key, key));
+					.where(eq(rateLimits.key, key)).pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message: "Failed to fetch rate limit",
+									cause: e,
+								}),
+						),
+					);
 
 				if (entry && entry.count > config.maxAttempts) {
 					const retryAfterMs = entry.expiresAt.getTime() - now.getTime();
@@ -64,32 +69,21 @@ export const RateLimitServiceLive = Layer.effect(
 						}),
 					);
 				}
-			}).pipe(
-				Effect.mapError((e): RateLimitError | DatabaseError =>
-					e instanceof RateLimitError
-						? e
-						: new DatabaseError({
-								message: "Failed to check rate limit",
+			});
+
+			const cleanup = Effect.fn("RateLimitService.cleanup")(function* () {
+				yield* db.delete(rateLimits).where(lt(rateLimits.expiresAt, new Date())).pipe(
+					Effect.mapError(
+						(e) =>
+							new DatabaseError({
+								message: "Failed to cleanup rate limits",
 								cause: e,
 							}),
-				),
-			);
+					),
+				);
+			});
 
-		const cleanup: IRateLimitService["cleanup"] = () =>
-			Effect.gen(function* () {
-				yield* db
-					.delete(rateLimits)
-					.where(lt(rateLimits.expiresAt, new Date()));
-			}).pipe(
-				Effect.mapError(
-					(e) =>
-						new DatabaseError({
-							message: "Failed to cleanup rate limits",
-							cause: e,
-						}),
-				),
-			);
-
-		return { check, cleanup };
-	}),
-);
+			return { check, cleanup };
+		}),
+	},
+) {}

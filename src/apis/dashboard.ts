@@ -10,7 +10,7 @@ export const getDashboardSummary = createServerFn({ method: "GET" }).handler(
 				yield* requireAuth;
 				const service = yield* DashboardService;
 
-				return yield* service.getSummary;
+				return yield* service.getSummary();
 			}),
 		);
 	},
@@ -24,7 +24,7 @@ export const getDashboardBreakdown = createServerFn({
 			yield* requireAuth;
 			const service = yield* DashboardService;
 
-			return yield* service.getBreakdown;
+			return yield* service.getBreakdown();
 		}),
 	);
 });
@@ -37,7 +37,7 @@ export const getAnalyticsDetails = createServerFn({
 			yield* requireAuth;
 			const service = yield* DashboardService;
 
-			return yield* service.getAnalyticsDetails;
+			return yield* service.getAnalyticsDetails();
 		}),
 	);
 });

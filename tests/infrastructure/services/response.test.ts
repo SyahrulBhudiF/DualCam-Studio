@@ -5,7 +5,7 @@ import { it } from "@effect/vitest";
 import { describe, expect, vi, beforeEach } from "vitest";
 import {
 	ResponseService,
-	ResponseServiceLive,
+	
 } from "@/infrastructure/services/response";
 
 // Creates an Effect-compatible mock result for yield*
@@ -152,7 +152,7 @@ const createTestLayer = (
 	}));
 
 	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return ResponseServiceLive.pipe(Layer.provide(MockPgDrizzle));
+	return ResponseService.Default.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("ResponseService", () => {
@@ -171,7 +171,7 @@ describe("ResponseService", () => {
 
 				return Effect.gen(function* () {
 					const service = yield* ResponseService;
-					const result = yield* service.getAll;
+					const result = yield* service.getAll();
 
 					expect(result).toBeDefined();
 					expect(Array.isArray(result)).toBe(true);
