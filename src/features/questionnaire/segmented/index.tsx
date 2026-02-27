@@ -33,7 +33,7 @@ export function SegmentedPage() {
 	const { questionnaire, questions } = useLoaderData({
 		from: "/questionnaire/segmented/",
 	});
-	const user = useUserStore().user;
+	const user = useUserStore((s) => s.user);
 	const store = useQuestionnaireStore();
 	const navigate = useNavigate();
 
@@ -163,7 +163,9 @@ export function SegmentedPage() {
 	if (!allReady) {
 		return (
 			<div className="min-h-screen flex flex-col items-center justify-center bg-muted/40 gap-4">
-				<Loader2 className="w-10 h-10 animate-spin" />
+				<div className="animate-spin">
+					<Loader2 className="w-10 h-10" />
+				</div>
 				<div className="text-slate-600 font-medium">
 					Initializing Cameras...
 				</div>

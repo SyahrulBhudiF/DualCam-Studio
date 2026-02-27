@@ -2,7 +2,6 @@ import { format } from "date-fns";
 import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
 import { getAllResponsesWithDetails } from "@/apis/admin/responses";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +20,8 @@ type ExportDetailProps = {
 	response: ResponseDetail;
 };
 
-export function exportResponsesToExcel(responses: ResponseListItem[]) {
+export async function exportResponsesToExcel(responses: ResponseListItem[]) {
+	const XLSX = await import("xlsx");
 	const data = responses.map((r) => ({
 		Name: r.profile?.name ?? "-",
 		Email: r.profile?.email ?? "-",
@@ -59,7 +59,8 @@ export function exportResponsesToExcel(responses: ResponseListItem[]) {
 	XLSX.writeFile(workbook, filename);
 }
 
-export function exportResponseDetailToExcel(response: ResponseDetail) {
+export async function exportResponseDetailToExcel(response: ResponseDetail) {
+	const XLSX = await import("xlsx");
 	const profileData = [
 		{
 			Field: "Name",
@@ -133,7 +134,8 @@ export function exportResponseDetailToExcel(response: ResponseDetail) {
 
 type FullResponseData = Awaited<ReturnType<typeof getAllResponsesWithDetails>>;
 
-export function exportAllResponseDetailsToExcel(responses: FullResponseData) {
+export async function exportAllResponseDetailsToExcel(responses: FullResponseData) {
+	const XLSX = await import("xlsx");
 	const workbook = XLSX.utils.book_new();
 
 	// Sheet 1: Summary - All respondents with their total scores
@@ -294,7 +296,7 @@ export function ExportResponsesButton({ responses }: ExportListProps) {
 		setIsExportingDetails(true);
 		try {
 			const fullData = await getAllResponsesWithDetails();
-			exportAllResponseDetailsToExcel(fullData);
+			await exportAllResponseDetailsToExcel(fullData);
 			toast.success("Export berhasil!");
 		} catch (error) {
 			console.error("Export failed:", error);
@@ -309,7 +311,7 @@ export function ExportResponsesButton({ responses }: ExportListProps) {
 			<DropdownMenuTrigger asChild>
 				<Button className="cursor-pointer" disabled={isExportingDetails}>
 					{isExportingDetails ? (
-						<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+						<div className="animate-spin mr-2"><Loader2 className="h-4 w-4" /></div>
 					) : (
 						<FileSpreadsheet className="h-4 w-4 mr-2" />
 					)}

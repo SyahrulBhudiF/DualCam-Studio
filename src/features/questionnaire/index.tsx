@@ -25,7 +25,7 @@ export function QuestionnairePage() {
 	const { questionnaire, questions } = useLoaderData({
 		from: "/questionnaire/",
 	});
-	const user = useUserStore().user;
+	const user = useUserStore((s) => s.user);
 	const navigate = useNavigate();
 
 	const [currentFolderName, setCurrentFolderName] = useState<string>("");
@@ -131,7 +131,9 @@ export function QuestionnairePage() {
 	if (!allReady) {
 		return (
 			<div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
-				<Loader2 className="w-10 h-10 animate-spin" />
+				<div className="animate-spin">
+					<Loader2 className="w-10 h-10" />
+				</div>
 				<div className="text-slate-600 font-medium">
 					Initializing Cameras...
 				</div>
