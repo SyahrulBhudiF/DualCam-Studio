@@ -160,35 +160,22 @@ export function SegmentedPage() {
 
 	const currentQ = questions?.[currentIndex];
 
-	if (!allReady) {
-		return (
-			<div className="min-h-screen flex flex-col items-center justify-center bg-muted/40 gap-4">
-				<div className="animate-spin">
-					<Loader2 className="w-10 h-10" />
-				</div>
-				<div className="text-slate-600 font-medium">
-					Initializing Cameras...
-				</div>
-				<div className="fixed opacity-0 pointer-events-none">
-					<CameraControlPanel
-						videoDevices={videoDevices}
-						deviceIdMain={deviceIdMain}
-						setDeviceIdMain={setDeviceIdMain}
-						deviceIdSec={deviceIdSec}
-						setDeviceIdSec={setDeviceIdSec}
-						videoRefMain={videoRefMain}
-						videoRefSec={videoRefSec}
-						realSenseRef={realSenseRef}
-						isRecording={false}
-						onSecReady={() => setSecReady(true)}
-					/>
-				</div>
-			</div>
-		);
-	}
-
 	return (
 		<div className="min-h-screen bg-muted/40 p-4 pb-48">
+			{/* Loading overlay — sits on top while camera isn't ready yet.
+			    The CameraControlPanel below is always mounted so its video
+			    element never gets replaced and srcObject assignment persists. */}
+			{!allReady && (
+				<div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-muted/80 gap-4">
+					<div className="animate-spin">
+						<Loader2 className="w-10 h-10" />
+					</div>
+					<div className="text-slate-600 font-medium">
+						Initializing Cameras...
+					</div>
+				</div>
+			)}
+
 			<div className="max-w-3xl mx-auto mb-6">
 				<h1 className="text-2xl font-bold">
 					Question {currentIndex + 1} / {questions?.length}
