@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLoaderData, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -36,6 +36,7 @@ export function SegmentedPage() {
 	const user = useUserStore((s) => s.user);
 	const store = useQuestionnaireStore();
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [isProcessing, setIsProcessing] = useState(false);
@@ -58,11 +59,16 @@ export function SegmentedPage() {
 
 	const uploadMutation = useMutation({
 		mutationFn: uploadVideoChunk,
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["video-uploads"] });
+		},
 	});
 
 	const submitMutation = useMutation({
 		mutationFn: submitSegmentedResponse,
 		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["admin", "responses"] });
+			queryClient.invalidateQueries({ queryKey: ["dashboard"] });
 			store.reset();
 			navigate({ to: "/success" });
 		},
@@ -168,22 +174,22 @@ export function SegmentedPage() {
 			{!allReady && (
 				<div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-muted/80 gap-4">
 					<div className="animate-spin">
-						<Loader2 className="w-10 h-10" />
+						<Loader2 className="size-10" />
 					</div>
-					<div className="text-slate-600 font-medium">
-						Initializing Cameras...
+					<div className="text-zinc-600 font-medium">
+						Initializing Cameras…
 					</div>
 				</div>
 			)}
 
 			<div className="max-w-3xl mx-auto mb-6">
-				<h1 className="text-2xl font-bold">
+				<h1 className="text-2xl font-semibold">
 					Question {currentIndex + 1} / {questions?.length}
 				</h1>
 			</div>
 
 			<div className="max-w-3xl mx-auto mb-8">
-				<form
+				<div
 					onSubmit={(e) => {
 						e.preventDefault();
 						e.stopPropagation();
@@ -205,7 +211,7 @@ export function SegmentedPage() {
 											{currentQ.answers.map((ans: Answer) => (
 												<div
 													key={ans.id}
-													className="flex items-center space-x-2 mb-2 cursor-pointer"
+													className="flex items-center gap-x-2 mb-2 cursor-pointer"
 												>
 													<RadioGroupItem value={ans.id} id={ans.id} />
 													<Label htmlFor={ans.id}>{ans.answer_text}</Label>
@@ -228,14 +234,14 @@ export function SegmentedPage() {
 								disabled={!answerId || !!isSubmitting || isProcessing}
 							>
 								{isSubmitting || isProcessing
-									? "Saving & Uploading..."
+									? "Saving & Uploading…"
 									: currentIndex === questions.length - 1
 										? "Finish"
 										: "Next Question"}
 							</Button>
 						)}
 					</form.Subscribe>
-				</form>
+				</div>
 			</div>
 
 			<CameraControlPanel

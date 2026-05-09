@@ -42,7 +42,7 @@ export function ResponseAnswers({
 		null,
 	);
 
-	const sortedDetails = [...details].sort(
+	const sortedDetails = details.toSorted(
 		(a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0),
 	);
 
@@ -124,7 +124,7 @@ export function ResponseAnswers({
 												</TableCell>
 												<TableCell>
 													<div className="flex items-center gap-2">
-														<CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+														<CheckCircle className="size-4 text-green-500 shrink-0" />
 														<span>{detail.answerText ?? "-"}</span>
 													</div>
 												</TableCell>
@@ -146,7 +146,7 @@ export function ResponseAnswers({
 																	setSelectedQuestionId(detail.questionId)
 																}
 															>
-																<Video className="h-4 w-4" />
+																<Video className="size-4" />
 															</Button>
 														) : (
 															<span className="text-muted-foreground text-xs">

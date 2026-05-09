@@ -1,6 +1,6 @@
 import z from "zod";
 
-export const submissionSchema = z.object({
+const submissionSchema = z.object({
 	userEmail: z.email(),
 	userName: z.string(),
 	userClass: z.string(),
@@ -15,9 +15,9 @@ export const submissionSchema = z.object({
 	folderName: z.string(),
 });
 
-export type submission = z.infer<typeof submissionSchema>;
+type submission = z.infer<typeof submissionSchema>;
 
-export const finalSubmitSchema = z.object({
+const finalSubmitSchema = z.object({
 	userEmail: z.email(),
 	userName: z.string(),
 	userClass: z.string(),
@@ -37,15 +37,15 @@ export const finalSubmitSchema = z.object({
 	),
 });
 
-export type finalSubmit = z.infer<typeof finalSubmitSchema>;
+type finalSubmit = z.infer<typeof finalSubmitSchema>;
 
-export const uploadChunkSchema = z.object({
+const uploadChunkSchema = z.object({
 	folderName: z.string(),
 	fileName: z.string(),
 	fileBase64: z.string(),
 });
 
-export type uploadChunk = z.infer<typeof uploadChunkSchema>;
+type uploadChunk = z.infer<typeof uploadChunkSchema>;
 
 export const createQuestionnaireSchema = z.object({
 	title: z.string().min(1, "Title is required"),
@@ -53,7 +53,7 @@ export const createQuestionnaireSchema = z.object({
 	isActive: z.boolean().default(false),
 });
 
-export const updateQuestionnaireSchema = createQuestionnaireSchema
+const updateQuestionnaireSchema = createQuestionnaireSchema
 	.partial()
 	.extend({
 		id: z.uuid(),
@@ -65,7 +65,7 @@ export const createQuestionSchema = z.object({
 	orderNumber: z.coerce.number().int().default(0),
 });
 
-export const updateQuestionSchema = createQuestionSchema
+const updateQuestionSchema = createQuestionSchema
 	.omit({ questionnaireId: true })
 	.partial()
 	.extend({
@@ -78,13 +78,13 @@ export const createAnswerSchema = z.object({
 	score: z.coerce.number().int().default(0),
 });
 
-export const updateAnswerSchema = createAnswerSchema
+const updateAnswerSchema = createAnswerSchema
 	.omit({ questionId: true })
 	.partial()
 	.extend({
 		id: z.uuid(),
 	});
 
-export const bulkDeleteSchema = z.object({
+const bulkDeleteSchema = z.object({
 	ids: z.array(z.uuid()),
 });

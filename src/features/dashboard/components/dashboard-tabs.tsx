@@ -18,7 +18,7 @@ export function DashboardTabs({
 	isLoading,
 }: DashboardTabsProps) {
 	return (
-		<Tabs orientation="vertical" defaultValue="overview" className="space-y-4">
+		<Tabs orientation="vertical" defaultValue="overview" className="space-y-3">
 			<div className="w-full overflow-x-auto pb-2">
 				<TabsList>
 					<TabsTrigger value="overview">Overview</TabsTrigger>
@@ -26,17 +26,17 @@ export function DashboardTabs({
 					<TabsTrigger value="responses">Responses</TabsTrigger>
 				</TabsList>
 			</div>
-			<TabsContent value="overview" className="space-y-4">
+			<TabsContent value="overview" className="space-y-3">
 				<DashboardOverview
 					summary={summary}
 					breakdown={breakdown}
 					isLoading={isLoading}
 				/>
 			</TabsContent>
-			<TabsContent value="analytics" className="space-y-4">
+			<TabsContent value="analytics" className="space-y-3">
 				<DashboardAnalytics analytics={analytics} isLoading={isLoading} />
 			</TabsContent>
-			<TabsContent value="responses" className="space-y-4">
+			<TabsContent value="responses" className="space-y-3">
 				<DashboardResponses />
 			</TabsContent>
 		</Tabs>

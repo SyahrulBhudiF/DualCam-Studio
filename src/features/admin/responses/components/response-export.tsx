@@ -20,7 +20,7 @@ type ExportDetailProps = {
 	response: ResponseDetail;
 };
 
-export async function exportResponsesToExcel(responses: ResponseListItem[]) {
+async function exportResponsesToExcel(responses: ResponseListItem[]) {
 	const XLSX = await import("xlsx");
 	const data = responses.map((r) => ({
 		Name: r.profile?.name ?? "-",
@@ -59,7 +59,7 @@ export async function exportResponsesToExcel(responses: ResponseListItem[]) {
 	XLSX.writeFile(workbook, filename);
 }
 
-export async function exportResponseDetailToExcel(response: ResponseDetail) {
+async function exportResponseDetailToExcel(response: ResponseDetail) {
 	const XLSX = await import("xlsx");
 	const profileData = [
 		{
@@ -104,7 +104,7 @@ export async function exportResponseDetailToExcel(response: ResponseDetail) {
 		},
 	];
 
-	const sortedDetails = [...response.details].sort(
+	const sortedDetails = response.details.toSorted(
 		(a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0),
 	);
 
@@ -134,7 +134,7 @@ export async function exportResponseDetailToExcel(response: ResponseDetail) {
 
 type FullResponseData = Awaited<ReturnType<typeof getAllResponsesWithDetails>>;
 
-export async function exportAllResponseDetailsToExcel(responses: FullResponseData) {
+async function exportAllResponseDetailsToExcel(responses: FullResponseData) {
 	const XLSX = await import("xlsx");
 	const workbook = XLSX.utils.book_new();
 
@@ -178,7 +178,7 @@ export async function exportAllResponseDetailsToExcel(responses: FullResponseDat
 	const allDetailsData: Record<string, unknown>[] = [];
 
 	for (const response of responses) {
-		const sortedDetails = [...response.details].sort(
+		const sortedDetails = response.details.toSorted(
 			(a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0),
 		);
 
@@ -218,7 +218,7 @@ export async function exportAllResponseDetailsToExcel(responses: FullResponseDat
 	if (responses.length > 0 && responses[0].details.length > 0) {
 		// Get unique questions from first response (assuming all have same questions)
 		const firstResponse = responses[0];
-		const sortedQuestions = [...firstResponse.details].sort(
+		const sortedQuestions = firstResponse.details.toSorted(
 			(a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0),
 		);
 
@@ -311,9 +311,9 @@ export function ExportResponsesButton({ responses }: ExportListProps) {
 			<DropdownMenuTrigger asChild>
 				<Button className="cursor-pointer" disabled={isExportingDetails}>
 					{isExportingDetails ? (
-						<div className="animate-spin mr-2"><Loader2 className="h-4 w-4" /></div>
+						<div className="animate-spin mr-2"><Loader2 className="size-4" /></div>
 					) : (
-						<FileSpreadsheet className="h-4 w-4 mr-2" />
+						<FileSpreadsheet className="size-4 mr-2" />
 					)}
 					Export Excel
 				</Button>
@@ -323,7 +323,7 @@ export function ExportResponsesButton({ responses }: ExportListProps) {
 					onClick={() => exportResponsesToExcel(responses)}
 					className="cursor-pointer"
 				>
-					<FileSpreadsheet className="h-4 w-4 mr-2" />
+					<FileSpreadsheet className="size-4 mr-2" />
 					Export Summary (Ringkasan)
 				</DropdownMenuItem>
 				<DropdownMenuItem
@@ -331,7 +331,7 @@ export function ExportResponsesButton({ responses }: ExportListProps) {
 					className="cursor-pointer"
 					disabled={isExportingDetails}
 				>
-					<FileSpreadsheet className="h-4 w-4 mr-2" />
+					<FileSpreadsheet className="size-4 mr-2" />
 					Export All Details (Lengkap)
 				</DropdownMenuItem>
 			</DropdownMenuContent>
@@ -344,7 +344,7 @@ export function ExportResponseDetailButton({ response }: ExportDetailProps) {
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button variant="outline" className="cursor-pointer">
-					<Download className="h-4 w-4 mr-2" />
+					<Download className="size-4 mr-2" />
 					Export
 				</Button>
 			</DropdownMenuTrigger>
@@ -353,7 +353,7 @@ export function ExportResponseDetailButton({ response }: ExportDetailProps) {
 					onClick={() => exportResponseDetailToExcel(response)}
 					className="cursor-pointer"
 				>
-					<FileSpreadsheet className="h-4 w-4 mr-2" />
+					<FileSpreadsheet className="size-4 mr-2" />
 					Export as Excel
 				</DropdownMenuItem>
 			</DropdownMenuContent>

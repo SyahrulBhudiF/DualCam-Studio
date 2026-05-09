@@ -75,7 +75,7 @@ export const SubmissionSchema = Schema.Struct({
 	videoBase64Secondary: Schema.optional(Schema.String),
 });
 
-export type SubmissionPayload = Schema.Schema.Type<typeof SubmissionSchema>;
+type SubmissionPayload = Schema.Schema.Type<typeof SubmissionSchema>;
 
 // ============================================
 // Segmented Upload Schemas

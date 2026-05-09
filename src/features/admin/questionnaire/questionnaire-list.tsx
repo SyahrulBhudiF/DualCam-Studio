@@ -154,20 +154,20 @@ export function QuestionnaireList({
 	});
 
 	return (
-		<Main className="space-y-6">
+		<Main className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h2 className="text-2xl font-bold tracking-tight">Questionnaires</h2>
+				<h2 className="text-2xl font-semibold tracking-tight">Questionnaires</h2>
 				<Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
 					<DialogTrigger asChild>
 						<Button size="sm" className="cursor-pointer">
-							<Plus className="mr-2 h-4 w-4" /> Add Questionnaire
+							<Plus className="mr-2 size-4" /> Add Questionnaire
 						</Button>
 					</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>
 							<DialogTitle>Create Questionnaire</DialogTitle>
 						</DialogHeader>
-						<form
+						<div
 							onSubmit={(e) => {
 								e.preventDefault();
 								e.stopPropagation();
@@ -223,9 +223,9 @@ export function QuestionnaireList({
 								className="w-full cursor-pointer"
 								disabled={createMutation.isPending}
 							>
-								{createMutation.isPending ? "Creating..." : "Create"}
+								{createMutation.isPending ? "Creating…" : "Create"}
 							</Button>
-						</form>
+						</div>
 					</DialogContent>
 				</Dialog>
 			</div>
@@ -299,7 +299,7 @@ export function QuestionnaireList({
 						deleteMutation.mutate({ data: { ids } });
 					}}
 				>
-					<Trash className="mr-2 h-4 w-4" /> Delete Selected
+					<Trash className="mr-2 size-4" /> Delete Selected
 				</Button>
 			</DataTableBulkActions>
 		</Main>

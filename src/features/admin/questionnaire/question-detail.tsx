@@ -7,7 +7,6 @@ import {
 	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
-	type SortingState,
 	useReactTable,
 } from "@tanstack/react-table";
 import { ArrowLeft, Plus, Save, Trash } from "lucide-react";
@@ -40,6 +39,7 @@ import {
 	createQuestionSchema,
 } from "@/libs/schemas/questionnaire";
 import { getAnswerColumns } from "./components/columns";
+import { useQuestionDetailState } from "./hooks/use-question-detail-state";
 import type { Answer, Question } from "./questionnaires.types";
 
 const questionFormSchema = createQuestionSchema.omit({
@@ -49,6 +49,7 @@ const questionFormSchema = createQuestionSchema.omit({
 const answerFormSchema = createAnswerSchema.omit({
 	questionId: true,
 });
+
 
 function UpdateQuestionForm({ question }: { question: Question }) {
 	const queryClient = useQueryClient();
@@ -99,7 +100,7 @@ function UpdateQuestionForm({ question }: { question: Question }) {
 	});
 
 	return (
-		<form
+		<div
 			onSubmit={(e) => {
 				e.preventDefault();
 				e.stopPropagation();
@@ -152,9 +153,9 @@ function UpdateQuestionForm({ question }: { question: Question }) {
 				disabled={updateMutation.isPending}
 				className="cursor-pointer"
 			>
-				<Save className="mr-2 h-4 w-4" /> Save Question
+				<Save className="mr-2 size-4" /> Save Question
 			</Button>
-		</form>
+		</div>
 	);
 }
 
@@ -215,7 +216,7 @@ function CreateAnswerForm({
 	});
 
 	return (
-		<form
+		<div
 			onSubmit={(e) => {
 				e.preventDefault();
 				e.stopPropagation();
@@ -269,7 +270,7 @@ function CreateAnswerForm({
 			>
 				Create
 			</Button>
-		</form>
+		</div>
 	);
 }
 
@@ -332,7 +333,7 @@ function EditAnswerForm({
 	});
 
 	return (
-		<form
+		<div
 			onSubmit={(e) => {
 				e.preventDefault();
 				e.stopPropagation();
@@ -386,7 +387,7 @@ function EditAnswerForm({
 			>
 				Update
 			</Button>
-		</form>
+		</div>
 	);
 }
 
@@ -398,11 +399,18 @@ export function QuestionDetail({
 	answers: Answer[];
 }) {
 	const queryClient = useQueryClient();
-	const [sorting, setSorting] = useState<SortingState>([]);
-	const [rowSelection, setRowSelection] = useState({});
-	const [globalFilter, setGlobalFilter] = useState("");
-	const [isCreateOpen, setIsCreateOpen] = useState(false);
-	const [editingAnswer, setEditingAnswer] = useState<Answer | null>(null);
+	const {
+		sorting,
+		rowSelection,
+		globalFilter,
+		isCreateOpen,
+		editingAnswer,
+		setSorting,
+		setRowSelection,
+		setGlobalFilter,
+		setIsCreateOpen,
+		setEditingAnswer,
+	} = useQuestionDetailState();
 
 	const deleteAnswerMutation = useMutation({
 		mutationFn: deleteAnswers,
@@ -439,10 +447,10 @@ export function QuestionDetail({
 						to="/admin/questionnaires/$questionnaireId"
 						params={{ questionnaireId: question.questionnaireId }}
 					>
-						<ArrowLeft className="h-4 w-4" />
+						<ArrowLeft className="size-4" />
 					</Link>
 				</Button>
-				<h2 className="text-2xl font-bold tracking-tight">Question Details</h2>
+				<h2 className="text-2xl font-semibold tracking-tight">Question Details</h2>
 			</div>
 
 			<UpdateQuestionForm question={question} />
@@ -453,7 +461,7 @@ export function QuestionDetail({
 					<Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
 						<DialogTrigger asChild>
 							<Button size="sm" className="cursor-pointer">
-								<Plus className="mr-2 h-4 w-4" /> Add Answer
+								<Plus className="mr-2 size-4" /> Add Answer
 							</Button>
 						</DialogTrigger>
 						<DialogContent>
@@ -543,7 +551,7 @@ export function QuestionDetail({
 							deleteAnswerMutation.mutate({ data: { ids } });
 						}}
 					>
-						<Trash className="mr-2 h-4 w-4" /> Delete Selected
+						<Trash className="mr-2 size-4" /> Delete Selected
 					</Button>
 				</DataTableBulkActions>
 			</div>

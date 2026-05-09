@@ -22,14 +22,14 @@ export function DashboardOverview({
 		<>
 			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+					<CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
 							Total Questionnaires
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{isLoading ? "..." : (summary?.totalQuestionnaires ?? 0)}
+							{isLoading ? "…" : (summary?.totalQuestionnaires ?? 0)}
 						</div>
 						<p className="text-muted-foreground text-xs">
 							Semua kuesioner yang terdaftar
@@ -37,14 +37,14 @@ export function DashboardOverview({
 					</CardContent>
 				</Card>
 				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+					<CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
 							Active Questionnaires
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{isLoading ? "..." : (summary?.activeQuestionnaires ?? 0)}
+							{isLoading ? "…" : (summary?.activeQuestionnaires ?? 0)}
 						</div>
 						<p className="text-muted-foreground text-xs">
 							Sedang dibuka untuk respon
@@ -52,14 +52,14 @@ export function DashboardOverview({
 					</CardContent>
 				</Card>
 				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+					<CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
 							Total Responses
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{isLoading ? "..." : (summary?.totalResponses ?? 0)}
+							{isLoading ? "…" : (summary?.totalResponses ?? 0)}
 						</div>
 						<p className="text-muted-foreground text-xs">
 							Semua respon yang sudah masuk
@@ -67,7 +67,7 @@ export function DashboardOverview({
 					</CardContent>
 				</Card>
 				<Card>
-					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+					<CardHeader className="flex flex-row items-center justify-between gap-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
 							Average Total Score
 						</CardTitle>
@@ -75,7 +75,7 @@ export function DashboardOverview({
 					<CardContent>
 						<div className="text-2xl font-bold">
 							{isLoading
-								? "..."
+								? "…"
 								: Math.round((summary?.averageScore ?? 0) * 10) / 10}
 						</div>
 						<p className="text-muted-foreground text-xs">
@@ -94,7 +94,7 @@ export function DashboardOverview({
 					</CardHeader>
 					<CardContent className="space-y-3">
 						{isLoading && (
-							<div className="text-sm text-muted-foreground">Loading...</div>
+							<div className="text-sm text-muted-foreground">Loading…</div>
 						)}
 						{!isLoading && breakdown?.questionnaires.length === 0 && (
 							<div className="text-sm text-muted-foreground">
@@ -127,7 +127,7 @@ export function DashboardOverview({
 					</CardHeader>
 					<CardContent className="space-y-3">
 						{isLoading && (
-							<div className="text-sm text-muted-foreground">Loading...</div>
+							<div className="text-sm text-muted-foreground">Loading…</div>
 						)}
 						{!isLoading && breakdown?.classes.length === 0 && (
 							<div className="text-sm text-muted-foreground">

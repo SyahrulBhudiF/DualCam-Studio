@@ -5,12 +5,12 @@ const PasswordPattern =
 
 const EmailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const Password = Schema.String.pipe(
+const Password = Schema.String.pipe(
 	Schema.minLength(8),
 	Schema.pattern(PasswordPattern),
 );
 
-export const Email = Schema.String.pipe(Schema.pattern(EmailPattern));
+const Email = Schema.String.pipe(Schema.pattern(EmailPattern));
 
 export const LoginSchema = Schema.Struct({
 	email: Email,

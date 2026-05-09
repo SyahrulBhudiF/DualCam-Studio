@@ -44,7 +44,7 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [isMuted, setIsMuted] = useState(false);
-	const [hasError, setHasError] = useState(false);
+	const hasErrorRef = useRef(false);
 
 	const isDownloadOnly = isDownloadOnlyFormat(src);
 
@@ -89,7 +89,7 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 		return (
 			<div className="space-y-3">
 				<div className="relative rounded-lg overflow-hidden bg-muted aspect-video flex flex-col items-center justify-center p-4">
-					<FileVideo className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mb-3" />
+					<FileVideo className="size-12 sm:h-16 sm:w-16 text-muted-foreground mb-3" />
 					<p className="text-sm sm:text-base font-medium text-center mb-1">
 						{getExtension(src)} Video (Raw Dataset)
 					</p>
@@ -101,7 +101,7 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 						className="cursor-pointer"
 						size="default"
 					>
-						<Download className="h-4 w-4 mr-2" />
+						<Download className="size-4 mr-2" />
 						Download {getExtension(src)}
 					</Button>
 				</div>
@@ -112,35 +112,10 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 		);
 	}
 
-	// Show error state if video fails to load
-	if (hasError) {
-		return (
-			<div className="space-y-3">
-				<div className="relative rounded-lg overflow-hidden bg-muted aspect-video flex flex-col items-center justify-center p-4">
-					<FileVideo className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mb-3" />
-					<p className="text-sm sm:text-base font-medium text-center mb-1">
-						Video tidak tersedia
-					</p>
-					<p className="text-xs sm:text-sm text-muted-foreground text-center mb-4">
-						File mungkin belum ada atau path salah
-					</p>
-					<Button
-						onClick={handleDownload}
-						variant="outline"
-						className="cursor-pointer"
-						size="sm"
-					>
-						<Download className="h-4 w-4 mr-2" />
-						Coba Download
-					</Button>
-				</div>
-			</div>
-		);
-	}
 
 	return (
 		<div className="space-y-3">
-			<div className="relative rounded-lg overflow-hidden bg-black aspect-video">
+			<div className="relative rounded-lg overflow-hidden bg-zinc-950 aspect-video">
 				<video
 					ref={videoRef}
 					src={src || undefined}
@@ -148,7 +123,9 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 					onPlay={() => setIsPlaying(true)}
 					onPause={() => setIsPlaying(false)}
 					onEnded={() => setIsPlaying(false)}
-					onError={() => setHasError(true)}
+					onError={() => {
+						hasErrorRef.current = true;
+					}}
 				>
 					<track kind="captions" />
 				</video>
@@ -161,9 +138,9 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 					className="cursor-pointer"
 				>
 					{isPlaying ? (
-						<Pause className="h-4 w-4" />
+						<Pause className="size-4" />
 					) : (
-						<Play className="h-4 w-4" />
+						<Play className="size-4" />
 					)}
 				</Button>
 				<Button
@@ -173,9 +150,9 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 					className="cursor-pointer"
 				>
 					{isMuted ? (
-						<VolumeX className="h-4 w-4" />
+						<VolumeX className="size-4" />
 					) : (
-						<Volume2 className="h-4 w-4" />
+						<Volume2 className="size-4" />
 					)}
 				</Button>
 				<Button
@@ -184,7 +161,7 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 					onClick={handleFullscreen}
 					className="cursor-pointer"
 				>
-					<Maximize className="h-4 w-4" />
+					<Maximize className="size-4" />
 				</Button>
 				<Button
 					variant="outline"
@@ -192,7 +169,7 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 					onClick={handleDownload}
 					className="cursor-pointer"
 				>
-					<Download className="h-4 w-4" />
+					<Download className="size-4" />
 				</Button>
 			</div>
 		</div>

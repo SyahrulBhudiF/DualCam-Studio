@@ -1,11 +1,11 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { format } from "date-fns";
 import { ArrowLeft, Eye, Save, Video } from "lucide-react";
 import { toast } from "sonner";
 import { updateQuestionnaire } from "@/apis/admin/questionnaires";
 import { getResponsesByQuestionnaireId } from "@/apis/admin/responses";
+import { ClientDate } from "@/components/client-date";
 import { Main } from "@/components/layout/main";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -99,10 +99,10 @@ export function QuestionnaireDetail({
 			<div className="flex items-center gap-4">
 				<Button variant="outline" size="icon" asChild>
 					<Link to="/admin/questionnaires">
-						<ArrowLeft className="h-4 w-4" />
+						<ArrowLeft className="size-4" />
 					</Link>
 				</Button>
-				<h2 className="text-2xl font-bold tracking-tight">
+				<h2 className="text-2xl font-semibold tracking-tight">
 					Questionnaire Details
 				</h2>
 			</div>
@@ -120,7 +120,7 @@ export function QuestionnaireDetail({
 
 				<TabsContent value="details" className="space-y-4">
 					<div className="grid gap-6 md:grid-cols-2">
-						<form
+						<div
 							onSubmit={(e) => {
 								e.preventDefault();
 								e.stopPropagation();
@@ -186,9 +186,9 @@ export function QuestionnaireDetail({
 							</form.Field>
 
 							<Button type="submit" disabled={updateMutation.isPending}>
-								<Save className="mr-2 h-4 w-4" /> Save Changes
+								<Save className="mr-2 size-4" /> Save Changes
 							</Button>
-						</form>
+						</div>
 					</div>
 				</TabsContent>
 
@@ -206,7 +206,7 @@ export function QuestionnaireDetail({
 						{responsesQuery.isLoading ? (
 							<div className="flex items-center justify-center h-32">
 								<span className="text-muted-foreground">
-									Loading responses...
+									Loading responses…
 								</span>
 							</div>
 						) : responses.length === 0 ? (
@@ -248,7 +248,7 @@ export function QuestionnaireDetail({
 											<TableCell>
 												{response.videoPath && response.videoPath !== "null" ? (
 													<Badge variant="default" className="gap-1">
-														<Video className="h-3 w-3" />
+														<Video className="size-3" />
 														Yes
 													</Badge>
 												) : (
@@ -256,10 +256,10 @@ export function QuestionnaireDetail({
 												)}
 											</TableCell>
 											<TableCell className="text-muted-foreground text-sm">
-												{format(
-													new Date(response.createdAt),
-													"dd MMM yyyy HH:mm",
-												)}
+												<ClientDate
+											date={response.createdAt}
+											formatString="dd MMM yyyy HH:mm"
+										/>
 											</TableCell>
 											<TableCell>
 												<Link
@@ -271,7 +271,7 @@ export function QuestionnaireDetail({
 														size="sm"
 														className="cursor-pointer"
 													>
-														<Eye className="h-4 w-4 mr-1" />
+														<Eye className="size-4 mr-1" />
 														View
 													</Button>
 												</Link>

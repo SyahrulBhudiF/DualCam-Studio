@@ -22,40 +22,40 @@ export type Answer = {
 	createdAt: string;
 };
 
-export type CreateQuestionnaireInput = {
+type CreateQuestionnaireInput = {
 	title: string;
 	description?: string | null;
 	isActive?: boolean;
 };
 
-export type UpdateQuestionnaireInput = Partial<CreateQuestionnaireInput> & {
+type UpdateQuestionnaireInput = Partial<CreateQuestionnaireInput> & {
 	id: string;
 };
 
-export type CreateQuestionInput = {
+type CreateQuestionInput = {
 	questionnaireId: string;
 	questionText: string;
 	orderNumber?: number;
 };
 
-export type UpdateQuestionInput = Partial<
+type UpdateQuestionInput = Partial<
 	Omit<CreateQuestionInput, "questionnaireId">
 > & {
 	id: string;
 };
 
-export type CreateAnswerInput = {
+type CreateAnswerInput = {
 	questionId: string;
 	answerText: string;
 	score: number;
 };
 
-export type UpdateAnswerInput = Partial<
+type UpdateAnswerInput = Partial<
 	Omit<CreateAnswerInput, "questionId">
 > & {
 	id: string;
 };
 
-export type BulkDeleteInput = {
+type BulkDeleteInput = {
 	ids: string[];
 };

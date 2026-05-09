@@ -18,7 +18,7 @@ export function ProfileDropdown() {
 		<>
 			<DropdownMenu modal={false}>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" className="relative h-8 w-8 rounded-full">
+					<Button variant="ghost" className="relative size-8 rounded-full">
 						a
 					</Button>
 				</DropdownMenuTrigger>

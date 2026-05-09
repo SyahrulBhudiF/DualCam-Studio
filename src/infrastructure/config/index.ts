@@ -17,7 +17,7 @@ export const SessionConfig = Config.all({
 	),
 });
 
-export const DatabaseConfig = Config.all({
+const DatabaseConfig = Config.all({
 	url: Config.string("DATABASE_URL"),
 });
 

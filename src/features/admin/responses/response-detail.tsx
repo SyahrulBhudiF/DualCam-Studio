@@ -208,12 +208,12 @@ export function ResponseDetail({ response }: ResponseDetailProps) {
 				<div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
 					<Link to="/admin/responses">
 						<Button variant="ghost" size="sm" className="cursor-pointer w-fit">
-							<ArrowLeft className="h-4 w-4 mr-2" />
+							<ArrowLeft className="size-4 mr-2" />
 							Back to Responses
 						</Button>
 					</Link>
 					<div>
-						<h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+						<h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
 							Response Detail
 						</h2>
 						<p className="text-sm text-muted-foreground">

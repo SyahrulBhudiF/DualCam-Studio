@@ -48,9 +48,9 @@ export function DashboardAnalytics({
 							Perbandingan respon dengan dan tanpa video
 						</CardDescription>
 					</CardHeader>
-					<CardContent className="space-y-4">
+					<CardContent className="space-y-3">
 						{isLoading && (
-							<div className="text-sm text-muted-foreground">Loading...</div>
+							<div className="text-sm text-muted-foreground">Loading…</div>
 						)}
 						{!isLoading && (
 							<>
@@ -102,7 +102,7 @@ export function DashboardAnalytics({
 					</CardHeader>
 					<CardContent className="space-y-2">
 						{isLoading && (
-							<div className="text-sm text-muted-foreground">Loading...</div>
+							<div className="text-sm text-muted-foreground">Loading…</div>
 						)}
 						{!isLoading && analytics?.timeline.length === 0 && (
 							<div className="text-sm text-muted-foreground">
@@ -131,7 +131,7 @@ export function DashboardAnalytics({
 					</CardHeader>
 					<CardContent className="space-y-2">
 						{isLoading && (
-							<div className="text-sm text-muted-foreground">Loading...</div>
+							<div className="text-sm text-muted-foreground">Loading…</div>
 						)}
 						{!isLoading && analytics?.answers.length === 0 && (
 							<div className="text-sm text-muted-foreground">

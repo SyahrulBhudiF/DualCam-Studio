@@ -100,7 +100,7 @@ export const deleteQuestionnaires = createServerFn({ method: "POST" })
 		);
 	});
 
-export const setQuestionnaireActive = createServerFn({ method: "POST" })
+const setQuestionnaireActive = createServerFn({ method: "POST" })
 	.inputValidator(Schema.decodeUnknownSync(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(

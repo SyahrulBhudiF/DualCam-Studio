@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { format } from "date-fns";
 import { Eye, Video } from "lucide-react";
 import { getResponses } from "@/apis/admin/responses";
+import { ClientDate } from "@/components/client-date";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,7 +50,7 @@ export function DashboardResponses() {
 			<CardContent>
 				{responsesQuery.isLoading ? (
 					<div className="flex items-center justify-center h-32">
-						<span className="text-muted-foreground">Loading responses...</span>
+						<span className="text-muted-foreground">Loading responses…</span>
 					</div>
 				) : responses.length === 0 ? (
 					<div className="flex items-center justify-center h-32">
@@ -89,7 +89,7 @@ export function DashboardResponses() {
 									<TableCell>
 										{response.videoPath && response.videoPath !== "null" ? (
 											<Badge variant="default" className="gap-1">
-												<Video className="h-3 w-3" />
+												<Video className="size-3" />
 												Yes
 											</Badge>
 										) : (
@@ -97,7 +97,7 @@ export function DashboardResponses() {
 										)}
 									</TableCell>
 									<TableCell className="text-muted-foreground text-sm">
-										{format(new Date(response.createdAt), "dd MMM yyyy HH:mm")}
+										<ClientDate date={response.createdAt} formatString="dd MMM yyyy HH:mm" />
 									</TableCell>
 									<TableCell>
 										<Link
@@ -109,7 +109,7 @@ export function DashboardResponses() {
 												size="sm"
 												className="cursor-pointer"
 											>
-												<Eye className="h-4 w-4 mr-1" />
+												<Eye className="size-4 mr-1" />
 												View
 											</Button>
 										</Link>

@@ -235,15 +235,18 @@ export const getFilterOptions = createServerFn({ method: "GET" }).handler(
 					profileService.getUniqueClasses(),
 				]);
 
+				const names = profiles.reduce<string[]>((acc, profile) => {
+					if (typeof profile.name === "string") acc.push(profile.name);
+					return acc;
+				}, []);
+
 				return {
 					questionnaires: questionnaires.map((q) => ({
 						id: q.id,
 						title: q.title,
 					})),
 					classes: uniqueClasses,
-					names: profiles
-						.map((p) => p.name)
-						.filter((n): n is string => typeof n === "string"),
+					names,
 				};
 			}),
 		);
