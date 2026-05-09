@@ -12,9 +12,9 @@ export function Dashboard({
 }: DashboardProps) {
 	return (
 		<Main>
-			<div className="mb-2 flex items-center justify-between space-y-2">
-				<h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-				<div className="flex items-center space-x-2">
+			<div className="mb-2 flex items-center justify-between gap-y-2">
+				<h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+				<div className="flex items-center gap-x-2">
 					<Button
 						onClick={() =>
 							exportDashboardToExcel({ summary, breakdown, analytics })

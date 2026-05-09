@@ -108,7 +108,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					rel="noopener noreferrer"
 					className="fixed bottom-3 right-3 z-40 flex items-center gap-1.5 rounded-md bg-background/50 px-2.5 py-1.5 text-xs text-muted-foreground opacity-80 shadow-sm backdrop-blur-sm transition-opacity hover:opacity-100"
 				>
-					<img src="/logo.svg" alt="DualCam Studio" className="h-4 w-4" />
+					<img src="/logo.svg" alt="DualCam Studio" className="size-4" />
 					<span>by SyahrulBhudiF</span>
 				</a>
 				{/*<TanStackRouterDevtools position="bottom-left" />*/}

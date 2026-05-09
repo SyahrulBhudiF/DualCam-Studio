@@ -9,18 +9,18 @@ export const Route = createFileRoute("/success/")({
 
 function SuccessPage() {
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+		<div className="min-h-screen flex items-center justify-center bg-zinc-50 p-4">
 			<Card className="w-full max-w-md text-center shadow-lg">
 				<CardHeader>
 					<div className="flex justify-center mb-4">
-						<CheckCircle2 className="h-16 w-16 text-green-500" />
+						<CheckCircle2 className="size-16 text-green-500" />
 					</div>
 					<CardTitle className="text-2xl font-bold text-green-700">
 						Submission Successful!
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-4">
-					<p className="text-slate-600">
+					<p className="text-zinc-600">
 						Thank you for completing the questionnaire. Your video and answers
 						have been recorded securely.
 					</p>

@@ -11,7 +11,7 @@ import {
 } from "../db";
 import { DatabaseError } from "../errors";
 
-export interface DashboardSummary {
+interface DashboardSummary {
 	totalQuestionnaires: number;
 	activeQuestionnaires: number;
 	totalResponses: number;
@@ -19,27 +19,27 @@ export interface DashboardSummary {
 	totalClasses: number;
 }
 
-export interface QuestionnaireStats {
+interface QuestionnaireStats {
 	id: string;
 	title: string;
 	totalResponses: number;
 	averageScore: number;
 }
 
-export interface ClassStats {
+interface ClassStats {
 	className: string;
 	totalResponses: number;
 	averageScore: number;
 }
 
-export interface QuestionStats {
+interface QuestionStats {
 	id: string;
 	text: string;
 	order: number | null;
 	averageScore: number;
 }
 
-export interface AnswerStats {
+interface AnswerStats {
 	id: string;
 	text: string;
 	questionId: string | null;
@@ -47,18 +47,18 @@ export interface AnswerStats {
 	averageScore: number;
 }
 
-export interface TimelineEntry {
+interface TimelineEntry {
 	date: string;
 	totalResponses: number;
 	averageScore: number;
 }
 
-export interface DashboardBreakdown {
+interface DashboardBreakdown {
 	questionnaires: QuestionnaireStats[];
 	classes: ClassStats[];
 }
 
-export interface AnalyticsDetails {
+interface AnalyticsDetails {
 	questions: QuestionStats[];
 	answers: AnswerStats[];
 	timeline: TimelineEntry[];
@@ -173,16 +173,25 @@ export class DashboardService extends Effect.Service<DashboardService>()(
 								: 0,
 					}));
 
-					const classStats = classRows
-						.filter((r) => r.className !== null)
-						.map((r) => ({
-							className: r.className as string,
+					const classStats = classRows.reduce<
+						{
+							className: string;
+							totalResponses: number;
+							averageScore: number;
+						}[]
+					>((acc, r) => {
+						if (r.className === null) return acc;
+
+						acc.push({
+							className: r.className,
 							totalResponses: r.totalResponses,
 							averageScore:
 								r.totalResponses > 0
 									? Number(r.totalScore) / r.totalResponses
 									: 0,
-						}));
+						});
+						return acc;
+					}, []);
 
 					return {
 						questionnaires: questionnaireStats,

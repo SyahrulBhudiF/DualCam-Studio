@@ -23,7 +23,7 @@ export type {
 	Profile,
 	Question,
 	Questionnaire,
-	RateLimit,
+	
 	Response,
 	Session,
 	User,

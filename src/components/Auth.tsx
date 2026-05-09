@@ -21,11 +21,7 @@ export function Auth({
 					<CardTitle className="text-2xl text-center">{actionText}</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<form
-						onSubmit={(e) => {
-							e.preventDefault();
-							onSubmit(e);
-						}}
+					<div
 						className="space-y-4"
 					>
 						<div className="space-y-2">
@@ -51,10 +47,10 @@ export function Auth({
 							className="w-full uppercase"
 							disabled={status === "pending"}
 						>
-							{status === "pending" ? "..." : actionText}
+							{status === "pending" ? "…" : actionText}
 						</Button>
 						{afterSubmit ? afterSubmit : null}
-					</form>
+					</div>
 				</CardContent>
 			</Card>
 		</div>

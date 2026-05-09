@@ -1,11 +1,4 @@
-import {
-	Bar,
-	BarChart,
-	CartesianGrid,
-	LabelList,
-	XAxis,
-	YAxis,
-} from "recharts";
+import { lazy, Suspense, type ComponentType } from "react";
 import {
 	Card,
 	CardContent,
@@ -19,6 +12,28 @@ import {
 	ChartTooltip,
 	ChartTooltipContent,
 } from "@/components/ui/chart";
+
+const asComponent = <T,>(component: T) =>
+	component as unknown as ComponentType<Record<string, unknown>>;
+
+const Bar = lazy(() =>
+	import("recharts").then((m) => ({ default: asComponent(m.Bar) })),
+);
+const BarChart = lazy(() =>
+	import("recharts").then((m) => ({ default: asComponent(m.BarChart) })),
+);
+const CartesianGrid = lazy(() =>
+	import("recharts").then((m) => ({ default: asComponent(m.CartesianGrid) })),
+);
+const LabelList = lazy(() =>
+	import("recharts").then((m) => ({ default: asComponent(m.LabelList) })),
+);
+const XAxis = lazy(() =>
+	import("recharts").then((m) => ({ default: asComponent(m.XAxis) })),
+);
+const YAxis = lazy(() =>
+	import("recharts").then((m) => ({ default: asComponent(m.YAxis) })),
+);
 
 type AnalysisPoint = {
 	label: string;
@@ -70,13 +85,20 @@ export function DashboardAnalysisChart({
 			<CardContent className="flex-1 pb-0">
 				{isLoading ? (
 					<div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-						Loading...
+						Loading…
 					</div>
 				) : safeData.length === 0 ? (
 					<div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
 						{emptyMessage}
 					</div>
 				) : (
+					<Suspense
+						fallback={
+							<div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+								Loading chart…
+							</div>
+						}
+					>
 					<ChartContainer config={chartConfig} className="min-h-[300px] w-full">
 						<BarChart
 							accessibilityLayer
@@ -124,7 +146,8 @@ export function DashboardAnalysisChart({
 								/>
 							</Bar>
 						</BarChart>
-					</ChartContainer>
+						</ChartContainer>
+					</Suspense>
 				)}
 			</CardContent>
 		</Card>

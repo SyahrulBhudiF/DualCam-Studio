@@ -1,4 +1,5 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import type React from "react";
+import { useEffect, useImperativeHandle, useRef } from "react";
 
 export interface RealSenseHandle {
 	startRecording: (options: {
@@ -11,12 +12,10 @@ export interface RealSenseHandle {
 
 interface RealSenseCanvasProps {
 	onReady?: () => void;
+	ref?: React.Ref<RealSenseHandle>;
 }
 
-export const RealSenseCanvas = forwardRef<
-	RealSenseHandle,
-	RealSenseCanvasProps
->(({ onReady }, ref) => {
+export function RealSenseCanvas({ onReady, ref }: RealSenseCanvasProps) {
 	const localCanvasRef = useRef<HTMLCanvasElement>(null);
 	const wsRef = useRef<WebSocket | null>(null);
 	const msgQueue = useRef<string[]>([]);
@@ -82,9 +81,7 @@ export const RealSenseCanvas = forwardRef<
 			ref={localCanvasRef}
 			width={640}
 			height={480}
-			className="w-full h-full object-contain bg-black"
+			className="w-full h-full object-contain bg-zinc-950"
 		/>
 	);
-});
-
-RealSenseCanvas.displayName = "RealSenseCanvas";
+}

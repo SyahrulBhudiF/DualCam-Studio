@@ -53,7 +53,7 @@ export function DataTableFacetedFilter<TData, TValue>({
 							>
 								{selectedValues.size}
 							</Badge>
-							<div className="hidden space-x-1 lg:flex">
+							<div className="hidden gap-x-1 lg:flex">
 								{selectedValues.size > 2 ? (
 									<Badge
 										variant="secondary"
@@ -62,17 +62,20 @@ export function DataTableFacetedFilter<TData, TValue>({
 										{selectedValues.size} selected
 									</Badge>
 								) : (
-									options
-										.filter((option) => selectedValues.has(option.value))
-										.map((option) => (
+									options.reduce<React.ReactNode[]>((badges, option) => {
+										if (!selectedValues.has(option.value)) return badges;
+
+										badges.push(
 											<Badge
 												variant="secondary"
 												key={option.value}
 												className="rounded-sm px-1 font-normal"
 											>
 												{option.label}
-											</Badge>
-										))
+											</Badge>,
+										);
+										return badges;
+									}, [])
 								)}
 							</div>
 						</>
@@ -110,14 +113,14 @@ export function DataTableFacetedFilter<TData, TValue>({
 													: "opacity-50 [&_svg]:invisible",
 											)}
 										>
-											<CheckIcon className={cn("text-background h-4 w-4")} />
+											<CheckIcon className={cn("text-background size-4")} />
 										</div>
 										{option.icon && (
 											<option.icon className="text-muted-foreground size-4" />
 										)}
 										<span>{option.label}</span>
 										{facets?.get(option.value) && (
-											<span className="ms-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
+											<span className="ms-auto flex size-4 items-center justify-center font-mono text-xs">
 												{facets.get(option.value)}
 											</span>
 										)}

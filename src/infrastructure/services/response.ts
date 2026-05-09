@@ -19,17 +19,17 @@ import {
 } from "../db";
 import { DatabaseError, ResponseNotFoundError } from "../errors";
 
-export type VideoSegmentPath = {
+type VideoSegmentPath = {
 	main: string | null;
 	secondary: string | null;
 } | null;
 
-export interface ResponseWithProfile extends Response {
+interface ResponseWithProfile extends Response {
 	profile: Profile | null;
 	questionnaire: Questionnaire | null;
 }
 
-export interface ResponseDetail {
+interface ResponseDetail {
 	id: string;
 	responseId: string;
 	questionId: string;
@@ -42,11 +42,11 @@ export interface ResponseDetail {
 	maxScore: number;
 }
 
-export interface ResponseFull extends ResponseWithProfile {
+interface ResponseFull extends ResponseWithProfile {
 	details: ResponseDetail[];
 }
 
-export interface ResponseFilter {
+interface ResponseFilter {
 	questionnaireId?: string;
 	className?: string;
 	name?: string;
@@ -401,39 +401,40 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 					// Group details by response ID
 					const detailsByResponseId = new Map<string, ResponseDetail[]>();
 					for (const row of allDetails) {
-						const responseId = row.detail.responseId;
+						const detail = row.detail;
+						const responseId = detail.responseId;
 						if (!detailsByResponseId.has(responseId)) {
 							detailsByResponseId.set(responseId, []);
 						}
 
+						const rawVideoSegmentPath = detail.videoSegmentPath;
 						let videoSegmentPath: VideoSegmentPath = null;
-						if (row.detail.videoSegmentPath != null) {
-							if (typeof row.detail.videoSegmentPath === "string") {
+						if (rawVideoSegmentPath != null) {
+							if (typeof rawVideoSegmentPath === "string") {
 								try {
-									videoSegmentPath = JSON.parse(row.detail.videoSegmentPath);
+									videoSegmentPath = JSON.parse(rawVideoSegmentPath);
 								} catch {
 									videoSegmentPath = {
-										main: row.detail.videoSegmentPath,
+										main: rawVideoSegmentPath,
 										secondary: null,
 									};
 								}
-							} else if (typeof row.detail.videoSegmentPath === "object") {
-								videoSegmentPath =
-									row.detail.videoSegmentPath as VideoSegmentPath;
+							} else if (typeof rawVideoSegmentPath === "object") {
+								videoSegmentPath = rawVideoSegmentPath as VideoSegmentPath;
 							}
 						}
 
 						detailsByResponseId.get(responseId)?.push({
-							id: row.detail.id,
-							responseId: row.detail.responseId,
-							questionId: row.detail.questionId,
-							answerId: row.detail.answerId,
-							score: row.detail.score,
+							id: detail.id,
+							responseId: detail.responseId,
+							questionId: detail.questionId,
+							answerId: detail.answerId,
+							score: detail.score,
 							videoSegmentPath,
 							questionText: row.question?.questionText ?? null,
 							orderNumber: row.question?.orderNumber ?? null,
 							answerText: row.answer?.answerText ?? null,
-							maxScore: row.detail.score, // approximate for bulk — exact would need extra query
+							maxScore: detail.score, // approximate for bulk — exact would need extra query
 						});
 					}
 

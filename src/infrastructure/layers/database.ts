@@ -2,9 +2,9 @@ import { PgDrizzle, layer as pgDrizzleLayer } from "@effect/sql-drizzle/Pg";
 import { PgClient } from "@effect/sql-pg";
 import { Config, Duration, Layer, Redacted } from "effect";
 
-export { PgDrizzle };
+;
 
-export const PgClientLive = PgClient.layerConfig(
+const PgClientLive = PgClient.layerConfig(
 	Config.all({
 		url: Config.redacted("DATABASE_URL"),
 		maxConnections: Config.succeed(10),

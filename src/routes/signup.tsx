@@ -1,5 +1,5 @@
-import { useMutation } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { signupFn } from "@/apis/user";
 import { Auth } from "@/components/Auth";
 import { getValidationErrorMessage } from "@/utils/utils";
@@ -9,8 +9,16 @@ export const Route = createFileRoute("/signup")({
 });
 
 function SignupComp() {
+	const queryClient = useQueryClient();
+	const router = useRouter();
 	const signupMutation = useMutation({
 		mutationFn: signupFn,
+		onSuccess: async (data) => {
+			if (!data?.error) {
+				await queryClient.invalidateQueries({ queryKey: ["user"] });
+				await router.invalidate();
+			}
+		},
 	});
 
 	const validationError = getValidationErrorMessage(signupMutation.error);

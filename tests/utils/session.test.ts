@@ -50,8 +50,10 @@ describe("Session Utilities", () => {
 
 	describe("setSessionCookie", () => {
 		it("should set cookie with correct options", async () => {
-			const { setCookie } = await import("@tanstack/react-start/server");
-			const { setSessionCookie } = await import("@/utils/session");
+			const [{ setCookie }, { setSessionCookie }] = await Promise.all([
+				import("@tanstack/react-start/server"),
+				import("@/utils/session"),
+			]);
 
 			await Effect.runPromise(setSessionCookie("new-token"));
 
@@ -67,8 +69,10 @@ describe("Session Utilities", () => {
 
 	describe("clearSessionCookie", () => {
 		it("should delete the session cookie", async () => {
-			const { deleteCookie } = await import("@tanstack/react-start/server");
-			const { clearSessionCookie } = await import("@/utils/session");
+			const [{ deleteCookie }, { clearSessionCookie }] = await Promise.all([
+				import("@tanstack/react-start/server"),
+				import("@/utils/session"),
+			]);
 
 			await Effect.runPromise(clearSessionCookie);
 
@@ -119,8 +123,10 @@ describe("Session Config", () => {
 		vi.stubEnv("SESSION_DURATION_DAYS", "14");
 		vi.resetModules();
 
-		const { setCookie } = await import("@tanstack/react-start/server");
-		const { setSessionCookie } = await import("@/utils/session");
+		const [{ setCookie }, { setSessionCookie }] = await Promise.all([
+			import("@tanstack/react-start/server"),
+			import("@/utils/session"),
+		]);
 
 		await Effect.runPromise(setSessionCookie("test-token"));
 

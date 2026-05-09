@@ -22,6 +22,12 @@ export function Login() {
 
 	const signupMutation = useMutation({
 		mutationFn: signupFn,
+		onSuccess: async (data) => {
+			if (!data?.error) {
+				await queryClient.invalidateQueries({ queryKey: ["user"] });
+				await router.invalidate();
+			}
+		},
 	});
 
 	const validationError = getValidationErrorMessage(loginMutation.error);

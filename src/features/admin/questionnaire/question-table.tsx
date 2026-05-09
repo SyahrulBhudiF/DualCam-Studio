@@ -6,7 +6,6 @@ import {
 	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
-	type SortingState,
 	useReactTable,
 } from "@tanstack/react-table";
 import { Plus, Trash } from "lucide-react";
@@ -34,11 +33,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createQuestionSchema } from "@/libs/schemas/questionnaire";
 import { getQuestionColumns } from "./components/columns";
+import { useQuestionTableState } from "./hooks/use-question-table-state";
 import type { Question } from "./questionnaires.types";
 
 const questionFormSchema = createQuestionSchema.omit({
 	questionnaireId: true,
 });
+
 
 function CreateQuestionForm({
 	questionnaireId,
@@ -98,7 +99,7 @@ function CreateQuestionForm({
 	});
 
 	return (
-		<form
+		<div
 			onSubmit={(e) => {
 				e.preventDefault();
 				e.stopPropagation();
@@ -152,7 +153,7 @@ function CreateQuestionForm({
 			>
 				Create
 			</Button>
-		</form>
+		</div>
 	);
 }
 
@@ -216,7 +217,7 @@ function EditQuestionForm({
 	});
 
 	return (
-		<form
+		<div
 			onSubmit={(e) => {
 				e.preventDefault();
 				e.stopPropagation();
@@ -270,7 +271,7 @@ function EditQuestionForm({
 			>
 				Update
 			</Button>
-		</form>
+		</div>
 	);
 }
 
@@ -281,11 +282,18 @@ export function QuestionTable({
 	data: Question[];
 	questionnaireId: string;
 }) {
-	const [sorting, setSorting] = useState<SortingState>([]);
-	const [rowSelection, setRowSelection] = useState({});
-	const [globalFilter, setGlobalFilter] = useState("");
-	const [isCreateOpen, setIsCreateOpen] = useState(false);
-	const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+	const {
+		sorting,
+		rowSelection,
+		globalFilter,
+		isCreateOpen,
+		editingQuestion,
+		setSorting,
+		setRowSelection,
+		setGlobalFilter,
+		setIsCreateOpen,
+		setEditingQuestion,
+	} = useQuestionTableState();
 
 	const queryClient = useQueryClient();
 
@@ -324,7 +332,7 @@ export function QuestionTable({
 				<Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
 					<DialogTrigger asChild>
 						<Button size="sm" className="cursor-pointer">
-							<Plus className="mr-2 h-4 w-4" /> Add Question
+							<Plus className="mr-2 size-4" /> Add Question
 						</Button>
 					</DialogTrigger>
 					<DialogContent>
@@ -411,7 +419,7 @@ export function QuestionTable({
 						deleteMutation.mutate({ data: { ids } });
 					}}
 				>
-					<Trash className="mr-2 h-4 w-4" /> Delete Selected
+					<Trash className="mr-2 size-4" /> Delete Selected
 				</Button>
 			</DataTableBulkActions>
 		</div>

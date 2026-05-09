@@ -1,5 +1,5 @@
 import { DirectionProvider as RdxDirProvider } from "@radix-ui/react-direction";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, use, useEffect, useState } from "react";
 import { getCookie, removeCookie, setCookie } from "@/libs/cookie";
 
 export type Direction = "ltr" | "rtl";
@@ -53,7 +53,7 @@ export function DirectionProvider({ children }: { children: React.ReactNode }) {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useDirection() {
-	const context = useContext(DirectionContext);
+	const context = use(DirectionContext);
 	if (!context) {
 		throw new Error("useDirection must be used within a DirectionProvider");
 	}

@@ -25,8 +25,8 @@ export function NotFound({
 		<div className="flex min-h-[50vh] flex-col items-center justify-center p-4">
 			<Card className="w-full max-w-md">
 				<CardHeader className="text-center">
-					<div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-						<FileQuestion className="h-8 w-8 text-muted-foreground" />
+					<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
+						<FileQuestion className="size-8 text-muted-foreground" />
 					</div>
 					<CardTitle className="text-xl">{title}</CardTitle>
 					<CardDescription className="text-balance">
@@ -44,12 +44,12 @@ export function NotFound({
 						onClick={() => window.history.back()}
 						className="gap-2"
 					>
-						<ArrowLeft className="h-4 w-4" />
+						<ArrowLeft className="size-4" />
 						Go Back
 					</Button>
 					<Button asChild className="gap-2">
 						<Link to="/">
-							<Home className="h-4 w-4" />
+							<Home className="size-4" />
 							Home
 						</Link>
 					</Button>

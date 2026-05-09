@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { ArrowUpDown, Eye, Video } from "lucide-react";
+import { ClientDate } from "@/components/client-date";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -41,7 +41,7 @@ export function getResponseColumns(): ColumnDef<ResponseListItem>[] {
 					className="cursor-pointer"
 				>
 					Name
-					<ArrowUpDown className="ml-2 h-4 w-4" />
+					<ArrowUpDown className="ml-2 size-4" />
 				</Button>
 			),
 			cell: ({ row }) => (
@@ -58,7 +58,7 @@ export function getResponseColumns(): ColumnDef<ResponseListItem>[] {
 					className="cursor-pointer"
 				>
 					Class
-					<ArrowUpDown className="ml-2 h-4 w-4" />
+					<ArrowUpDown className="ml-2 size-4" />
 				</Button>
 			),
 			cell: ({ row }) => (
@@ -85,7 +85,7 @@ export function getResponseColumns(): ColumnDef<ResponseListItem>[] {
 					className="cursor-pointer"
 				>
 					Questionnaire
-					<ArrowUpDown className="ml-2 h-4 w-4" />
+					<ArrowUpDown className="ml-2 size-4" />
 				</Button>
 			),
 			cell: ({ row }) => (
@@ -104,7 +104,7 @@ export function getResponseColumns(): ColumnDef<ResponseListItem>[] {
 					className="cursor-pointer"
 				>
 					Score
-					<ArrowUpDown className="ml-2 h-4 w-4" />
+					<ArrowUpDown className="ml-2 size-4" />
 				</Button>
 			),
 			cell: ({ row }) => (
@@ -120,7 +120,7 @@ export function getResponseColumns(): ColumnDef<ResponseListItem>[] {
 					row.original.videoPath && row.original.videoPath !== "null";
 				return hasVideo ? (
 					<Badge variant="default" className="gap-1">
-						<Video className="h-3 w-3" />
+						<Video className="size-3" />
 						Yes
 					</Badge>
 				) : (
@@ -138,12 +138,12 @@ export function getResponseColumns(): ColumnDef<ResponseListItem>[] {
 					className="cursor-pointer"
 				>
 					Date
-					<ArrowUpDown className="ml-2 h-4 w-4" />
+					<ArrowUpDown className="ml-2 size-4" />
 				</Button>
 			),
 			cell: ({ row }) => (
 				<span className="text-muted-foreground text-sm">
-					{format(new Date(row.original.createdAt), "dd MMM yyyy HH:mm")}
+					<ClientDate date={row.original.createdAt} formatString="dd MMM yyyy HH:mm" />
 				</span>
 			),
 		},
@@ -156,7 +156,7 @@ export function getResponseColumns(): ColumnDef<ResponseListItem>[] {
 					params={{ responseId: row.original.id }}
 				>
 					<Button variant="ghost" size="sm" className="cursor-pointer">
-						<Eye className="h-4 w-4 mr-1" />
+						<Eye className="size-4 mr-1" />
 						View
 					</Button>
 				</Link>

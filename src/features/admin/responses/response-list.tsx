@@ -84,10 +84,10 @@ export function ResponseList({
 	};
 
 	return (
-		<Main className="space-y-6">
+		<Main className="space-y-4">
 			<div className="flex items-center justify-between">
 				<div>
-					<h2 className="text-2xl font-bold tracking-tight">Responses</h2>
+					<h2 className="text-2xl font-semibold tracking-tight">Responses</h2>
 					<p className="text-muted-foreground">
 						View and manage all questionnaire responses
 					</p>
@@ -174,8 +174,8 @@ export function ResponseList({
 					}}
 					disabled={deleteMutation.isPending}
 				>
-					<Trash className="mr-2 h-4 w-4" />
-					{deleteMutation.isPending ? "Deleting..." : "Delete Selected"}
+					<Trash className="mr-2 size-4" />
+					{deleteMutation.isPending ? "Deleting…" : "Delete Selected"}
 				</Button>
 			</DataTableBulkActions>
 		</Main>

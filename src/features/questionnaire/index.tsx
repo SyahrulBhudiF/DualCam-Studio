@@ -1,5 +1,5 @@
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLoaderData, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -27,6 +27,7 @@ export function QuestionnairePage() {
 	});
 	const user = useUserStore((s) => s.user);
 	const navigate = useNavigate();
+	const queryClient = useQueryClient();
 
 	const [currentFolderName, setCurrentFolderName] = useState<string>("");
 
@@ -48,7 +49,11 @@ export function QuestionnairePage() {
 
 	const mutation = useMutation({
 		mutationFn: submitQuestionnaire,
-		onSuccess: () => navigate({ to: "/success" }),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["admin", "responses"] });
+			queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+			navigate({ to: "/success" });
+		},
 		onError: (error) => {
 			console.error(error);
 			alert("Failed to submit.");
@@ -130,12 +135,12 @@ export function QuestionnairePage() {
 
 	if (!allReady) {
 		return (
-			<div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+			<div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 gap-4">
 				<div className="animate-spin">
-					<Loader2 className="w-10 h-10" />
+					<Loader2 className="size-10" />
 				</div>
-				<div className="text-slate-600 font-medium">
-					Initializing Cameras...
+				<div className="text-zinc-600 font-medium">
+					Initializing Cameras…
 				</div>
 				<div className="fixed opacity-0 pointer-events-none">
 					<CameraControlPanel
@@ -158,23 +163,23 @@ export function QuestionnairePage() {
 	return (
 		<div className="min-h-screen bg-primary p-4 pb-48">
 			<div className="max-w-3xl mx-auto mb-6">
-				<h1 className="text-2xl font-bold dark:text-slate-50">
+				<h1 className="text-2xl font-semibold dark:text-zinc-50">
 					{questionnaire.title}
 				</h1>
-				<p className="text-slate-600 dark:text-slate-400">
+				<p className="text-zinc-600 dark:text-zinc-400">
 					Student:{" "}
-					<span className="font-semibold dark:text-slate-200">
+					<span className="font-semibold dark:text-zinc-200">
 						{user?.name || "Guest"}
 					</span>{" "}
 					| Class:{" "}
-					<span className="font-semibold dark:text-slate-200">
+					<span className="font-semibold dark:text-zinc-200">
 						{user?.class || "-"}
 					</span>
 				</p>
 			</div>
 
 			<div className="max-w-3xl mx-auto space-y-6">
-				<form
+				<div
 					onSubmit={(e) => {
 						e.preventDefault();
 						e.stopPropagation();
@@ -198,7 +203,7 @@ export function QuestionnairePage() {
 											{q.answers.map((ans) => (
 												<div
 													key={ans.id}
-													className="flex items-center space-x-2 cursor-pointer"
+													className="flex items-center gap-x-2 cursor-pointer"
 												>
 													<RadioGroupItem value={ans.id} id={ans.id} />
 													<Label htmlFor={ans.id}>{ans.answer_text}</Label>
@@ -230,12 +235,12 @@ export function QuestionnairePage() {
 								}
 							>
 								{isSubmitting || mutation.isPending
-									? "Finalizing..."
+									? "Finalizing…"
 									: "Submit Answers"}
 							</Button>
 						)}
 					</form.Subscribe>
-				</form>
+				</div>
 			</div>
 
 			<CameraControlPanel
