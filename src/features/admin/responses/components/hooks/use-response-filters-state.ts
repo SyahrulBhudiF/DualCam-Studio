@@ -1,6 +1,6 @@
-import { useReducer } from "react";
+import { useReducer } from"react";
 
-export const ALL_FILTER_VALUE = "__all__";
+export const ALL_FILTER_VALUE ="__all__";
 
 type FilterState = {
 	questionnaireId: string;
@@ -11,12 +11,12 @@ type FilterState = {
 };
 
 type FilterAction =
-	| { type: "questionnaireId"; value: string }
-	| { type: "className"; value: string }
-	| { type: "name"; value: string }
-	| { type: "startDate"; value?: Date }
-	| { type: "endDate"; value?: Date }
-	| { type: "reset" };
+	| { type:"questionnaireId"; value: string }
+	| { type:"className"; value: string }
+	| { type:"name"; value: string }
+	| { type:"startDate"; value?: Date }
+	| { type:"endDate"; value?: Date }
+	| { type:"reset" };
 
 const INITIAL_FILTER_STATE: FilterState = {
 	questionnaireId: ALL_FILTER_VALUE,
@@ -26,17 +26,17 @@ const INITIAL_FILTER_STATE: FilterState = {
 
 function filterReducer(state: FilterState, action: FilterAction): FilterState {
 	switch (action.type) {
-		case "questionnaireId":
+		case"questionnaireId":
 			return { ...state, questionnaireId: action.value };
-		case "className":
+		case"className":
 			return { ...state, className: action.value };
-		case "name":
+		case"name":
 			return { ...state, name: action.value };
-		case "startDate":
+		case"startDate":
 			return { ...state, startDate: action.value };
-		case "endDate":
+		case"endDate":
 			return { ...state, endDate: action.value };
-		case "reset":
+		case"reset":
 			return INITIAL_FILTER_STATE;
 	}
 }
@@ -47,11 +47,11 @@ export function useResponseFiltersState() {
 	return {
 		...state,
 		setQuestionnaireId: (value: string) =>
-			dispatch({ type: "questionnaireId", value }),
-		setClassName: (value: string) => dispatch({ type: "className", value }),
-		setName: (value: string) => dispatch({ type: "name", value }),
-		setStartDate: (value?: Date) => dispatch({ type: "startDate", value }),
-		setEndDate: (value?: Date) => dispatch({ type: "endDate", value }),
-		resetFilters: () => dispatch({ type: "reset" }),
+			dispatch({ type:"questionnaireId", value }),
+		setClassName: (value: string) => dispatch({ type:"className", value }),
+		setName: (value: string) => dispatch({ type:"name", value }),
+		setStartDate: (value?: Date) => dispatch({ type:"startDate", value }),
+		setEndDate: (value?: Date) => dispatch({ type:"endDate", value }),
+		resetFilters: () => dispatch({ type:"reset" }),
 	};
 }

@@ -1,8 +1,8 @@
-import { Main } from "@/components/layout/main";
-import { Button } from "@/components/ui/button";
-import { exportDashboardToExcel } from "./components/dashboard-export";
-import { DashboardTabs } from "./components/dashboard-tabs";
-import type { DashboardProps } from "./components/types";
+import { Main } from"@/components/layout/main";
+import { Button } from"@/components/ui/button";
+import { exportDashboardToExcel } from"./components/dashboard-export";
+import { DashboardTabs } from"./components/dashboard-tabs";
+import type { DashboardProps } from"./components/types";
 
 export function Dashboard({
 	summary,

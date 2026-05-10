@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from"@tanstack/react-query";
 import {
 	flexRender,
 	getCoreRowModel,
@@ -7,22 +7,22 @@ import {
 	getSortedRowModel,
 	type SortingState,
 	useReactTable,
-} from "@tanstack/react-table";
-import { Trash } from "lucide-react";
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { deleteResponses } from "@/apis/admin/responses";
+} from"@tanstack/react-table";
+import { Trash } from"lucide-react";
+import { useMemo, useState } from"react";
+import { toast } from"sonner";
+import { deleteResponses } from"@/apis/admin/responses";
 import {
 	DataTableBulkActions,
 	DataTablePagination,
 	DataTableToolbar,
-} from "@/components/data-table";
-import { Main } from "@/components/layout/main";
-import { Button } from "@/components/ui/button";
-import { getResponseColumns } from "./components/columns";
-import { ExportResponsesButton } from "./components/response-export";
-import { ResponseFilters } from "./components/response-filters";
-import type { FilterOptions, ResponseListItem } from "./responses.types";
+} from"@/components/data-table";
+import { Main } from"@/components/layout/main";
+import { Button } from"@/components/ui/button";
+import { getResponseColumns } from"./components/columns";
+import { ExportResponsesButton } from"./components/response-export";
+import { ResponseFilters } from"./components/response-filters";
+import type { FilterOptions, ResponseListItem } from"./responses.types";
 
 type ResponseListProps = {
 	data?: ResponseListItem[];
@@ -47,7 +47,7 @@ export function ResponseList({
 	const deleteMutation = useMutation({
 		mutationFn: deleteResponses,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["admin", "responses"] });
+			queryClient.invalidateQueries({ queryKey: ["admin","responses"] });
 			setRowSelection({});
 			toast.success("Responses deleted successfully");
 		},
@@ -101,9 +101,13 @@ export function ResponseList({
 				onFilterClear={handleFilterClear}
 			/>
 
-			<DataTableToolbar table={table} searchKey="name" />
+			<DataTableToolbar
+				table={table}
+				searchKey="name"
+				searchPlaceholder="Search responses by name…"
+			/>
 
-			<div className="rounded-md border overflow-auto">
+			<div className="border overflow-auto">
 				<table className="w-full caption-bottom text-sm">
 					<thead className="[&_tr]:border-b">
 						{table.getHeaderGroups().map((headerGroup) => (
@@ -132,7 +136,7 @@ export function ResponseList({
 							table.getRowModel().rows.map((row) => (
 								<tr
 									key={row.id}
-									data-state={row.getIsSelected() && "selected"}
+									data-state={row.getIsSelected() &&"selected"}
 									className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
 								>
 									{row.getVisibleCells().map((cell) => (
@@ -175,7 +179,7 @@ export function ResponseList({
 					disabled={deleteMutation.isPending}
 				>
 					<Trash className="mr-2 size-4" />
-					{deleteMutation.isPending ? "Deleting…" : "Delete Selected"}
+					{deleteMutation.isPending ?"Deleting…" :"Delete Selected"}
 				</Button>
 			</DataTableBulkActions>
 		</Main>

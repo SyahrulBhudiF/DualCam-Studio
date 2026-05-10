@@ -1,14 +1,14 @@
-import { createServerFn } from "@tanstack/react-start";
-import { Effect } from "effect";
-import { DashboardService, runEffect } from "@/infrastructure";
-import { requireAuth } from "@/utils/session";
+import { createServerFn } from"@tanstack/react-start";
+import { Effect } from"effect";
+import { DashboardService, runEffect } from"@/infrastructure";
+import { requireAuth } from"@/utils/session";
 
-export const getDashboardSummary = createServerFn({ method: "GET" }).handler(
+export const getDashboardSummary = createServerFn({ method:"GET" }).handler(
 	async () => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 
 				return yield* service.getSummary();
 			}),
@@ -17,12 +17,12 @@ export const getDashboardSummary = createServerFn({ method: "GET" }).handler(
 );
 
 export const getDashboardBreakdown = createServerFn({
-	method: "GET",
+	method:"GET",
 }).handler(async () => {
 	return runEffect(
 		Effect.gen(function* () {
 			yield* requireAuth;
-			const service = yield* DashboardService;
+			const service = yield* DashboardService.asEffect();
 
 			return yield* service.getBreakdown();
 		}),
@@ -30,12 +30,12 @@ export const getDashboardBreakdown = createServerFn({
 });
 
 export const getAnalyticsDetails = createServerFn({
-	method: "GET",
+	method:"GET",
 }).handler(async () => {
 	return runEffect(
 		Effect.gen(function* () {
 			yield* requireAuth;
-			const service = yield* DashboardService;
+			const service = yield* DashboardService.asEffect();
 
 			return yield* service.getAnalyticsDetails();
 		}),

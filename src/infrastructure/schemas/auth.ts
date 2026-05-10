@@ -1,16 +1,10 @@
-import { Schema } from "effect";
-
-const PasswordPattern =
-	/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/;
+import { Schema } from"effect";
 
 const EmailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const Password = Schema.String.pipe(
-	Schema.minLength(8),
-	Schema.pattern(PasswordPattern),
-);
+const Password = Schema.String.check(Schema.isMinLength(8));
 
-const Email = Schema.String.pipe(Schema.pattern(EmailPattern));
+const Email = Schema.String.check(Schema.isPattern(EmailPattern));
 
 export const LoginSchema = Schema.Struct({
 	email: Email,

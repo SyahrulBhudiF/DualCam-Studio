@@ -1,34 +1,34 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { CalendarIcon, Filter, X } from "lucide-react";
-import { getResponsesFiltered } from "@/apis/admin/responses";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { useMutation, useQueryClient } from"@tanstack/react-query";
+import { format } from"date-fns";
+import { CalendarIcon, Filter, X } from"lucide-react";
+import { useCallback, useEffect, useMemo } from"react";
+import { getResponsesFiltered } from"@/apis/admin/responses";
+import { Button } from"@/components/ui/button";
+import { Calendar } from"@/components/ui/calendar";
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
-} from "@/components/ui/popover";
+} from"@/components/ui/popover";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/utils/utils";
-import type { FilterOptions, ResponseListItem } from "../responses.types";
+} from"@/components/ui/select";
+import { cn } from"@/utils/utils";
+import type { FilterOptions, ResponseListItem } from"../responses.types";
 import {
 	ALL_FILTER_VALUE,
 	useResponseFiltersState,
-} from "./hooks/use-response-filters-state";
+} from"./hooks/use-response-filters-state";
 
 type ResponseFiltersProps = {
 	filterOptions?: FilterOptions;
 	onFilterApply: (data: ResponseListItem[]) => void;
 	onFilterClear: () => void;
 };
-
 
 export function ResponseFilters({
 	filterOptions,
@@ -53,12 +53,27 @@ export function ResponseFilters({
 	const filterMutation = useMutation({
 		mutationFn: getResponsesFiltered,
 		onSuccess: (data) => {
-			queryClient.setQueryData(["admin", "responses", "filtered"], data);
+			queryClient.setQueryData(["admin","responses","filtered"], data);
 			onFilterApply(data);
 		},
 	});
 
-	const handleApplyFilters = () => {
+	const filterPayload = useMemo(
+		() => ({
+			questionnaireId,
+			className,
+			startDate,
+			endDate,
+			name,
+		}),
+		[questionnaireId, className, startDate, endDate, name],
+	);
+	const uniqueNames = useMemo(
+		() => [...new Set(filterOptions?.names ?? [])],
+		[filterOptions?.names],
+	);
+
+	const handleApplyFilters = useCallback(() => {
 		filterMutation.mutate({
 			data: {
 				questionnaireId:
@@ -69,7 +84,11 @@ export function ResponseFilters({
 				name: name !== ALL_FILTER_VALUE ? name : undefined,
 			},
 		});
-	};
+	}, [filterMutation, questionnaireId, className, startDate, endDate, name]);
+
+	useEffect(() => {
+		handleApplyFilters();
+	}, [filterPayload]);
 
 	const handleClearFilters = () => {
 		resetFilters();
@@ -78,28 +97,28 @@ export function ResponseFilters({
 
 	const hasActiveFilters = Boolean(
 		questionnaireId !== ALL_FILTER_VALUE ||
-		className !== ALL_FILTER_VALUE ||
-		startDate ||
-		endDate ||
-		name !== ALL_FILTER_VALUE,
+			className !== ALL_FILTER_VALUE ||
+			startDate ||
+			endDate ||
+			name !== ALL_FILTER_VALUE,
 	);
 	// Show loading skeleton if filterOptions not ready
 	if (!filterOptions) {
 		return (
-			<div className="flex flex-wrap items-center gap-3 p-4 border rounded-lg bg-muted/30 animate-pulse">
+			<div className="flex flex-wrap items-center gap-3 p-4 border bg-muted/30 animate-pulse">
 				<div className="flex items-center gap-2">
 					<Filter className="size-4 text-muted-foreground" />
 					<span className="text-sm font-medium">Filters:</span>
 				</div>
-				<div className="h-10 w-[200px] bg-muted rounded" />
-				<div className="h-10 w-[150px] bg-muted rounded" />
-				<div className="h-10 w-[150px] bg-muted rounded" />
+				<div className="h-10 w-[200px] bg-muted" />
+				<div className="h-10 w-[150px] bg-muted" />
+				<div className="h-10 w-[150px] bg-muted" />
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex flex-wrap items-center gap-3 p-4 border rounded-lg bg-muted/30">
+		<div className="flex flex-wrap items-center gap-3 p-4 border bg-muted/30">
 			<div className="flex items-center gap-2">
 				<Filter className="size-4 text-muted-foreground" />
 				<span className="text-sm font-medium">Filters:</span>
@@ -120,12 +139,12 @@ export function ResponseFilters({
 			</Select>
 
 			<Select value={name} onValueChange={setName}>
-				<SelectTrigger className="w-[150px]">
+				<SelectTrigger className="w-[150px]" onBlur={handleApplyFilters}>
 					<SelectValue placeholder="All Profiles" />
 				</SelectTrigger>
 				<SelectContent>
 					<SelectItem value={ALL_FILTER_VALUE}>All Profiles</SelectItem>
-					{filterOptions.names.map((q) => (
+					{uniqueNames.map((q) => (
 						<SelectItem key={q} value={q}>
 							{q}
 						</SelectItem>
@@ -151,13 +170,12 @@ export function ResponseFilters({
 				<PopoverTrigger asChild>
 					<Button
 						variant="outline"
-						className={cn(
-							"w-[140px] justify-start text-left font-normal",
-							!startDate && "text-muted-foreground",
+						className={cn("w-[140px] justify-start text-left font-normal",
+							!startDate &&"text-muted-foreground",
 						)}
 					>
 						<CalendarIcon className="mr-2 size-4" />
-						{startDate ? format(startDate, "dd/MM/yyyy") : "Start Date"}
+						{startDate ? format(startDate,"dd/MM/yyyy") :"Start Date"}
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="w-auto p-0" align="start">
@@ -174,13 +192,12 @@ export function ResponseFilters({
 				<PopoverTrigger asChild>
 					<Button
 						variant="outline"
-						className={cn(
-							"w-[140px] justify-start text-left font-normal",
-							!endDate && "text-muted-foreground",
+						className={cn("w-[140px] justify-start text-left font-normal",
+							!endDate &&"text-muted-foreground",
 						)}
 					>
 						<CalendarIcon className="mr-2 size-4" />
-						{endDate ? format(endDate, "dd/MM/yyyy") : "End Date"}
+						{endDate ? format(endDate,"dd/MM/yyyy") :"End Date"}
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="w-auto p-0" align="start">
@@ -192,14 +209,6 @@ export function ResponseFilters({
 					/>
 				</PopoverContent>
 			</Popover>
-
-			<Button
-				onClick={handleApplyFilters}
-				disabled={filterMutation.isPending}
-				className="cursor-pointer"
-			>
-				{filterMutation.isPending ? "Filtering…" : "Apply"}
-			</Button>
 
 			{hasActiveFilters && (
 				<Button

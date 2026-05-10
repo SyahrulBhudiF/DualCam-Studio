@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Login } from "@/components/Login";
-import { AuthenticatedLayout } from "@/components/layout/authenticated-layout";
+import { createFileRoute } from"@tanstack/react-router";
+import { Login } from"@/components/Login";
+import { AuthenticatedLayout } from"@/components/layout/authenticated-layout";
 
 export const Route = createFileRoute("/admin")({
 	beforeLoad: ({ context }) => {
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/admin")({
 		}
 	},
 	errorComponent: ({ error }) => {
-		if (error.message === "Not authenticated") {
+		if (error.message ==="Not authenticated") {
 			return <Login />;
 		}
 

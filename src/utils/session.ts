@@ -2,11 +2,11 @@ import {
 	deleteCookie,
 	getCookies,
 	setCookie,
-} from "@tanstack/react-start/server";
-import { Effect } from "effect";
-import { SessionConfig } from "@/infrastructure/config";
-import { AuthService } from "@/infrastructure/services/auth";
-import { UnauthorizedError } from "@/infrastructure/errors/auth";
+} from"@tanstack/react-start/server";
+import { Cause, Effect, Option } from"effect";
+import { SessionConfig } from"@/infrastructure/config";
+import { UnauthorizedError } from"@/infrastructure/errors/auth";
+import { AuthService } from"@/infrastructure/services/auth";
 
 // Get the session token from cookies
 export const getSessionToken = Effect.gen(function* () {
@@ -21,16 +21,18 @@ export const requireAuth = Effect.gen(function* () {
 
 	if (!token) {
 		return yield* Effect.fail(
-			new UnauthorizedError({ message: "Authentication required" }),
+			new UnauthorizedError({ message:"Authentication required" }),
 		);
 	}
 
-	const authService = yield* AuthService;
-	const result = yield* authService.validateSession(token).pipe(
-		Effect.mapError(
-			() => new UnauthorizedError({ message: "Invalid or expired session" }),
-		),
-	);
+	const authService = yield* AuthService.asEffect();
+	const result = yield* authService
+		.validateSession(token)
+		.pipe(
+			Effect.mapError(
+				() => new UnauthorizedError({ message:"Invalid or expired session" }),
+			),
+		);
 
 	return result;
 });
@@ -42,8 +44,8 @@ export const setSessionCookie = (token: string) =>
 		setCookie(config.cookieName, token, {
 			httpOnly: true,
 			secure: config.secure,
-			sameSite: "lax",
-			path: "/",
+			sameSite:"lax",
+			path:"/",
 			maxAge: config.durationDays * 24 * 60 * 60,
 		});
 	});
@@ -59,11 +61,23 @@ export const extractErrorMessage = (
 	cause: unknown,
 	defaultMessage: string,
 ): string => {
-	if (cause && typeof cause === "object" && "_tag" in cause) {
-		const failure = cause as { _tag: string; error?: { message?: string } };
-		if (failure._tag === "Fail" && failure.error?.message) {
-			return failure.error.message;
+	if (!Cause.isCause(cause)) {
+		if (cause && typeof cause ==="object" &&"error" in cause) {
+			const legacy = cause as { error?: { message?: string } };
+			if (legacy.error?.message) return legacy.error.message;
 		}
+		return defaultMessage;
 	}
+
+	const error = Cause.findErrorOption(cause);
+	if (Option.isSome(error)) {
+		const value = error.value;
+		if (value instanceof Error) return value.message;
+		if (value && typeof value ==="object" &&"message" in value) {
+			return String(value.message);
+		}
+		return String(value);
+	}
+
 	return defaultMessage;
 };

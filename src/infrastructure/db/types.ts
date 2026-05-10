@@ -1,4 +1,4 @@
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import type { InferInsertModel, InferSelectModel } from"drizzle-orm";
 import type {
 	answers,
 	profiles,
@@ -9,7 +9,7 @@ import type {
 	responses,
 	sessions,
 	users,
-} from "./schema";
+} from"./schema";
 
 export type Questionnaire = InferSelectModel<typeof questionnaires>;
 export type Question = InferSelectModel<typeof questions>;

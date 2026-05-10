@@ -1,25 +1,25 @@
-import { Schema } from "effect";
-import { createServerFn } from "@tanstack/react-start";
-import { Effect } from "effect";
+import { createServerFn } from"@tanstack/react-start";
+import { Effect } from"effect";
 import {
 	ProfileService,
 	QuestionnaireService,
 	ResponseService,
 	runEffect,
-} from "@/infrastructure";
+} from"@/infrastructure";
 import {
 	BulkDeleteSchema,
 	ResponseFilterSchema,
 	UUID,
-} from "@/infrastructure/schemas/questionnaire";
-import { requireAuth } from "@/utils/session";
+} from"@/infrastructure/schemas/questionnaire";
+import { requireAuth } from"@/utils/session";
+import { inputValidator } from"../../infrastructure/schemas/validator";
 
-export const getResponses = createServerFn({ method: "GET" }).handler(
+export const getResponses = createServerFn({ method:"GET" }).handler(
 	async () => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				const responses = yield* service.getAll();
 
 				return responses.map((r) => ({
@@ -47,13 +47,13 @@ export const getResponses = createServerFn({ method: "GET" }).handler(
 	},
 );
 
-export const getResponseById = createServerFn({ method: "GET" })
-	.inputValidator(Schema.decodeUnknownSync(UUID))
+export const getResponseById = createServerFn({ method:"GET" })
+	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				const r = yield* service.getById(id);
 
 				return {
@@ -100,13 +100,13 @@ export const getResponseById = createServerFn({ method: "GET" })
 		);
 	});
 
-export const getResponsesByQuestionnaireId = createServerFn({ method: "GET" })
-	.inputValidator(Schema.decodeUnknownSync(UUID))
+export const getResponsesByQuestionnaireId = createServerFn({ method:"GET" })
+	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: questionnaireId }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				const responses = yield* service.getByQuestionnaireId(questionnaireId);
 
 				return responses.map((r) => ({
@@ -131,25 +131,25 @@ export const getResponsesByQuestionnaireId = createServerFn({ method: "GET" })
 		);
 	});
 
-export const deleteResponses = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(BulkDeleteSchema))
+export const deleteResponses = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(BulkDeleteSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* ResponseService;
-				return yield* service.delete(data.ids);
+				const service = yield* ResponseService.asEffect();
+				return yield* service.delete([...data.ids]);
 			}),
 		);
 	});
 
-export const getResponsesFiltered = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(ResponseFilterSchema))
+export const getResponsesFiltered = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(ResponseFilterSchema))
 	.handler(async ({ data: filters }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				const responses = yield* service.getFiltered({
 					questionnaireId: filters.questionnaireId,
 					className: filters.className,
@@ -183,12 +183,12 @@ export const getResponsesFiltered = createServerFn({ method: "POST" })
 	});
 
 export const getAllResponsesWithDetails = createServerFn({
-	method: "GET",
+	method:"GET",
 }).handler(async () => {
 	return runEffect(
 		Effect.gen(function* () {
 			yield* requireAuth;
-			const service = yield* ResponseService;
+			const service = yield* ResponseService.asEffect();
 			const responses = yield* service.getAllWithDetails();
 
 			return responses.map((r) => ({
@@ -221,13 +221,13 @@ export const getAllResponsesWithDetails = createServerFn({
 	);
 });
 
-export const getFilterOptions = createServerFn({ method: "GET" }).handler(
+export const getFilterOptions = createServerFn({ method:"GET" }).handler(
 	async () => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const questionnaireService = yield* QuestionnaireService;
-				const profileService = yield* ProfileService;
+				const questionnaireService = yield* QuestionnaireService.asEffect();
+				const profileService = yield* ProfileService.asEffect();
 
 				const [questionnaires, profiles, uniqueClasses] = yield* Effect.all([
 					questionnaireService.getAll(),
@@ -236,7 +236,7 @@ export const getFilterOptions = createServerFn({ method: "GET" }).handler(
 				]);
 
 				const names = profiles.reduce<string[]>((acc, profile) => {
-					if (typeof profile.name === "string") acc.push(profile.name);
+					if (typeof profile.name ==="string") acc.push(profile.name);
 					return acc;
 				}, []);
 

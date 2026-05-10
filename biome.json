@@ -6,7 +6,7 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["**"],
+		"includes": ["**", "!src/routeTree.gen.ts"],
 		"ignoreUnknown": false
 	},
 	"formatter": {
@@ -25,7 +25,8 @@
 			"!**/.vscode/**",
 			"!**/components/ui/**",
 			"!**/components/data-table/**",
-			"!**/routeTree.gen.ts"
+			"!**/routeTree.gen.ts",
+			"!src/routeTree.gen.ts"
 		]
 	},
 	"linter": {
@@ -41,7 +42,8 @@
 			"!**/.vscode/**",
 			"!**/components/ui/**",
 			"!**/components/data-table/**",
-			"!**/routeTree.gen.ts"
+			"!**/routeTree.gen.ts",
+			"!src/routeTree.gen.ts"
 		],
 		"rules": {
 			"recommended": true,

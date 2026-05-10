@@ -1,17 +1,17 @@
-import { Item, Root as Radio } from "@radix-ui/react-radio-group";
-import { CircleCheck, RotateCcw, Settings } from "lucide-react";
-import type { SVGProps } from "react";
-import { IconDir } from "@/assets/custom/icon-dir";
-import { IconLayoutCompact } from "@/assets/custom/icon-layout-compact";
-import { IconLayoutDefault } from "@/assets/custom/icon-layout-default";
-import { IconLayoutFull } from "@/assets/custom/icon-layout-full";
-import { IconSidebarFloating } from "@/assets/custom/icon-sidebar-floating";
-import { IconSidebarInset } from "@/assets/custom/icon-sidebar-inset";
-import { IconSidebarSidebar } from "@/assets/custom/icon-sidebar-sidebar";
-import { IconThemeDark } from "@/assets/custom/icon-theme-dark";
-import { IconThemeLight } from "@/assets/custom/icon-theme-light";
-import { IconThemeSystem } from "@/assets/custom/icon-theme-system";
-import { Button } from "@/components/ui/button";
+import { Item, Root as Radio } from"@radix-ui/react-radio-group";
+import { CircleCheck, RotateCcw, Settings } from"lucide-react";
+import type { SVGProps } from"react";
+import { IconDir } from"@/assets/custom/icon-dir";
+import { IconLayoutCompact } from"@/assets/custom/icon-layout-compact";
+import { IconLayoutDefault } from"@/assets/custom/icon-layout-default";
+import { IconLayoutFull } from"@/assets/custom/icon-layout-full";
+import { IconSidebarFloating } from"@/assets/custom/icon-sidebar-floating";
+import { IconSidebarInset } from"@/assets/custom/icon-sidebar-inset";
+import { IconSidebarSidebar } from"@/assets/custom/icon-sidebar-sidebar";
+import { IconThemeDark } from"@/assets/custom/icon-theme-dark";
+import { IconThemeLight } from"@/assets/custom/icon-theme-light";
+import { IconThemeSystem } from"@/assets/custom/icon-theme-system";
+import { Button } from"@/components/ui/button";
 import {
 	Sheet,
 	SheetContent,
@@ -20,12 +20,12 @@ import {
 	SheetHeader,
 	SheetTitle,
 	SheetTrigger,
-} from "@/components/ui/sheet";
-import { useDirection } from "@/libs/context/direction-provider";
-import { type Collapsible, useLayout } from "@/libs/context/layout-provider";
-import { useTheme } from "@/libs/context/theme-provider";
-import { cn } from "@/utils/utils";
-import { useSidebar } from "./ui/sidebar";
+} from"@/components/ui/sheet";
+import { useDirection } from"@/libs/context/direction-provider";
+import { type Collapsible, useLayout } from"@/libs/context/layout-provider";
+import { useTheme } from"@/libs/context/theme-provider";
+import { cn } from"@/utils/utils";
+import { useSidebar } from"./ui/sidebar";
 
 export function ConfigDrawer() {
 	const { setOpen } = useSidebar();
@@ -48,7 +48,7 @@ export function ConfigDrawer() {
 					variant="ghost"
 					aria-label="Open theme settings"
 					aria-describedby="config-drawer-description"
-					className="rounded-full"
+					className=""
 				>
 					<Settings aria-hidden="true" />
 				</Button>
@@ -93,8 +93,7 @@ function SectionTitle({
 }) {
 	return (
 		<div
-			className={cn(
-				"text-muted-foreground mb-2 flex items-center gap-2 text-sm font-semibold",
+			className={cn("text-muted-foreground mb-2 flex items-center gap-2 text-sm font-semibold",
 				className,
 			)}
 		>
@@ -103,7 +102,7 @@ function SectionTitle({
 				<Button
 					size="icon"
 					variant="secondary"
-					className="size-4 rounded-full"
+					className="size-4"
 					onClick={onReset}
 				>
 					<RotateCcw className="size-3" />
@@ -127,32 +126,25 @@ function RadioGroupItem({
 	return (
 		<Item
 			value={item.value}
-			className={cn("group outline-none", "transition duration-200 ease-in")}
+			className={cn("group outline-none","transition duration-200 ease-in")}
 			aria-label={`Select ${item.label.toLowerCase()}`}
 			aria-describedby={`${item.value}-description`}
 		>
 			<div
-				className={cn(
-					"ring-border relative rounded-[6px] ring-[1px]",
-					"group-data-[state=checked]:ring-primary group-data-[state=checked]:shadow-2xl",
-					"group-focus-visible:ring-2",
+				className={cn("ring-border relative ring-[1px]","group-data-[state=checked]:ring-primary group-data-[state=checked]:","group-focus-visible:ring-2",
 				)}
 				role="img"
 				aria-hidden="false"
 				aria-label={`${item.label} option preview`}
 			>
 				<CircleCheck
-					className={cn(
-						"fill-primary size-6 stroke-white",
-						"group-data-[state=unchecked]:hidden",
-						"absolute top-0 right-0 translate-x-1/2 -translate-y-1/2",
+					className={cn("fill-primary size-6 stroke-white","group-data-[state=unchecked]:hidden","absolute top-0 right-0 translate-x-1/2 -translate-y-1/2",
 					)}
 					aria-hidden="true"
 				/>
 				<item.icon
 					className={cn(
-						!isTheme &&
-							"stroke-primary fill-primary group-data-[state=unchecked]:stroke-muted-foreground group-data-[state=unchecked]:fill-muted-foreground",
+						!isTheme &&"stroke-primary fill-primary group-data-[state=unchecked]:stroke-muted-foreground group-data-[state=unchecked]:fill-muted-foreground",
 					)}
 					aria-hidden="true"
 				/>
@@ -186,18 +178,18 @@ function ThemeConfig() {
 			>
 				{[
 					{
-						value: "system",
-						label: "System",
+						value:"system",
+						label:"System",
 						icon: IconThemeSystem,
 					},
 					{
-						value: "light",
-						label: "Light",
+						value:"light",
+						label:"Light",
 						icon: IconThemeLight,
 					},
 					{
-						value: "dark",
-						label: "Dark",
+						value:"dark",
+						label:"Dark",
 						icon: IconThemeDark,
 					},
 				].map((item) => (
@@ -229,18 +221,18 @@ function SidebarConfig() {
 			>
 				{[
 					{
-						value: "inset",
-						label: "Inset",
+						value:"inset",
+						label:"Inset",
 						icon: IconSidebarInset,
 					},
 					{
-						value: "floating",
-						label: "Floating",
+						value:"floating",
+						label:"Floating",
 						icon: IconSidebarFloating,
 					},
 					{
-						value: "sidebar",
-						label: "Sidebar",
+						value:"sidebar",
+						label:"Sidebar",
 						icon: IconSidebarSidebar,
 					},
 				].map((item) => (
@@ -258,13 +250,13 @@ function LayoutConfig() {
 	const { open, setOpen } = useSidebar();
 	const { defaultCollapsible, collapsible, setCollapsible } = useLayout();
 
-	const radioState = open ? "default" : collapsible;
+	const radioState = open ?"default" : collapsible;
 
 	return (
 		<div className="max-md:hidden">
 			<SectionTitle
 				title="Layout"
-				showReset={radioState !== "default"}
+				showReset={radioState !=="default"}
 				onReset={() => {
 					setOpen(true);
 					setCollapsible(defaultCollapsible);
@@ -273,7 +265,7 @@ function LayoutConfig() {
 			<Radio
 				value={radioState}
 				onValueChange={(v) => {
-					if (v === "default") {
+					if (v ==="default") {
 						setOpen(true);
 						return;
 					}
@@ -286,18 +278,18 @@ function LayoutConfig() {
 			>
 				{[
 					{
-						value: "default",
-						label: "Default",
+						value:"default",
+						label:"Default",
 						icon: IconLayoutDefault,
 					},
 					{
-						value: "icon",
-						label: "Compact",
+						value:"icon",
+						label:"Compact",
 						icon: IconLayoutCompact,
 					},
 					{
-						value: "offcanvas",
-						label: "Full layout",
+						value:"offcanvas",
+						label:"Full layout",
 						icon: IconLayoutFull,
 					},
 				].map((item) => (
@@ -329,15 +321,15 @@ function DirConfig() {
 			>
 				{[
 					{
-						value: "ltr",
-						label: "Left to Right",
+						value:"ltr",
+						label:"Left to Right",
 						icon: (props: SVGProps<SVGSVGElement>) => (
 							<IconDir dir="ltr" {...props} />
 						),
 					},
 					{
-						value: "rtl",
-						label: "Right to Left",
+						value:"rtl",
+						label:"Right to Left",
 						icon: (props: SVGProps<SVGSVGElement>) => (
 							<IconDir dir="rtl" {...props} />
 						),

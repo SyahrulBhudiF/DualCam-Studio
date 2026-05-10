@@ -2,7 +2,7 @@ import type {
 	getFilterOptions,
 	getResponseById,
 	getResponses,
-} from "@/apis/admin/responses";
+} from"@/apis/admin/responses";
 
 export type ResponseListItem = Awaited<ReturnType<typeof getResponses>>[number];
 
@@ -46,7 +46,7 @@ export type SegmentedVideoPath = {
 };
 
 export type VideoData = {
-	mode: "full" | "segmented";
+	mode:"full" |"segmented";
 	fullVideo?: VideoPath;
 	segmentedVideos?: SegmentedVideoPath[];
 };

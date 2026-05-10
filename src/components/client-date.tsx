@@ -1,5 +1,5 @@
-import { format } from "date-fns";
-import { useEffect, useState } from "react";
+import { format } from"date-fns";
+import { useEffect, useState } from"react";
 
 type ClientDateProps = {
 	date: string | number | Date;
@@ -13,5 +13,5 @@ export function ClientDate({ date, formatString }: ClientDateProps) {
 		setFormatted(format(new Date(date), formatString));
 	}, [date, formatString]);
 
-	return <span suppressHydrationWarning>{formatted ?? ""}</span>;
+	return <span suppressHydrationWarning>{formatted ??""}</span>;
 }

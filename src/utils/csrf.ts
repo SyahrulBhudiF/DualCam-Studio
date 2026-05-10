@@ -1,6 +1,6 @@
-import { getRequestHeader, getRequestUrl } from "@tanstack/react-start/server";
-import { Effect } from "effect";
-import { CsrfError } from "@/infrastructure/errors/auth";
+import { getRequestHeader, getRequestUrl } from"@tanstack/react-start/server";
+import { Effect } from"effect";
+import { CsrfError } from"@/infrastructure/errors/auth";
 
 export const verifyCsrfOrigin = Effect.gen(function* () {
 	const origin = getRequestHeader("origin");
@@ -11,7 +11,7 @@ export const verifyCsrfOrigin = Effect.gen(function* () {
 		const referer = getRequestHeader("referer");
 		if (!referer) {
 			return yield* Effect.fail(
-				new CsrfError({ message: "Missing Origin header" }),
+				new CsrfError({ message:"Missing Origin header" }),
 			);
 		}
 
@@ -20,7 +20,7 @@ export const verifyCsrfOrigin = Effect.gen(function* () {
 
 		if (refererHost !== requestHost) {
 			return yield* Effect.fail(
-				new CsrfError({ message: "Invalid Referer header" }),
+				new CsrfError({ message:"Invalid Referer header" }),
 			);
 		}
 		return;
@@ -30,6 +30,6 @@ export const verifyCsrfOrigin = Effect.gen(function* () {
 	const requestHost = new URL(requestUrl).host;
 
 	if (originHost !== requestHost) {
-		return yield* Effect.fail(new CsrfError({ message: "Origin mismatch" }));
+		return yield* Effect.fail(new CsrfError({ message:"Origin mismatch" }));
 	}
 });

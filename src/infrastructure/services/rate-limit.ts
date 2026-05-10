@@ -1,21 +1,20 @@
-import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { eq, lt, sql } from "drizzle-orm";
-import { Effect } from "effect";
-import { RateLimitConfig } from "../config";
-import { rateLimits } from "../db";
-import { DatabaseError } from "../errors";
-import { RateLimitError } from "../errors/auth";
+import { eq, lt, sql } from"drizzle-orm";
+import { Context, Effect, Layer } from"effect";
+import { RateLimitConfig } from"../config";
+import { rateLimits } from"../db";
+import { DatabaseError } from"../errors";
+import { RateLimitError } from"../errors/auth";
+import { DB } from"../layers/database";
 
-export class RateLimitService extends Effect.Service<RateLimitService>()(
-	"RateLimitService",
+export class RateLimitService extends Context.Service<RateLimitService>()("RateLimitService",
 	{
-		accessors: true,
-		dependencies: [],
-		effect: Effect.gen(function* () {
-			const db = yield* PgDrizzle;
+		make: Effect.gen(function* () {
+			const db = yield* DB.asEffect();
 			const config = yield* RateLimitConfig;
 
-			const check = Effect.fn("RateLimitService.check")(function* (key: string) {
+			const check = Effect.fn("RateLimitService.check")(function* (
+				key: string,
+			) {
 				const now = new Date();
 				const expiresAt = new Date(now.getTime() + config.windowMs);
 
@@ -36,11 +35,12 @@ export class RateLimitService extends Effect.Service<RateLimitService>()(
 								ELSE ${rateLimits.expiresAt}
 							END`,
 						},
-					}).pipe(
+					})
+					.pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message: "Failed to update rate limit",
+									message:"Failed to update rate limit",
 									cause: e,
 								}),
 						),
@@ -50,11 +50,12 @@ export class RateLimitService extends Effect.Service<RateLimitService>()(
 				const [entry] = yield* db
 					.select()
 					.from(rateLimits)
-					.where(eq(rateLimits.key, key)).pipe(
+					.where(eq(rateLimits.key, key))
+					.pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message: "Failed to fetch rate limit",
+									message:"Failed to fetch rate limit",
 									cause: e,
 								}),
 						),
@@ -72,18 +73,23 @@ export class RateLimitService extends Effect.Service<RateLimitService>()(
 			});
 
 			const cleanup = Effect.fn("RateLimitService.cleanup")(function* () {
-				yield* db.delete(rateLimits).where(lt(rateLimits.expiresAt, new Date())).pipe(
-					Effect.mapError(
-						(e) =>
-							new DatabaseError({
-								message: "Failed to cleanup rate limits",
-								cause: e,
-							}),
-					),
-				);
+				yield* db
+					.delete(rateLimits)
+					.where(lt(rateLimits.expiresAt, new Date()))
+					.pipe(
+						Effect.mapError(
+							(e) =>
+								new DatabaseError({
+									message:"Failed to cleanup rate limits",
+									cause: e,
+								}),
+						),
+					);
 			});
 
 			return { check, cleanup };
 		}),
 	},
-) {}
+) {
+	static readonly layer = Layer.effect(this, this.make);
+}

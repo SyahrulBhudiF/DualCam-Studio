@@ -1,17 +1,13 @@
-import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { Effect, Exit, Layer } from "effect";
-import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
-import { describe, expect, vi, beforeEach } from "vitest";
-import {
-	ProfileService,
-	
-} from "@/infrastructure/services/profile";
+import { Effect, Exit, Layer } from "effect";
+import { beforeEach, describe, expect, vi } from "vitest";
+import { DB } from "@/infrastructure/layers/database";
+import { ProfileService } from "@/infrastructure/services/profile";
 
 // Creates an Effect-compatible mock result for yield*
-const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
-	const obj = Object.create(CommitPrototype);
-	obj.commit = () => Effect.succeed(data);
+const toEffect = <T>(data: T, methods?: Record<string, unknown>) => {
+	const obj = Effect.succeed(data) as Effect.Effect<T> &
+		Record<string, unknown>;
 	if (methods) Object.assign(obj, methods);
 	return obj;
 };
@@ -103,8 +99,8 @@ const createTestLayer = (
 			toEffect(overrides?.insertResult ? [overrides.insertResult] : []),
 		);
 
-	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return ProfileService.Default.pipe(Layer.provide(MockPgDrizzle));
+	const MockPgDrizzle = Layer.succeed(DB, mockDb as never);
+	return ProfileService.layer.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("ProfileService", () => {
@@ -122,7 +118,7 @@ describe("ProfileService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* ProfileService;
+				const service = yield* ProfileService.asEffect();
 				const result = yield* service.getById("p1");
 
 				expect(result.id).toBe("p1");
@@ -140,7 +136,7 @@ describe("ProfileService", () => {
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
 			return Effect.gen(function* () {
-				const service = yield* ProfileService;
+				const service = yield* ProfileService.asEffect();
 				const exit = yield* Effect.exit(service.getById("non-existent"));
 
 				expect(Exit.isFailure(exit)).toBe(true);
@@ -155,7 +151,7 @@ describe("ProfileService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* ProfileService;
+				const service = yield* ProfileService.asEffect();
 				const result = yield* service.getByEmail("user1@example.com");
 
 				expect(result?.email).toBe("user1@example.com");
@@ -172,7 +168,7 @@ describe("ProfileService", () => {
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
 			return Effect.gen(function* () {
-				const service = yield* ProfileService;
+				const service = yield* ProfileService.asEffect();
 				const result = yield* service.getByEmail("nonexistent@example.com");
 
 				expect(result).toBeNull();
@@ -195,7 +191,7 @@ describe("ProfileService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* ProfileService;
+				const service = yield* ProfileService.asEffect();
 				const result = yield* service.create({
 					email: "new@example.com",
 					name: "New User",
@@ -241,7 +237,7 @@ describe("ProfileService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* ProfileService;
+				const service = yield* ProfileService.asEffect();
 				const result = yield* service.upsertByEmail("user1@example.com", {
 					name: "Updated User",
 					class: "Class D",
@@ -277,7 +273,7 @@ describe("ProfileService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* ProfileService;
+				const service = yield* ProfileService.asEffect();
 				const result = yield* service.upsertByEmail("newuser@example.com", {
 					name: "New User",
 					class: "Class E",
@@ -295,7 +291,7 @@ describe("ProfileService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* ProfileService;
+				const service = yield* ProfileService.asEffect();
 				const result = yield* service.getAll();
 
 				expect(result).toHaveLength(3);
@@ -306,7 +302,7 @@ describe("ProfileService", () => {
 			const testLayer = createTestLayer(mockDb, { getAllResult: [] });
 
 			return Effect.gen(function* () {
-				const service = yield* ProfileService;
+				const service = yield* ProfileService.asEffect();
 				const result = yield* service.getAll();
 
 				expect(result).toHaveLength(0);
@@ -322,7 +318,7 @@ describe("ProfileService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* ProfileService;
+				const service = yield* ProfileService.asEffect();
 				const result = yield* service.getUniqueClasses();
 
 				expect(result).toEqual(["Class A", "Class B"]);
@@ -335,7 +331,7 @@ describe("ProfileService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* ProfileService;
+				const service = yield* ProfileService.asEffect();
 				const result = yield* service.getUniqueClasses();
 
 				expect(result).toHaveLength(0);

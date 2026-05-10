@@ -7,7 +7,7 @@ import {
 	text,
 	timestamp,
 	uuid,
-} from "drizzle-orm/pg-core";
+} from"drizzle-orm/pg-core";
 
 export const questionnaires = pgTable("questionnaires", {
 	id: uuid("id").primaryKey().defaultRandom(),
@@ -17,12 +17,11 @@ export const questionnaires = pgTable("questionnaires", {
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const questions = pgTable(
-	"questions",
+export const questions = pgTable("questions",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
 		questionnaireId: uuid("questionnaire_id")
-			.references(() => questionnaires.id, { onDelete: "cascade" })
+			.references(() => questionnaires.id, { onDelete:"cascade" })
 			.notNull(),
 		questionText: text("question_text").notNull(),
 		orderNumber: integer("order_number").default(0).notNull(),
@@ -33,12 +32,11 @@ export const questions = pgTable(
 	],
 );
 
-export const answers = pgTable(
-	"answers",
+export const answers = pgTable("answers",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
 		questionId: uuid("question_id")
-			.references(() => questions.id, { onDelete: "cascade" })
+			.references(() => questions.id, { onDelete:"cascade" })
 			.notNull(),
 		answerText: text("answer_text").notNull(),
 		score: integer("score").default(0).notNull(),
@@ -47,8 +45,7 @@ export const answers = pgTable(
 	(table) => [index("idx_answers_question_id").on(table.questionId)],
 );
 
-export const profiles = pgTable(
-	"profiles",
+export const profiles = pgTable("profiles",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
 		name: text("name"),
@@ -63,15 +60,14 @@ export const profiles = pgTable(
 	(table) => [index("idx_profiles_class").on(table.class)],
 );
 
-export const responses = pgTable(
-	"responses",
+export const responses = pgTable("responses",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
 		userId: uuid("user_id")
-			.references(() => profiles.id, { onDelete: "cascade" })
+			.references(() => profiles.id, { onDelete:"cascade" })
 			.notNull(),
 		questionnaireId: uuid("questionnaire_id")
-			.references(() => questionnaires.id, { onDelete: "cascade" })
+			.references(() => questionnaires.id, { onDelete:"cascade" })
 			.notNull(),
 		videoPath: text("video_path"),
 		totalScore: integer("total_score").default(0).notNull(),
@@ -84,18 +80,17 @@ export const responses = pgTable(
 	],
 );
 
-export const responseDetails = pgTable(
-	"response_details",
+export const responseDetails = pgTable("response_details",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
 		responseId: uuid("response_id")
-			.references(() => responses.id, { onDelete: "cascade" })
+			.references(() => responses.id, { onDelete:"cascade" })
 			.notNull(),
 		questionId: uuid("question_id")
-			.references(() => questions.id, { onDelete: "cascade" })
+			.references(() => questions.id, { onDelete:"cascade" })
 			.notNull(),
 		answerId: uuid("answer_id")
-			.references(() => answers.id, { onDelete: "cascade" })
+			.references(() => answers.id, { onDelete:"cascade" })
 			.notNull(),
 		score: integer("score").default(0).notNull(),
 		videoSegmentPath: jsonb("video_segment_path"),
@@ -110,7 +105,7 @@ export const responseDetails = pgTable(
 export const sessions = pgTable("sessions", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	userId: uuid("user_id")
-		.references(() => users.id, { onDelete: "cascade" })
+		.references(() => users.id, { onDelete:"cascade" })
 		.notNull(),
 	token: text("token").notNull().unique(),
 	expiresAt: timestamp("expires_at").notNull(),

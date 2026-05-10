@@ -1,9 +1,9 @@
-import Cookies from "js-cookie";
+import Cookies from"js-cookie";
 
 const DEFAULT_EXPIRES_DAYS = 7;
 
 function hasDocument() {
-	return typeof document !== "undefined";
+	return typeof document !=="undefined";
 }
 
 export function getCookie(name: string): string | undefined {
@@ -17,10 +17,10 @@ export function setCookie(
 	days = DEFAULT_EXPIRES_DAYS,
 ): void {
 	if (!hasDocument()) return;
-	Cookies.set(name, value, { expires: days, path: "/" });
+	Cookies.set(name, value, { expires: days, path:"/" });
 }
 
 export function removeCookie(name: string): void {
 	if (!hasDocument()) return;
-	Cookies.remove(name, { path: "/" });
+	Cookies.remove(name, { path:"/" });
 }

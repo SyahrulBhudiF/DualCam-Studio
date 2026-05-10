@@ -1,5 +1,5 @@
-import type { SVGProps } from "react";
-import { cn } from "@/utils/utils";
+import type { SVGProps } from"react";
+import { cn } from"@/utils/utils";
 
 export function IconThemeSystem({
 	className,
@@ -10,9 +10,7 @@ export function IconThemeSystem({
 			data-name="icon-theme-system"
 			xmlns="http://www.w3.org/2000/svg"
 			viewBox="0 0 79.86 51.14"
-			className={cn(
-				"overflow-hidden rounded-[6px]",
-				"stroke-primary fill-primary group-data-[state=unchecked]:stroke-muted-foreground group-data-[state=unchecked]:fill-muted-foreground",
+			className={cn("overflow-hidden","stroke-primary fill-primary group-data-[state=unchecked]:stroke-muted-foreground group-data-[state=unchecked]:fill-muted-foreground",
 				className,
 			)}
 			{...props}

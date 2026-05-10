@@ -1,16 +1,16 @@
-import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useLoaderData, useNavigate } from "@tanstack/react-router";
-import { Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { submitQuestionnaire } from "@/apis/questionnaire";
-import { CameraControlPanel } from "@/components/CameraControlPanel";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useCameraSetup } from "@/libs/hooks/use-camera-setup";
-import { useUserStore } from "@/libs/store/UserStore";
+import { useForm } from"@tanstack/react-form";
+import { useMutation, useQueryClient } from"@tanstack/react-query";
+import { useLoaderData, useNavigate } from"@tanstack/react-router";
+import { Loader2 } from"lucide-react";
+import { useEffect, useRef, useState } from"react";
+import { submitQuestionnaire } from"@/apis/questionnaire";
+import { CameraControlPanel } from"@/components/CameraControlPanel";
+import { Button } from"@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
+import { Label } from"@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from"@/components/ui/radio-group";
+import { useCameraSetup } from"@/libs/hooks/use-camera-setup";
+import { useUserStore } from"@/libs/store/UserStore";
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
 	return new Promise((resolve, reject) => {
@@ -23,7 +23,7 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
 
 export function QuestionnairePage() {
 	const { questionnaire, questions } = useLoaderData({
-		from: "/questionnaire/",
+		from:"/questionnaire/",
 	});
 	const user = useUserStore((s) => s.user);
 	const navigate = useNavigate();
@@ -50,9 +50,9 @@ export function QuestionnairePage() {
 	const mutation = useMutation({
 		mutationFn: submitQuestionnaire,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["admin", "responses"] });
+			queryClient.invalidateQueries({ queryKey: ["admin","responses"] });
 			queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-			navigate({ to: "/success" });
+			navigate({ to:"/success" });
 		},
 		onError: (error) => {
 			console.error(error);
@@ -74,31 +74,31 @@ export function QuestionnairePage() {
 
 			await new Promise((r) => setTimeout(r, 1500));
 
-			let base64Main = "";
+			let base64Main ="";
 			if (blobMain.size > 0) {
 				base64Main = await blobToBase64(blobMain);
 			}
 
-			let base64Sec = "";
+			let base64Sec ="";
 
-			if (deviceIdSec !== "ws-realsense" && blobSec && blobSec.size > 0) {
+			if (deviceIdSec !=="ws-realsense" && blobSec && blobSec.size > 0) {
 				base64Sec = await blobToBase64(blobSec);
-			} else if (deviceIdSec === "ws-realsense") {
-				base64Sec = "SAVED_ON_SERVER";
+			} else if (deviceIdSec ==="ws-realsense") {
+				base64Sec ="SAVED_ON_SERVER";
 			}
 
 			await mutation.mutateAsync({
 				data: {
-					userEmail: user.email || "",
+					userEmail: user.email ||"",
 					userName: user.name,
 					userClass: user.class,
-					userSemester: user.semester || "",
-					userGender: user.gender || "",
+					userSemester: user.semester ||"",
+					userGender: user.gender ||"",
 					userAge: user.age || 0,
-					userNim: user.nim || "",
+					userNim: user.nim ||"",
 					questionnaireId: questionnaire.id,
 					videoBase64Main: base64Main,
-					videoBase64Secondary: base64Sec || " ",
+					videoBase64Secondary: base64Sec ||"",
 					folderName: currentFolderName,
 					answers: value.answers,
 				},
@@ -109,7 +109,7 @@ export function QuestionnairePage() {
 	useEffect(() => {
 		if (user?.name && !currentFolderName) {
 			const timestamp = Date.now();
-			const safeName = user.name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+			const safeName = user.name.replace(/[^a-z0-9]/gi,"_").toLowerCase();
 
 			setCurrentFolderName(`full/${safeName}_${timestamp}`);
 		}
@@ -125,7 +125,7 @@ export function QuestionnairePage() {
 			!hasStartedRef.current
 		) {
 			const timer = setTimeout(() => {
-				startRecording({ folderName: currentFolderName, mode: "FULL" });
+				startRecording({ folderName: currentFolderName, mode:"FULL" });
 				hasStartedRef.current = true;
 			}, 1000);
 
@@ -135,13 +135,11 @@ export function QuestionnairePage() {
 
 	if (!allReady) {
 		return (
-			<div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 gap-4">
+			<div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
 				<div className="animate-spin">
 					<Loader2 className="size-10" />
 				</div>
-				<div className="text-zinc-600 font-medium">
-					Initializing Cameras…
-				</div>
+				<div className="text-muted-foreground font-medium">Initializing Cameras…</div>
 				<div className="fixed opacity-0 pointer-events-none">
 					<CameraControlPanel
 						videoDevices={videoDevices}
@@ -163,17 +161,17 @@ export function QuestionnairePage() {
 	return (
 		<div className="min-h-screen bg-primary p-4 pb-48">
 			<div className="max-w-3xl mx-auto mb-6">
-				<h1 className="text-2xl font-semibold dark:text-zinc-50">
+				<h1 className="text-2xl font-semibold dark:text-foreground">
 					{questionnaire.title}
 				</h1>
-				<p className="text-zinc-600 dark:text-zinc-400">
-					Student:{" "}
-					<span className="font-semibold dark:text-zinc-200">
-						{user?.name || "Guest"}
-					</span>{" "}
-					| Class:{" "}
-					<span className="font-semibold dark:text-zinc-200">
-						{user?.class || "-"}
+				<p className="text-muted-foreground dark:text-muted-foreground">
+					Student:{""}
+					<span className="font-semibold dark:text-foreground">
+						{user?.name ||"Guest"}
+					</span>{""}
+					| Class:{""}
+					<span className="font-semibold dark:text-foreground">
+						{user?.class ||"-"}
 					</span>
 				</p>
 			</div>
@@ -235,8 +233,8 @@ export function QuestionnairePage() {
 								}
 							>
 								{isSubmitting || mutation.isPending
-									? "Finalizing…"
-									: "Submit Answers"}
+									?"Finalizing…"
+									:"Submit Answers"}
 							</Button>
 						)}
 					</form.Subscribe>

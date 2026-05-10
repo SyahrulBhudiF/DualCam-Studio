@@ -1,4 +1,4 @@
-import z from "zod";
+import z from"zod";
 
 const submissionSchema = z.object({
 	userEmail: z.email(),
@@ -48,20 +48,18 @@ const uploadChunkSchema = z.object({
 type uploadChunk = z.infer<typeof uploadChunkSchema>;
 
 export const createQuestionnaireSchema = z.object({
-	title: z.string().min(1, "Title is required"),
+	title: z.string().min(1,"Title is required"),
 	description: z.string().optional().nullable(),
 	isActive: z.boolean().default(false),
 });
 
-const updateQuestionnaireSchema = createQuestionnaireSchema
-	.partial()
-	.extend({
-		id: z.uuid(),
-	});
+const updateQuestionnaireSchema = createQuestionnaireSchema.partial().extend({
+	id: z.uuid(),
+});
 
 export const createQuestionSchema = z.object({
 	questionnaireId: z.uuid(),
-	questionText: z.string().min(1, "Question text is required"),
+	questionText: z.string().min(1,"Question text is required"),
 	orderNumber: z.coerce.number().int().default(0),
 });
 
@@ -74,7 +72,7 @@ const updateQuestionSchema = createQuestionSchema
 
 export const createAnswerSchema = z.object({
 	questionId: z.uuid(),
-	answerText: z.string().min(1, "Answer text is required"),
+	answerText: z.string().min(1,"Answer text is required"),
 	score: z.coerce.number().int().default(0),
 });
 

@@ -1,14 +1,13 @@
-import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { Effect, Exit, Layer } from "effect";
-import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
-import { describe, expect, vi, beforeEach } from "vitest";
+import { Effect, Exit, Layer } from "effect";
+import { beforeEach, describe, expect, vi } from "vitest";
+import { DB } from "@/infrastructure/layers/database";
 import { AuthService } from "@/infrastructure/services/auth";
 
 // Creates an Effect-compatible mock result for yield*
-const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
-	const obj = Object.create(CommitPrototype);
-	obj.commit = () => Effect.succeed(data);
+const toEffect = <T>(data: T, methods?: Record<string, unknown>) => {
+	const obj = Effect.succeed(data) as Effect.Effect<T> &
+		Record<string, unknown>;
 	if (methods) Object.assign(obj, methods);
 	return obj;
 };
@@ -68,8 +67,8 @@ const createMockDb = () => {
 
 // Create a test layer with mocked database
 const createTestLayer = (mockDb: ReturnType<typeof createMockDb>) => {
-	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return AuthService.Default.pipe(Layer.provide(MockPgDrizzle));
+	const MockPgDrizzle = Layer.succeed(DB, mockDb as never);
+	return AuthService.layer.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("AuthService", () => {
@@ -85,7 +84,7 @@ describe("AuthService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const authService = yield* AuthService;
+				const authService = yield* AuthService.asEffect();
 				const result = yield* authService.signup(
 					"test@example.com",
 					"password123",
@@ -113,7 +112,7 @@ describe("AuthService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const authService = yield* AuthService;
+				const authService = yield* AuthService.asEffect();
 				const exit = yield* Effect.exit(
 					authService.signup("test@example.com", "password123"),
 				);
@@ -160,7 +159,7 @@ describe("AuthService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const authService = yield* AuthService;
+				const authService = yield* AuthService.asEffect();
 				const result = yield* authService.login(
 					"test@example.com",
 					"password123",
@@ -179,7 +178,7 @@ describe("AuthService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const authService = yield* AuthService;
+				const authService = yield* AuthService.asEffect();
 				const exit = yield* Effect.exit(
 					authService.login("test@example.com", "password123"),
 				);
@@ -194,7 +193,7 @@ describe("AuthService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const authService = yield* AuthService;
+				const authService = yield* AuthService.asEffect();
 				const exit = yield* Effect.exit(authService.validateSession(""));
 
 				expect(Exit.isFailure(exit)).toBe(true);
@@ -208,7 +207,7 @@ describe("AuthService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const authService = yield* AuthService;
+				const authService = yield* AuthService.asEffect();
 				const exit = yield* Effect.exit(
 					authService.validateSession("expired-token"),
 				);
@@ -223,7 +222,7 @@ describe("AuthService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const authService = yield* AuthService;
+				const authService = yield* AuthService.asEffect();
 				const result = yield* authService.logout("test-token");
 
 				expect(result).toBeUndefined();

@@ -1,29 +1,29 @@
-import { Link } from "@tanstack/react-router";
-import type { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
-import { DataTableColumnHeader } from "@/components/data-table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Link } from"@tanstack/react-router";
+import type { ColumnDef } from"@tanstack/react-table";
+import { MoreHorizontal } from"lucide-react";
+import { DataTableColumnHeader } from"@/components/data-table";
+import { Badge } from"@/components/ui/badge";
+import { Button } from"@/components/ui/button";
+import { Checkbox } from"@/components/ui/checkbox";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import type { Answer, Question, Questionnaire } from "../questionnaires.types";
+} from"@/components/ui/dropdown-menu";
+import type { Answer, Question, Questionnaire } from"../questionnaires.types";
 
 export const getQuestionnaireColumns = (
 	_onEdit: (item: Questionnaire) => void,
 	onToggleStatus: (item: Questionnaire) => void,
 ): ColumnDef<Questionnaire>[] => [
 	{
-		id: "select",
+		id:"select",
 		header: ({ table }) => (
 			<Checkbox
 				checked={
 					table.getIsAllPageRowsSelected() ||
-					(table.getIsSomePageRowsSelected() && "indeterminate")
+					(table.getIsSomePageRowsSelected() &&"indeterminate")
 				}
 				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
 				aria-label="Select all"
@@ -40,7 +40,7 @@ export const getQuestionnaireColumns = (
 		enableHiding: false,
 	},
 	{
-		accessorKey: "title",
+		accessorKey:"title",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Title" />
 		),
@@ -49,7 +49,7 @@ export const getQuestionnaireColumns = (
 		),
 	},
 	{
-		accessorKey: "description",
+		accessorKey:"description",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Description" />
 		),
@@ -60,21 +60,21 @@ export const getQuestionnaireColumns = (
 		),
 	},
 	{
-		accessorKey: "isActive",
+		accessorKey:"isActive",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Status" />
 		),
 		cell: ({ row }) => {
 			const isActive = row.getValue("isActive");
 			return (
-				<Badge variant={isActive ? "default" : "secondary"}>
-					{isActive ? "Active" : "Inactive"}
+				<Badge variant={isActive ?"default" :"secondary"}>
+					{isActive ?"Active" :"Inactive"}
 				</Badge>
 			);
 		},
 	},
 	{
-		id: "actions",
+		id:"actions",
 		cell: ({ row }) => (
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
@@ -93,7 +93,7 @@ export const getQuestionnaireColumns = (
 						</Link>
 					</DropdownMenuItem>
 					<DropdownMenuItem onClick={() => onToggleStatus(row.original)}>
-						{row.original.isActive ? "Set Inactive" : "Set Active"}
+						{row.original.isActive ?"Set Inactive" :"Set Active"}
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
@@ -106,12 +106,12 @@ export const getQuestionColumns = (
 	onEdit: (item: Question) => void,
 ): ColumnDef<Question>[] => [
 	{
-		id: "select",
+		id:"select",
 		header: ({ table }) => (
 			<Checkbox
 				checked={
 					table.getIsAllPageRowsSelected() ||
-					(table.getIsSomePageRowsSelected() && "indeterminate")
+					(table.getIsSomePageRowsSelected() &&"indeterminate")
 				}
 				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
 			/>
@@ -126,7 +126,7 @@ export const getQuestionColumns = (
 		enableHiding: false,
 	},
 	{
-		accessorKey: "orderNumber",
+		accessorKey:"orderNumber",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Order" />
 		),
@@ -135,7 +135,7 @@ export const getQuestionColumns = (
 		),
 	},
 	{
-		accessorKey: "questionText",
+		accessorKey:"questionText",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Question" />
 		),
@@ -144,7 +144,7 @@ export const getQuestionColumns = (
 		),
 	},
 	{
-		id: "actions",
+		id:"actions",
 		cell: ({ row }) => (
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
@@ -174,12 +174,12 @@ export const getAnswerColumns = (
 	onEdit: (item: Answer) => void,
 ): ColumnDef<Answer>[] => [
 	{
-		id: "select",
+		id:"select",
 		header: ({ table }) => (
 			<Checkbox
 				checked={
 					table.getIsAllPageRowsSelected() ||
-					(table.getIsSomePageRowsSelected() && "indeterminate")
+					(table.getIsSomePageRowsSelected() &&"indeterminate")
 				}
 				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
 			/>
@@ -193,7 +193,7 @@ export const getAnswerColumns = (
 		enableSorting: false,
 	},
 	{
-		accessorKey: "answerText",
+		accessorKey:"answerText",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Answer" />
 		),
@@ -202,14 +202,14 @@ export const getAnswerColumns = (
 		),
 	},
 	{
-		accessorKey: "score",
+		accessorKey:"score",
 		header: ({ column }) => (
 			<DataTableColumnHeader column={column} title="Score" />
 		),
 		cell: ({ row }) => <div>{row.getValue("score")}</div>,
 	},
 	{
-		id: "actions",
+		id:"actions",
 		cell: ({ row }) => (
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>

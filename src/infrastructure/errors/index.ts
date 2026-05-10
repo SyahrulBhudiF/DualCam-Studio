@@ -1,10 +1,4 @@
-;
-
-export {
-	DatabaseError,
-} from "./database";
-
-;
+export { DatabaseError } from"./database";
 
 export {
 	AnswerNotFoundError,
@@ -12,10 +6,7 @@ export {
 	QuestionNotFoundError,
 	QuestionnaireNotFoundError,
 	ResponseNotFoundError,
-	
-} from "./not-found";
-
-;
+} from"./not-found";
 
 import type {
 	CsrfError,
@@ -25,11 +16,9 @@ import type {
 	SignupError,
 	TokenError,
 	UnauthorizedError,
-} from "./auth";
-import type {
-	DatabaseError,
-} from "./database";
-import type { FileError } from "./file";
+} from"./auth";
+import type { DatabaseError } from"./database";
+import type { FileError } from"./file";
 import type {
 	AnswerNotFoundError,
 	ProfileNotFoundError,
@@ -37,8 +26,8 @@ import type {
 	QuestionnaireNotFoundError,
 	ResponseNotFoundError,
 	UserNotFoundError,
-} from "./not-found";
-import type { ParseError, ValidationError } from "./validation";
+} from"./not-found";
+import type { ParseError, ValidationError } from"./validation";
 
 type AppError =
 	| DatabaseError

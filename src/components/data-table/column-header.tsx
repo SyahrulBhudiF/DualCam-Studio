@@ -3,17 +3,17 @@ import {
 	ArrowUpIcon,
 	CaretSortIcon,
 	EyeNoneIcon,
-} from "@radix-ui/react-icons";
-import type { Column } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
+} from"@radix-ui/react-icons";
+import type { Column } from"@tanstack/react-table";
+import { Button } from"@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/utils/utils";
+} from"@/components/ui/dropdown-menu";
+import { cn } from"@/utils/utils";
 
 type DataTableColumnHeaderProps<TData, TValue> =
 	React.HTMLAttributes<HTMLDivElement> & {
@@ -40,9 +40,9 @@ export function DataTableColumnHeader<TData, TValue>({
 						className="data-[state=open]:bg-accent h-8"
 					>
 						<span>{title}</span>
-						{column.getIsSorted() === "desc" ? (
+						{column.getIsSorted() ==="desc" ? (
 							<ArrowDownIcon className="ms-2 size-4" />
-						) : column.getIsSorted() === "asc" ? (
+						) : column.getIsSorted() ==="asc" ? (
 							<ArrowUpIcon className="ms-2 size-4" />
 						) : (
 							<CaretSortIcon className="ms-2 size-4" />

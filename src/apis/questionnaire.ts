@@ -1,7 +1,6 @@
-import path from "node:path";
-import { Schema } from "effect";
-import { createServerFn } from "@tanstack/react-start";
-import { Effect } from "effect";
+import path from"node:path";
+import { createServerFn } from"@tanstack/react-start";
+import { Effect } from"effect";
 import {
 	AnswerService,
 	FileUploadService,
@@ -9,15 +8,16 @@ import {
 	QuestionnaireService,
 	ResponseService,
 	runEffect,
-} from "@/infrastructure";
-import { SubmissionSchema } from "@/infrastructure/schemas/questionnaire";
-import { verifyCsrfOrigin } from "@/utils/csrf";
+} from"@/infrastructure";
+import { SubmissionSchema } from"@/infrastructure/schemas/questionnaire";
+import { verifyCsrfOrigin } from"@/utils/csrf";
+import { inputValidator } from"../infrastructure/schemas/validator";
 
-export const getActiveQuestionnaire = createServerFn({ method: "GET" }).handler(
+export const getActiveQuestionnaire = createServerFn({ method:"GET" }).handler(
 	async () => {
 		return runEffect(
 			Effect.gen(function* () {
-				const service = yield* QuestionnaireService;
+				const service = yield* QuestionnaireService.asEffect();
 				const result = yield* service.getActive();
 
 				return {
@@ -42,17 +42,17 @@ export const getActiveQuestionnaire = createServerFn({ method: "GET" }).handler(
 	},
 );
 
-export const submitQuestionnaire = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(SubmissionSchema))
+export const submitQuestionnaire = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(SubmissionSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* verifyCsrfOrigin;
 
-				const fileUploadService = yield* FileUploadService;
-				const answerService = yield* AnswerService;
-				const profileService = yield* ProfileService;
-				const responseService = yield* ResponseService;
+				const fileUploadService = yield* FileUploadService.asEffect();
+				const answerService = yield* AnswerService.asEffect();
+				const profileService = yield* ProfileService.asEffect();
+				const responseService = yield* ResponseService.asEffect();
 
 				const folderName = data.folderName;
 				const uploadRoot = yield* fileUploadService.getUploadRoot();
@@ -69,7 +69,7 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
 				} = { main: null, secondary: null };
 
 				if (data.videoBase64Main) {
-					const mainFileName = "recording_main.webm";
+					const mainFileName ="recording_main.webm";
 					const mainResult = yield* fileUploadService.uploadChunk({
 						folderName,
 						fileName: mainFileName,
@@ -79,13 +79,13 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
 				}
 
 				// Save secondary video if provided
-				if (data.videoBase64Secondary === "SAVED_ON_SERVER") {
+				if (data.videoBase64Secondary ==="SAVED_ON_SERVER") {
 					storedPathObject.secondary = `/video_uploads/${folderName}/recording_realsense.avi`;
 				} else if (
 					data.videoBase64Secondary &&
 					data.videoBase64Secondary.trim().length > 20
 				) {
-					const secondaryFileName = "recording_realsense.webm";
+					const secondaryFileName ="recording_realsense.webm";
 					const secondaryResult = yield* fileUploadService.uploadChunk({
 						folderName,
 						fileName: secondaryFileName,

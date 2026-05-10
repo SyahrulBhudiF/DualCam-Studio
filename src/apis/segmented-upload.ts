@@ -1,26 +1,26 @@
-import { Schema } from "effect";
-import { createServerFn } from "@tanstack/react-start";
-import { Effect } from "effect";
+import { createServerFn } from"@tanstack/react-start";
+import { Effect } from"effect";
 import {
 	AnswerService,
 	FileUploadService,
 	ProfileService,
 	ResponseService,
 	runEffect,
-} from "@/infrastructure";
+} from"@/infrastructure";
 import {
 	FinalSubmitSchema,
 	UploadChunkSchema,
-} from "@/infrastructure/schemas/questionnaire";
-import { verifyCsrfOrigin } from "@/utils/csrf";
+} from"@/infrastructure/schemas/questionnaire";
+import { verifyCsrfOrigin } from"@/utils/csrf";
+import { inputValidator } from"../infrastructure/schemas/validator";
 
-export const uploadVideoChunk = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(UploadChunkSchema))
+export const uploadVideoChunk = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(UploadChunkSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* verifyCsrfOrigin;
-				const service = yield* FileUploadService;
+				const service = yield* FileUploadService.asEffect();
 
 				return yield* service.uploadChunk({
 					folderName: data.folderName,
@@ -31,16 +31,16 @@ export const uploadVideoChunk = createServerFn({ method: "POST" })
 		);
 	});
 
-export const submitSegmentedResponse = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(FinalSubmitSchema))
+export const submitSegmentedResponse = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(FinalSubmitSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* verifyCsrfOrigin;
 
-				const answerService = yield* AnswerService;
-				const profileService = yield* ProfileService;
-				const responseService = yield* ResponseService;
+				const answerService = yield* AnswerService.asEffect();
+				const profileService = yield* ProfileService.asEffect();
+				const responseService = yield* ResponseService.asEffect();
 
 				// Upsert profile with all fields
 				const profile = yield* profileService.upsertByEmail(data.userEmail, {

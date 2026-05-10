@@ -1,17 +1,12 @@
-import * as path from "node:path";
-import { FileSystem } from "@effect/platform";
-import { NodeFileSystem } from "@effect/platform-node";
-import { Effect, Layer } from "effect";
-import { FileError } from "../errors/file";
+import * as path from"node:path";
+import { Context, Effect, FileSystem, Layer } from"effect";
+import { FileError } from"../errors/file";
 
-export class FileUploadService extends Effect.Service<FileUploadService>()(
-	"FileUploadService",
+export class FileUploadService extends Context.Service<FileUploadService>()("FileUploadService",
 	{
-		accessors: true,
-		dependencies: [],
-		effect: Effect.gen(function* () {
+		make: Effect.gen(function* () {
 			const fs = yield* FileSystem.FileSystem;
-			const uploadRoot = path.join(process.cwd(), "video_uploads");
+			const uploadRoot = path.join(process.cwd(),"video_uploads");
 
 			const ensureDirectory = Effect.fn("FileUploadService.ensureDirectory")(
 				function* (dirPath: string) {
@@ -53,38 +48,36 @@ export class FileUploadService extends Effect.Service<FileUploadService>()(
 				);
 			});
 
-			const uploadChunk = Effect.fn("FileUploadService.uploadChunk")(function* (
-				data: {
+			const uploadChunk = Effect.fn("FileUploadService.uploadChunk")(
+				function* (data: {
 					folderName: string;
 					fileName: string;
 					fileBase64: string;
+				}) {
+					const userFolder = path.join(uploadRoot, data.folderName);
+					yield* ensureDirectory(uploadRoot);
+					yield* ensureDirectory(userFolder);
+
+					const filePath = path.join(userFolder, data.fileName);
+					const fileDir = path.dirname(filePath);
+					yield* ensureDirectory(fileDir);
+
+					const base64Data = data.fileBase64.includes(",")
+						? data.fileBase64.split(",")[1]
+						: data.fileBase64;
+					const buffer = Buffer.from(base64Data,"base64");
+
+					yield* saveFile(filePath, buffer);
+
+					return {
+						success: true,
+						path: `/video_uploads/${data.folderName}/${data.fileName}`,
+					};
 				},
-			) {
-				const userFolder = path.join(uploadRoot, data.folderName);
-				yield* ensureDirectory(uploadRoot);
-				yield* ensureDirectory(userFolder);
+			);
 
-				const filePath = path.join(userFolder, data.fileName);
-				const fileDir = path.dirname(filePath);
-				yield* ensureDirectory(fileDir);
-
-				const base64Data = data.fileBase64.includes(",")
-					? data.fileBase64.split(",")[1]
-					: data.fileBase64;
-				const buffer = Buffer.from(base64Data, "base64");
-
-				yield* saveFile(filePath, buffer);
-
-				return {
-					success: true,
-					path: `/video_uploads/${data.folderName}/${data.fileName}`,
-				};
-			});
-
-			const getUploadRoot = Effect.fn("FileUploadService.getUploadRoot")(
-				function* () {
-					return uploadRoot;
-				},
+			const getUploadRoot = Effect.fn("FileUploadService.getUploadRoot")(() =>
+				Effect.succeed(uploadRoot),
 			);
 
 			return {
@@ -95,4 +88,6 @@ export class FileUploadService extends Effect.Service<FileUploadService>()(
 			};
 		}),
 	},
-) {}
+) {
+	static readonly layer = Layer.effect(this, this.make);
+}
