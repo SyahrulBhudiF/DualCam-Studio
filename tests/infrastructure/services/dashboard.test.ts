@@ -1,17 +1,13 @@
-import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { Effect, Layer } from "effect";
-import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
-import { describe, expect, vi, beforeEach } from "vitest";
-import {
-	DashboardService,
-	
-} from "@/infrastructure/services/dashboard";
+import { Effect, Layer } from "effect";
+import { beforeEach, describe, expect, vi } from "vitest";
+import { DB } from "@/infrastructure/layers/database";
+import { DashboardService } from "@/infrastructure/services/dashboard";
 
 // Creates an Effect-compatible mock result for yield*
-const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
-	const obj = Object.create(CommitPrototype);
-	obj.commit = () => Effect.succeed(data);
+const toEffect = <T>(data: T, methods?: Record<string, unknown>) => {
+	const obj = Effect.succeed(data) as Effect.Effect<T> &
+		Record<string, unknown>;
 	if (methods) Object.assign(obj, methods);
 	return obj;
 };
@@ -150,8 +146,8 @@ const createMockDb = () => {
 // Create a test layer with mocked database
 const createTestLayer = () => {
 	const { db } = createMockDb();
-	const MockPgDrizzle = Layer.succeed(PgDrizzle, db as never);
-	return DashboardService.Default.pipe(Layer.provide(MockPgDrizzle));
+	const MockPgDrizzle = Layer.succeed(DB, db as never);
+	return DashboardService.layer.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("DashboardService", () => {
@@ -162,7 +158,7 @@ describe("DashboardService", () => {
 	describe("getSummary", () => {
 		it.effect("should return dashboard summary", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				const result = yield* service.getSummary();
 
 				expect(result).toBeDefined();
@@ -176,7 +172,7 @@ describe("DashboardService", () => {
 
 		it.effect("should calculate average score", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				const result = yield* service.getSummary();
 
 				expect(typeof result.averageScore).toBe("number");
@@ -188,7 +184,7 @@ describe("DashboardService", () => {
 	describe("getBreakdown", () => {
 		it.effect("should return questionnaire breakdown", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				const result = yield* service.getBreakdown();
 
 				expect(result).toBeDefined();
@@ -199,7 +195,7 @@ describe("DashboardService", () => {
 
 		it.effect("should return questionnaire stats with correct structure", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				const result = yield* service.getBreakdown();
 
 				expect(result.questionnaires.length).toBeGreaterThan(0);
@@ -214,7 +210,7 @@ describe("DashboardService", () => {
 
 		it.effect("should calculate class stats correctly", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				const result = yield* service.getBreakdown();
 
 				expect(result.classes.length).toBeGreaterThanOrEqual(0);
@@ -225,7 +221,7 @@ describe("DashboardService", () => {
 	describe("getAnalyticsDetails", () => {
 		it.effect("should return analytics details", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				const result = yield* service.getAnalyticsDetails();
 
 				expect(result).toBeDefined();
@@ -238,7 +234,7 @@ describe("DashboardService", () => {
 
 		it.effect("should calculate video stats", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				const result = yield* service.getAnalyticsDetails();
 
 				expect(typeof result.video.withVideo).toBe("number");
@@ -249,7 +245,7 @@ describe("DashboardService", () => {
 
 		it.effect("should generate timeline entries", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				const result = yield* service.getAnalyticsDetails();
 
 				expect(Array.isArray(result.timeline)).toBe(true);
@@ -263,7 +259,7 @@ describe("DashboardService", () => {
 
 		it.effect("should calculate question stats", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				const result = yield* service.getAnalyticsDetails();
 
 				expect(Array.isArray(result.questions)).toBe(true);

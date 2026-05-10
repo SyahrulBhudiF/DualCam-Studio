@@ -1,17 +1,13 @@
-import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { Effect, Exit, Layer } from "effect";
-import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
-import { describe, expect, vi, beforeEach } from "vitest";
-import {
-	ResponseService,
-	
-} from "@/infrastructure/services/response";
+import { Effect, Exit, Layer } from "effect";
+import { beforeEach, describe, expect, vi } from "vitest";
+import { DB } from "@/infrastructure/layers/database";
+import { ResponseService } from "@/infrastructure/services/response";
 
 // Creates an Effect-compatible mock result for yield*
-const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
-	const obj = Object.create(CommitPrototype);
-	obj.commit = () => Effect.succeed(data);
+const toEffect = <T>(data: T, methods?: Record<string, unknown>) => {
+	const obj = Effect.succeed(data) as Effect.Effect<T> &
+		Record<string, unknown>;
 	if (methods) Object.assign(obj, methods);
 	return obj;
 };
@@ -151,8 +147,8 @@ const createTestLayer = (
 		where: vi.fn().mockImplementation(() => toEffect(undefined)),
 	}));
 
-	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return ResponseService.Default.pipe(Layer.provide(MockPgDrizzle));
+	const MockPgDrizzle = Layer.succeed(DB, mockDb as never);
+	return ResponseService.layer.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("ResponseService", () => {
@@ -170,7 +166,7 @@ describe("ResponseService", () => {
 				const testLayer = createTestLayer(mockDb);
 
 				return Effect.gen(function* () {
-					const service = yield* ResponseService;
+					const service = yield* ResponseService.asEffect();
 					const result = yield* service.getAll();
 
 					expect(result).toBeDefined();
@@ -188,7 +184,7 @@ describe("ResponseService", () => {
 			const testLayer = createTestLayer(mockDb, { emptyResponse: true });
 
 			return Effect.gen(function* () {
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				const exit = yield* Effect.exit(service.getById("non-existent"));
 
 				expect(Exit.isFailure(exit)).toBe(true);
@@ -201,7 +197,7 @@ describe("ResponseService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				const result = yield* service.getByQuestionnaireId("qn1");
 
 				expect(result).toBeDefined();
@@ -215,7 +211,7 @@ describe("ResponseService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				const result = yield* service.getFiltered({ questionnaireId: "qn1" });
 
 				expect(result).toBeDefined();
@@ -227,7 +223,7 @@ describe("ResponseService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				const result = yield* service.getFiltered({
 					startDate: "2024-01-01",
 					endDate: "2024-12-31",
@@ -255,7 +251,7 @@ describe("ResponseService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				const result = yield* service.create(
 					{
 						userId: "u1",
@@ -284,7 +280,7 @@ describe("ResponseService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				const result = yield* service.create(
 					{
 						userId: "u1",
@@ -307,7 +303,7 @@ describe("ResponseService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				yield* service.delete(["r1", "r2"]);
 
 				expect(mockDb.delete).toHaveBeenCalled();

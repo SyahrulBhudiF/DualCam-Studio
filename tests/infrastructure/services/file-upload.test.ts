@@ -1,11 +1,8 @@
 import { NodeFileSystem } from "@effect/platform-node";
-import { Effect, Layer } from "effect";
 import { it } from "@effect/vitest";
-import { describe, expect, vi, beforeEach } from "vitest";
-import {
-	FileUploadService,
-	
-} from "@/infrastructure/services/file-upload";
+import { Effect, Layer } from "effect";
+import { beforeEach, describe, expect, vi } from "vitest";
+import { FileUploadService } from "@/infrastructure/services/file-upload";
 
 describe("FileUploadService", () => {
 	beforeEach(() => {
@@ -15,12 +12,16 @@ describe("FileUploadService", () => {
 	describe("getUploadRoot", () => {
 		it.effect("should return the upload root path", () =>
 			Effect.gen(function* () {
-				const service = yield* FileUploadService;
+				const service = yield* FileUploadService.asEffect();
 				const result = yield* service.getUploadRoot();
 
 				expect(result).toBeDefined();
 				expect(result).toContain("video_uploads");
-			}).pipe(Effect.provide(FileUploadService.Default.pipe(Layer.provide(NodeFileSystem.layer)))),
+			}).pipe(
+				Effect.provide(
+					FileUploadService.layer.pipe(Layer.provide(NodeFileSystem.layer)),
+				),
+			),
 		);
 	});
 
@@ -71,7 +72,7 @@ describe("FileUploadService", () => {
 	describe("service structure", () => {
 		it.effect("should have required methods", () =>
 			Effect.gen(function* () {
-				const service = yield* FileUploadService;
+				const service = yield* FileUploadService.asEffect();
 				return {
 					hasEnsureDirectory: typeof service.ensureDirectory === "function",
 					hasSaveFile: typeof service.saveFile === "function",
@@ -85,7 +86,9 @@ describe("FileUploadService", () => {
 					expect(result.hasUploadChunk).toBe(true);
 					expect(result.hasGetUploadRoot).toBe(true);
 				}),
-				Effect.provide(FileUploadService.Default.pipe(Layer.provide(NodeFileSystem.layer))),
+				Effect.provide(
+					FileUploadService.layer.pipe(Layer.provide(NodeFileSystem.layer)),
+				),
 			),
 		);
 	});

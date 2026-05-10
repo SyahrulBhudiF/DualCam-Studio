@@ -1,6 +1,6 @@
-import { Effect } from "effect";
 import { it } from "@effect/vitest";
-import { describe, expect, vi, beforeEach } from "vitest";
+import { Effect } from "effect";
+import { beforeEach, describe, expect, vi } from "vitest";
 
 // Mock the tanstack server functions
 vi.mock("@tanstack/react-start/server", () => ({

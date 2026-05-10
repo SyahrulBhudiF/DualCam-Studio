@@ -1,8 +1,56 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DashboardAnalytics } from "./dashboard-analytics";
-import { DashboardOverview } from "./dashboard-overview";
-import { DashboardResponses } from "./dashboard-responses";
-import type { AnalyticsData, BreakdownData, SummaryData } from "./types";
+import { Suspense, lazy } from"react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from"@/components/ui/tabs";
+
+import type { AnalyticsData, BreakdownData, SummaryData } from"./types";
+
+const DashboardOverview = lazy(() =>
+	import("./dashboard-overview").then((m) => ({ default: m.DashboardOverview })),
+);
+const DashboardAnalytics = lazy(() =>
+	import("./dashboard-analytics").then((m) => ({
+		default: m.DashboardAnalytics,
+	})),
+);
+const DashboardResponses = lazy(() =>
+	import("./dashboard-responses").then((m) => ({ default: m.DashboardResponses })),
+);
+
+function DashboardOverviewFallback() {
+	return (
+		<>
+			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+				{["total","active","responses","score"].map((key) => (
+					<div key={key} className="h-[126px] border bg-card" />
+				))}
+			</div>
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
+				<div className="col-span-1 h-[260px] border bg-card lg:col-span-4" />
+				<div className="col-span-1 h-[260px] border bg-card lg:col-span-3" />
+			</div>
+		</>
+	);
+}
+
+function DashboardAnalyticsFallback() {
+	return (
+		<>
+			<div className="grid gap-4 lg:grid-cols-7">
+				<div className="col-span-1 flex h-[432px] items-center justify-center border bg-card text-sm text-muted-foreground lg:col-span-4">
+					Loading analytics…
+				</div>
+				<div className="col-span-1 h-[224px] border bg-card lg:col-span-3" />
+			</div>
+			<div className="grid gap-4 lg:grid-cols-7">
+				<div className="col-span-1 h-[260px] border bg-card lg:col-span-4" />
+				<div className="col-span-1 h-[260px] border bg-card lg:col-span-3" />
+			</div>
+		</>
+	);
+}
+
+function DashboardResponsesFallback() {
+	return <div className="h-[420px] border bg-card" />;
+}
 
 type DashboardTabsProps = {
 	summary: SummaryData;
@@ -27,17 +75,23 @@ export function DashboardTabs({
 				</TabsList>
 			</div>
 			<TabsContent value="overview" className="space-y-3">
-				<DashboardOverview
-					summary={summary}
-					breakdown={breakdown}
-					isLoading={isLoading}
-				/>
+				<Suspense fallback={<DashboardOverviewFallback />}>
+					<DashboardOverview
+						summary={summary}
+						breakdown={breakdown}
+						isLoading={isLoading}
+					/>
+				</Suspense>
 			</TabsContent>
 			<TabsContent value="analytics" className="space-y-3">
-				<DashboardAnalytics analytics={analytics} isLoading={isLoading} />
+				<Suspense fallback={<DashboardAnalyticsFallback />}>
+					<DashboardAnalytics analytics={analytics} isLoading={isLoading} />
+				</Suspense>
 			</TabsContent>
 			<TabsContent value="responses" className="space-y-3">
-				<DashboardResponses />
+				<Suspense fallback={<DashboardResponsesFallback />}>
+					<DashboardResponses />
+				</Suspense>
 			</TabsContent>
 		</Tabs>
 	);

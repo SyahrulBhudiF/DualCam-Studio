@@ -1,6 +1,6 @@
-import { useForm } from "@tanstack/react-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { useForm } from"@tanstack/react-form";
+import { useMutation, useQueryClient } from"@tanstack/react-query";
+import { Link } from"@tanstack/react-router";
 import {
 	flexRender,
 	getCoreRowModel,
@@ -8,39 +8,38 @@ import {
 	getPaginationRowModel,
 	getSortedRowModel,
 	useReactTable,
-} from "@tanstack/react-table";
-import { ArrowLeft, Plus, Save, Trash } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+} from"@tanstack/react-table";
+import { ArrowLeft, Plus, Trash } from"lucide-react";
+import { toast } from"sonner";
 import {
 	createAnswer,
 	deleteAnswers,
 	updateAnswer,
 	updateQuestion,
-} from "@/apis/admin/questionnaires";
+} from"@/apis/admin/questionnaires";
 import {
 	DataTableBulkActions,
 	DataTablePagination,
 	DataTableToolbar,
-} from "@/components/data-table";
-import { Main } from "@/components/layout/main";
-import { Button } from "@/components/ui/button";
+} from"@/components/data-table";
+import { Main } from"@/components/layout/main";
+import { Button } from"@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from"@/components/ui/dialog";
+import { Input } from"@/components/ui/input";
+import { Label } from"@/components/ui/label";
 import {
 	createAnswerSchema,
 	createQuestionSchema,
-} from "@/libs/schemas/questionnaire";
-import { getAnswerColumns } from "./components/columns";
-import { useQuestionDetailState } from "./hooks/use-question-detail-state";
-import type { Answer, Question } from "./questionnaires.types";
+} from"@/libs/schemas/questionnaire";
+import { getAnswerColumns } from"./components/columns";
+import { useQuestionDetailState } from"./hooks/use-question-detail-state";
+import type { Answer, Question } from"./questionnaires.types";
 
 const questionFormSchema = createQuestionSchema.omit({
 	questionnaireId: true,
@@ -50,7 +49,6 @@ const answerFormSchema = createAnswerSchema.omit({
 	questionId: true,
 });
 
-
 function UpdateQuestionForm({ question }: { question: Question }) {
 	const queryClient = useQueryClient();
 
@@ -58,7 +56,7 @@ function UpdateQuestionForm({ question }: { question: Question }) {
 		mutationFn: updateQuestion,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["admin", "question", question.id],
+				queryKey: ["admin","question", question.id],
 			});
 			toast.success("Question updated successfully");
 		},
@@ -106,7 +104,7 @@ function UpdateQuestionForm({ question }: { question: Question }) {
 				e.stopPropagation();
 				form.handleSubmit();
 			}}
-			className="space-y-4 rounded-lg border p-4 max-w-2xl"
+			className="space-y-4 border p-4 max-w-2xl"
 		>
 			<form.Field name="orderNumber">
 				{(field) => (
@@ -121,8 +119,8 @@ function UpdateQuestionForm({ question }: { question: Question }) {
 							onChange={(e) => field.handleChange(Number(e.target.value))}
 						/>
 						{field.state.meta.errors ? (
-							<p className="text-sm text-red-500">
-								{field.state.meta.errors.join(", ")}
+							<p className="text-sm text-destructive">
+								{field.state.meta.errors.join(",")}
 							</p>
 						) : null}
 					</div>
@@ -140,8 +138,8 @@ function UpdateQuestionForm({ question }: { question: Question }) {
 							onChange={(e) => field.handleChange(e.target.value)}
 						/>
 						{field.state.meta.errors ? (
-							<p className="text-sm text-red-500">
-								{field.state.meta.errors.join(", ")}
+							<p className="text-sm text-destructive">
+								{field.state.meta.errors.join(",")}
 							</p>
 						) : null}
 					</div>
@@ -153,7 +151,7 @@ function UpdateQuestionForm({ question }: { question: Question }) {
 				disabled={updateMutation.isPending}
 				className="cursor-pointer"
 			>
-				<Save className="mr-2 size-4" /> Save Question
+				Save Question
 			</Button>
 		</div>
 	);
@@ -172,7 +170,7 @@ function CreateAnswerForm({
 		mutationFn: createAnswer,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["admin", "answers", questionId],
+				queryKey: ["admin","answers", questionId],
 			});
 			onSuccess();
 			form.reset();
@@ -185,7 +183,7 @@ function CreateAnswerForm({
 
 	const form = useForm({
 		defaultValues: {
-			answerText: "",
+			answerText:"",
 			score: 0,
 		},
 		validators: {
@@ -235,8 +233,8 @@ function CreateAnswerForm({
 							onChange={(e) => field.handleChange(e.target.value)}
 						/>
 						{field.state.meta.errors ? (
-							<p className="text-sm text-red-500">
-								{field.state.meta.errors.join(", ")}
+							<p className="text-sm text-destructive">
+								{field.state.meta.errors.join(",")}
 							</p>
 						) : null}
 					</div>
@@ -255,8 +253,8 @@ function CreateAnswerForm({
 							onChange={(e) => field.handleChange(Number(e.target.value))}
 						/>
 						{field.state.meta.errors ? (
-							<p className="text-sm text-red-500">
-								{field.state.meta.errors.join(", ")}
+							<p className="text-sm text-destructive">
+								{field.state.meta.errors.join(",")}
 							</p>
 						) : null}
 					</div>
@@ -289,7 +287,7 @@ function EditAnswerForm({
 		mutationFn: updateAnswer,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["admin", "answers", questionId],
+				queryKey: ["admin","answers", questionId],
 			});
 			onSuccess();
 			form.reset();
@@ -352,8 +350,8 @@ function EditAnswerForm({
 							onChange={(e) => field.handleChange(e.target.value)}
 						/>
 						{field.state.meta.errors ? (
-							<p className="text-sm text-red-500">
-								{field.state.meta.errors.join(", ")}
+							<p className="text-sm text-destructive">
+								{field.state.meta.errors.join(",")}
 							</p>
 						) : null}
 					</div>
@@ -372,8 +370,8 @@ function EditAnswerForm({
 							onChange={(e) => field.handleChange(Number(e.target.value))}
 						/>
 						{field.state.meta.errors ? (
-							<p className="text-sm text-red-500">
-								{field.state.meta.errors.join(", ")}
+							<p className="text-sm text-destructive">
+								{field.state.meta.errors.join(",")}
 							</p>
 						) : null}
 					</div>
@@ -416,7 +414,7 @@ export function QuestionDetail({
 		mutationFn: deleteAnswers,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["admin", "answers", question.id],
+				queryKey: ["admin","answers", question.id],
 			});
 			setRowSelection({});
 			toast.success("Answers deleted successfully");
@@ -450,7 +448,9 @@ export function QuestionDetail({
 						<ArrowLeft className="size-4" />
 					</Link>
 				</Button>
-				<h2 className="text-2xl font-semibold tracking-tight">Question Details</h2>
+				<h2 className="text-2xl font-semibold tracking-tight">
+					Question Details
+				</h2>
 			</div>
 
 			<UpdateQuestionForm question={question} />
@@ -495,7 +495,7 @@ export function QuestionDetail({
 				</div>
 
 				<DataTableToolbar table={table} searchKey="answerText" />
-				<div className="rounded-md border overflow-auto">
+				<div className="border overflow-auto">
 					<table className="w-full caption-bottom text-sm">
 						<thead className="[&_tr]:border-b">
 							{table.getHeaderGroups().map((headerGroup) => (

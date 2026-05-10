@@ -1,9 +1,9 @@
-import fs from "node:fs";
-import path from "node:path";
-import { Readable } from "node:stream";
-import { createFileRoute } from "@tanstack/react-router";
+import fs from"node:fs";
+import path from"node:path";
+import { Readable } from"node:stream";
+import { createFileRoute } from"@tanstack/react-router";
 
-const UPLOAD_ROOT = path.resolve(process.cwd(), "video_uploads");
+const UPLOAD_ROOT = path.resolve(process.cwd(),"video_uploads");
 
 export const Route = createFileRoute("/api/video/$")({
 	server: {
@@ -20,7 +20,10 @@ export const Route = createFileRoute("/api/video/$")({
 				const filePath = path.resolve(UPLOAD_ROOT, normalizedPath);
 
 				// Guard: resolved path must stay within upload root
-				if (!filePath.startsWith(UPLOAD_ROOT + path.sep) && filePath !== UPLOAD_ROOT) {
+				if (
+					!filePath.startsWith(UPLOAD_ROOT + path.sep) &&
+					filePath !== UPLOAD_ROOT
+				) {
 					return new Response("Forbidden", { status: 403 });
 				}
 
@@ -35,14 +38,9 @@ export const Route = createFileRoute("/api/video/$")({
 
 				// Determine content type based on extension
 				const ext = path.extname(filePath).toLowerCase();
-				const contentTypes: Record<string, string> = {
-					".webm": "video/webm",
-					".mp4": "video/mp4",
-					".avi": "video/x-msvideo",
-					".mov": "video/quicktime",
-					".mkv": "video/x-matroska",
+				const contentTypes: Record<string, string> = {".webm":"video/webm",".mp4":"video/mp4",".avi":"video/x-msvideo",".mov":"video/quicktime",".mkv":"video/x-matroska",
 				};
-				const contentType = contentTypes[ext] ?? "video/webm";
+				const contentType = contentTypes[ext] ??"video/webm";
 
 				// Parse Range header for streaming
 				const rangeHeader = request.headers.get("range");
@@ -59,8 +57,7 @@ export const Route = createFileRoute("/api/video/$")({
 					if (start >= fileSize || end >= fileSize || start > end) {
 						return new Response("Range Not Satisfiable", {
 							status: 416,
-							headers: {
-								"Content-Range": `bytes */${fileSize}`,
+							headers: {"Content-Range": `bytes */${fileSize}`,
 							},
 						});
 					}
@@ -71,12 +68,7 @@ export const Route = createFileRoute("/api/video/$")({
 
 					return new Response(readable, {
 						status: 206,
-						headers: {
-							"Content-Type": contentType,
-							"Content-Length": chunkSize.toString(),
-							"Content-Range": `bytes ${start}-${end}/${fileSize}`,
-							"Accept-Ranges": "bytes",
-							"Cache-Control": "public, max-age=3600",
+						headers: {"Content-Type": contentType,"Content-Length": chunkSize.toString(),"Content-Range": `bytes ${start}-${end}/${fileSize}`,"Accept-Ranges":"bytes","Cache-Control":"public, max-age=3600",
 						},
 					});
 				}
@@ -87,11 +79,7 @@ export const Route = createFileRoute("/api/video/$")({
 
 				return new Response(readable, {
 					status: 200,
-					headers: {
-						"Content-Type": contentType,
-						"Content-Length": fileSize.toString(),
-						"Accept-Ranges": "bytes",
-						"Cache-Control": "public, max-age=3600",
+					headers: {"Content-Type": contentType,"Content-Length": fileSize.toString(),"Accept-Ranges":"bytes","Cache-Control":"public, max-age=3600",
 					},
 				});
 			},

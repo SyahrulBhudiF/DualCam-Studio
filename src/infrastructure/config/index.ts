@@ -1,4 +1,6 @@
-import { Config } from "effect";
+import { Config, ConfigProvider } from"effect";
+
+const envProvider = ConfigProvider.fromEnv();
 
 export const AuthConfig = Config.all({
 	saltRounds: Config.number("BCRYPT_SALT_ROUNDS").pipe(Config.withDefault(10)),
@@ -8,16 +10,20 @@ export const AuthConfig = Config.all({
 	),
 });
 
-export const SessionConfig = Config.all({
-	cookieName: Config.string("SESSION_COOKIE_NAME"),
-	durationDays: Config.number("SESSION_DURATION_DAYS"),
+const SessionConfigDescriptor = Config.all({
+	cookieName: Config.string("SESSION_COOKIE_NAME").pipe(
+		Config.withDefault("session_token"),
+	),
+	durationDays: Config.number("SESSION_DURATION_DAYS").pipe(Config.withDefault(7)),
 	secure: Config.string("NODE_ENV").pipe(
-		Config.map((env) => env === "production"),
+		Config.map((env) => env ==="production"),
 		Config.withDefault(false),
 	),
 });
 
-const DatabaseConfig = Config.all({
+export const SessionConfig = SessionConfigDescriptor.parse(envProvider);
+
+const _DatabaseConfig = Config.all({
 	url: Config.string("DATABASE_URL"),
 });
 

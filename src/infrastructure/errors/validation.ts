@@ -1,7 +1,6 @@
-import { Schema } from "effect";
+import { Schema } from"effect";
 
-export class ValidationError extends Schema.TaggedError<ValidationError>()(
-	"ValidationError",
+export class ValidationError extends Schema.TaggedErrorClass<ValidationError>()("ValidationError",
 	{
 		message: Schema.String,
 		field: Schema.optional(Schema.String),
@@ -16,8 +15,7 @@ export class ValidationError extends Schema.TaggedError<ValidationError>()(
 	},
 ) {}
 
-export class ParseError extends Schema.TaggedError<ParseError>()(
-	"ParseError",
+export class ParseError extends Schema.TaggedErrorClass<ParseError>()("ParseError",
 	{
 		message: Schema.String,
 		cause: Schema.optional(Schema.Unknown),

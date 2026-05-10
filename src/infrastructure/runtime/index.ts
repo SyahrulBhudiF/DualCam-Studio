@@ -1,50 +1,16 @@
-import { type Effect, Layer, ManagedRuntime } from "effect";
-import { DrizzleLive } from "../layers/database";
-import {
-	AllServicesLive,
-	type AnswerService,
-	type AuthService,
-	type DashboardService,
-	type FileUploadService,
-	type ProfileService,
-	type QuestionnaireService,
-	type QuestionService,
-	type RateLimitService,
-	type ResponseService,
-} from "../services";
+import { type Effect, Layer, ManagedRuntime } from"effect";
+import { DatabaseLive } from"../layers/database";
+import { AllServicesLive } from"../services";
 
-const AppLayer = AllServicesLive.pipe(Layer.provide(DrizzleLive));
+const AppLayer = AllServicesLive.pipe(Layer.provide(DatabaseLive));
 
-const AppRuntime = ManagedRuntime.make(AppLayer);
+const AppRuntime = ManagedRuntime.make(
+	AppLayer as Layer.Layer<unknown, never, never>,
+);
 
-export const runEffect = <A, E>(
-	effect: Effect.Effect<
-		A,
-		E,
-		| QuestionnaireService
-		| QuestionService
-		| AnswerService
-		| ProfileService
-		| ResponseService
-		| DashboardService
-		| FileUploadService
-		| AuthService
-		| RateLimitService
-	>,
-): Promise<A> => AppRuntime.runPromise(effect);
+export const runEffect = <A, E, R>(
+	effect: Effect.Effect<A, E, R>,
+): Promise<A> => AppRuntime.runPromise(effect as Effect.Effect<A, E, never>);
 
-export const runEffectExit = <A, E>(
-	effect: Effect.Effect<
-		A,
-		E,
-		| QuestionnaireService
-		| QuestionService
-		| AnswerService
-		| ProfileService
-		| ResponseService
-		| DashboardService
-		| FileUploadService
-		| AuthService
-		| RateLimitService
-	>,
-) => AppRuntime.runPromiseExit(effect);
+export const runEffectExit = <A, E, R>(effect: Effect.Effect<A, E, R>) =>
+	AppRuntime.runPromiseExit(effect as Effect.Effect<A, E, never>);

@@ -1,20 +1,20 @@
-import { CheckCircle, Video } from "lucide-react";
-import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { CheckCircle, Video } from"lucide-react";
+import { useState } from"react";
+import { Badge } from"@/components/ui/badge";
+import { Button } from"@/components/ui/button";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "@/components/ui/card";
+} from"@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-} from "@/components/ui/dialog";
+} from"@/components/ui/dialog";
 import {
 	Table,
 	TableBody,
@@ -22,10 +22,10 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { ResponseDetailItem, VideoData } from "../responses.types";
-import { SingleVideoPlayer } from "./single-video-player";
+} from"@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from"@/components/ui/tabs";
+import type { ResponseDetailItem, VideoData } from"../responses.types";
+import { SingleVideoPlayer } from"./single-video-player";
 
 type ResponseAnswersProps = {
 	details: ResponseDetailItem[];
@@ -51,7 +51,7 @@ export function ResponseAnswers({
 		0,
 	);
 
-	const isSegmented = videoData?.mode === "segmented";
+	const isSegmented = videoData?.mode ==="segmented";
 
 	const getVideoForQuestion = (questionId: string) => {
 		if (!isSegmented || !videoData?.segmentedVideos) return null;
@@ -74,7 +74,7 @@ export function ResponseAnswers({
 							<CardTitle>Response Answers</CardTitle>
 							<CardDescription>
 								All answers submitted for this questionnaire
-								{isSegmented && " (with video per question)"}
+								{isSegmented &&" (with video per question)"}
 							</CardDescription>
 						</div>
 						<div className="text-right">
@@ -119,18 +119,18 @@ export function ResponseAnswers({
 												</TableCell>
 												<TableCell>
 													<div className="max-w-md">
-														{detail.questionText ?? "-"}
+														{detail.questionText ??"-"}
 													</div>
 												</TableCell>
 												<TableCell>
 													<div className="flex items-center gap-2">
-														<CheckCircle className="size-4 text-green-500 shrink-0" />
-														<span>{detail.answerText ?? "-"}</span>
+														<CheckCircle className="size-4 text-primary shrink-0" />
+														<span>{detail.answerText ??"-"}</span>
 													</div>
 												</TableCell>
 												<TableCell className="text-right">
 													<Badge
-														variant={detail.score > 0 ? "default" : "secondary"}
+														variant={detail.score > 0 ?"default" :"secondary"}
 													>
 														{detail.score}
 													</Badge>
@@ -172,16 +172,16 @@ export function ResponseAnswers({
 				<DialogContent className="max-w-4xl">
 					<DialogHeader>
 						<DialogTitle>
-							Question {selectedDetail?.orderNumber ?? ""} Video
+							Question {selectedDetail?.orderNumber ??""} Video
 						</DialogTitle>
 					</DialogHeader>
 					{selectedDetail && (
-						<div className="p-3 bg-muted rounded-lg mb-4">
+						<div className="p-3 bg-muted mb-4">
 							<div className="text-sm font-medium">
 								{selectedDetail.questionText}
 							</div>
 							<div className="text-xs text-muted-foreground mt-1">
-								Answer: {selectedDetail.answerText} (Score:{" "}
+								Answer: {selectedDetail.answerText} (Score:{""}
 								{selectedDetail.score})
 							</div>
 						</div>
@@ -200,7 +200,7 @@ export function ResponseAnswers({
 										title="Main Camera"
 									/>
 								) : (
-									<div className="flex items-center justify-center h-48 bg-muted rounded-lg">
+									<div className="flex items-center justify-center h-48 bg-muted">
 										<span className="text-muted-foreground">
 											Main video not available
 										</span>
@@ -214,7 +214,7 @@ export function ResponseAnswers({
 										title="Secondary Camera"
 									/>
 								) : (
-									<div className="flex items-center justify-center h-48 bg-muted rounded-lg">
+									<div className="flex items-center justify-center h-48 bg-muted">
 										<span className="text-muted-foreground">
 											Secondary video not available
 										</span>
@@ -231,7 +231,7 @@ export function ResponseAnswers({
 												title="Main Side"
 											/>
 										) : (
-											<div className="flex items-center justify-center h-32 bg-muted rounded-lg">
+											<div className="flex items-center justify-center h-32 bg-muted">
 												<span className="text-muted-foreground text-sm">
 													Not available
 												</span>
@@ -248,7 +248,7 @@ export function ResponseAnswers({
 												title="Secondary Side"
 											/>
 										) : (
-											<div className="flex items-center justify-center h-32 bg-muted rounded-lg">
+											<div className="flex items-center justify-center h-32 bg-muted">
 												<span className="text-muted-foreground text-sm">
 													Not available
 												</span>

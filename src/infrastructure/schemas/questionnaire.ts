@@ -1,14 +1,14 @@
-import { Schema } from "effect";
+import { Schema } from"effect";
 
 // Common UUID schema
-export const UUID = Schema.UUID;
+export const UUID = Schema.String.check(Schema.isUUID());
 
 // ============================================
 // Questionnaire Schemas
 // ============================================
 
 export const CreateQuestionnaireSchema = Schema.Struct({
-	title: Schema.String.pipe(Schema.minLength(1)),
+	title: Schema.String.check(Schema.isMinLength(1)),
 	description: Schema.optional(Schema.NullOr(Schema.String)),
 	isActive: Schema.optional(Schema.Boolean),
 });
@@ -26,7 +26,7 @@ export const UpdateQuestionnaireSchema = Schema.Struct({
 
 export const CreateQuestionSchema = Schema.Struct({
 	questionnaireId: UUID,
-	questionText: Schema.String.pipe(Schema.minLength(1)),
+	questionText: Schema.String.check(Schema.isMinLength(1)),
 	orderNumber: Schema.Number,
 });
 
@@ -42,7 +42,7 @@ export const UpdateQuestionSchema = Schema.Struct({
 
 export const CreateAnswerSchema = Schema.Struct({
 	questionId: UUID,
-	answerText: Schema.String.pipe(Schema.minLength(1)),
+	answerText: Schema.String.check(Schema.isMinLength(1)),
 	score: Schema.Number,
 });
 
@@ -57,7 +57,7 @@ export const UpdateAnswerSchema = Schema.Struct({
 // ============================================
 
 export const BulkDeleteSchema = Schema.Struct({
-	ids: Schema.mutable(Schema.Array(UUID)),
+	ids: Schema.Array(UUID),
 });
 
 // ============================================
@@ -69,7 +69,7 @@ export const SubmissionSchema = Schema.Struct({
 	userEmail: Schema.String,
 	userName: Schema.String,
 	userClass: Schema.String,
-	answers: Schema.Record({ key: Schema.String, value: UUID }),
+	answers: Schema.Record(Schema.String, UUID),
 	folderName: Schema.String,
 	videoBase64Main: Schema.optional(Schema.String),
 	videoBase64Secondary: Schema.optional(Schema.String),

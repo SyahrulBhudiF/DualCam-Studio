@@ -1,19 +1,19 @@
-import { Schema } from "effect";
-import { redirect } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { getRequestIP } from "@tanstack/react-start/server";
-import { Effect, Exit } from "effect";
-import { AuthService, RateLimitService, runEffectExit } from "@/infrastructure";
-import { LoginSchema, SignupSchema } from "@/infrastructure/schemas/auth";
+import { redirect } from"@tanstack/react-router";
+import { createServerFn } from"@tanstack/react-start";
+import { getRequestIP } from"@tanstack/react-start/server";
+import { Effect, Exit, Result } from"effect";
+import { AuthService, RateLimitService, runEffectExit } from"@/infrastructure";
+import { LoginSchema, SignupSchema } from"@/infrastructure/schemas/auth";
+import { verifyCsrfOrigin } from"@/utils/csrf";
 import {
 	clearSessionCookie,
 	extractErrorMessage,
 	getSessionToken,
 	setSessionCookie,
-} from "@/utils/session";
-import { verifyCsrfOrigin } from "@/utils/csrf";
+} from"@/utils/session";
+import { inputValidator } from"../infrastructure/schemas/validator";
 
-export const fetchUser = createServerFn({ method: "GET" }).handler(async () => {
+export const fetchUser = createServerFn({ method:"GET" }).handler(async () => {
 	const exit = await runEffectExit(
 		Effect.gen(function* () {
 			const token = yield* getSessionToken;
@@ -22,15 +22,15 @@ export const fetchUser = createServerFn({ method: "GET" }).handler(async () => {
 				return null;
 			}
 
-			const authService = yield* AuthService;
-			const result = yield* Effect.either(authService.validateSession(token));
+			const authService = yield* AuthService.asEffect();
+			const result = yield* Effect.result(authService.validateSession(token));
 
-			if (result._tag === "Left") {
+			if (Result.isFailure(result)) {
 				yield* clearSessionCookie;
 				return null;
 			}
 
-			return { email: result.right.user.email };
+			return { email: result.success.user.email };
 		}),
 	);
 
@@ -41,8 +41,8 @@ export const fetchUser = createServerFn({ method: "GET" }).handler(async () => {
 	return exit.value;
 });
 
-export const loginFn = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(LoginSchema))
+export const loginFn = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(LoginSchema))
 	.handler(async ({ data }) => {
 		const exit = await runEffectExit(
 			Effect.gen(function* () {
@@ -50,14 +50,14 @@ export const loginFn = createServerFn({ method: "POST" })
 				yield* verifyCsrfOrigin;
 
 				// Rate limiting by IP
-				const ip = getRequestIP() ?? "unknown";
-				const rateLimiter = yield* RateLimitService;
+				const ip = getRequestIP() ??"unknown";
+				const rateLimiter = yield* RateLimitService.asEffect();
 				yield* rateLimiter.check(`login:${ip}`);
 
 				// Piggyback rate limit cleanup (fire-and-forget)
-				yield* Effect.fork(rateLimiter.cleanup());
+				yield* Effect.forkDetach(rateLimiter.cleanup());
 
-				const authService = yield* AuthService;
+				const authService = yield* AuthService.asEffect();
 				const result = yield* authService.login(data.email, data.password);
 				yield* setSessionCookie(result.session.token);
 				return result;
@@ -67,7 +67,7 @@ export const loginFn = createServerFn({ method: "POST" })
 		if (Exit.isFailure(exit)) {
 			return {
 				error: true,
-				message: extractErrorMessage(exit.cause, "Login failed"),
+				message: extractErrorMessage(exit.cause,"Login failed"),
 			};
 		}
 
@@ -83,8 +83,8 @@ export const logoutFn = createServerFn().handler(async () => {
 			const token = yield* getSessionToken;
 
 			if (token) {
-				const authService = yield* AuthService;
-				yield* Effect.either(authService.logout(token));
+				const authService = yield* AuthService.asEffect();
+				yield* Effect.result(authService.logout(token));
 			}
 
 			yield* clearSessionCookie;
@@ -92,12 +92,12 @@ export const logoutFn = createServerFn().handler(async () => {
 	);
 
 	throw redirect({
-		href: "/",
+		href:"/",
 	});
 });
 
-export const signupFn = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(SignupSchema))
+export const signupFn = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(SignupSchema))
 	.handler(async ({ data }) => {
 		const exit = await runEffectExit(
 			Effect.gen(function* () {
@@ -105,11 +105,11 @@ export const signupFn = createServerFn({ method: "POST" })
 				yield* verifyCsrfOrigin;
 
 				// Rate limiting by IP
-				const ip = getRequestIP() ?? "unknown";
-				const rateLimiter = yield* RateLimitService;
+				const ip = getRequestIP() ??"unknown";
+				const rateLimiter = yield* RateLimitService.asEffect();
 				yield* rateLimiter.check(`signup:${ip}`);
 
-				const authService = yield* AuthService;
+				const authService = yield* AuthService.asEffect();
 				yield* authService.signup(data.email, data.password);
 				const result = yield* authService.login(data.email, data.password);
 				yield* setSessionCookie(result.session.token);
@@ -121,11 +121,11 @@ export const signupFn = createServerFn({ method: "POST" })
 		if (Exit.isFailure(exit)) {
 			return {
 				error: true,
-				message: extractErrorMessage(exit.cause, "Signup failed"),
+				message: extractErrorMessage(exit.cause,"Signup failed"),
 			};
 		}
 
 		throw redirect({
-			href: data.redirectUrl || "/",
+			href: data.redirectUrl ||"/",
 		});
 	});

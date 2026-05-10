@@ -1,17 +1,13 @@
-import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { Effect, Exit, Layer } from "effect";
-import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
-import { describe, expect, vi, beforeEach } from "vitest";
-import {
-	QuestionService,
-	
-} from "@/infrastructure/services/question";
+import { Effect, Exit, Layer } from "effect";
+import { beforeEach, describe, expect, vi } from "vitest";
+import { DB } from "@/infrastructure/layers/database";
+import { QuestionService } from "@/infrastructure/services/question";
 
 // Creates an Effect-compatible mock result for yield*
-const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
-	const obj = Object.create(CommitPrototype);
-	obj.commit = () => Effect.succeed(data);
+const toEffect = <T>(data: T, methods?: Record<string, unknown>) => {
+	const obj = Effect.succeed(data) as Effect.Effect<T> &
+		Record<string, unknown>;
 	if (methods) Object.assign(obj, methods);
 	return obj;
 };
@@ -88,8 +84,8 @@ const createTestLayer = (
 			toEffect(overrides?.insertResult ? [overrides.insertResult] : []),
 		);
 
-	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return QuestionService.Default.pipe(Layer.provide(MockPgDrizzle));
+	const MockPgDrizzle = Layer.succeed(DB, mockDb as never);
+	return QuestionService.layer.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("QuestionService", () => {
@@ -105,7 +101,7 @@ describe("QuestionService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 				const result = yield* service.getByQuestionnaireId("qn1");
 
 				expect(result).toHaveLength(2);
@@ -117,7 +113,7 @@ describe("QuestionService", () => {
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
 			return Effect.gen(function* () {
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 				const result = yield* service.getByQuestionnaireId("non-existent");
 
 				expect(result).toHaveLength(0);
@@ -132,7 +128,7 @@ describe("QuestionService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 				const result = yield* service.getById("q1");
 
 				expect(result.id).toBe("q1");
@@ -146,7 +142,7 @@ describe("QuestionService", () => {
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
 			return Effect.gen(function* () {
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 				const exit = yield* Effect.exit(service.getById("non-existent"));
 
 				expect(Exit.isFailure(exit)).toBe(true);
@@ -169,7 +165,7 @@ describe("QuestionService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 				const result = yield* service.create({
 					questionnaireId: "qn1",
 					questionText: "New Question",
@@ -196,7 +192,7 @@ describe("QuestionService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 				const result = yield* service.update("q1", {
 					questionText: "Updated Question",
 				});
@@ -215,7 +211,7 @@ describe("QuestionService", () => {
 			const testLayer = createTestLayer(mockDb, { updateResult: undefined });
 
 			return Effect.gen(function* () {
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 				const exit = yield* Effect.exit(
 					service.update("non-existent", {
 						questionText: "New Text",
@@ -232,7 +228,7 @@ describe("QuestionService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 				yield* service.delete(["q1", "q2"]);
 
 				expect(mockDb.delete).toHaveBeenCalled();

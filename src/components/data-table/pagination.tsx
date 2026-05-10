@@ -3,17 +3,17 @@ import {
 	ChevronRightIcon,
 	DoubleArrowLeftIcon,
 	DoubleArrowRightIcon,
-} from "@radix-ui/react-icons";
-import type { Table } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
+} from"@radix-ui/react-icons";
+import type { Table } from"@tanstack/react-table";
+import { Button } from"@/components/ui/button";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "@/components/ui/select";
-import { cn, getPageNumbers } from "@/utils/utils";
+} from"@/components/ui/select";
+import { cn, getPageNumbers } from"@/utils/utils";
 
 type DataTablePaginationProps<TData> = {
 	table: Table<TData>;
@@ -30,9 +30,7 @@ export function DataTablePagination<TData>({
 
 	return (
 		<div
-			className={cn(
-				"flex items-center justify-between overflow-clip px-2",
-				"@max-2xl/content:flex-col-reverse @max-2xl/content:gap-4",
+			className={cn("flex items-center justify-between overflow-clip px-2","@max-2xl/content:flex-col-reverse @max-2xl/content:gap-4",
 				className,
 			)}
 			style={{ overflowClipMargin: 1 }}
@@ -90,11 +88,11 @@ export function DataTablePagination<TData>({
 					{/* Page number buttons */}
 					{pageNumbers.map((pageNumber) => (
 						<div key={pageNumber} className="flex items-center">
-							{pageNumber === "…" ? (
+							{pageNumber ==="…" ? (
 								<span className="text-muted-foreground px-1 text-sm">…</span>
 							) : (
 								<Button
-									variant={currentPage === pageNumber ? "default" : "outline"}
+									variant={currentPage === pageNumber ?"default" :"outline"}
 									className="h-8 min-w-8 px-2"
 									onClick={() => table.setPageIndex((pageNumber as number) - 1)}
 								>

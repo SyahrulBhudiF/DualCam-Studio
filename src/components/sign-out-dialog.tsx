@@ -1,5 +1,5 @@
-import { useLocation, useNavigate } from "@tanstack/react-router";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useLocation, useNavigate } from"@tanstack/react-router";
+import { ConfirmDialog } from"@/components/confirm-dialog";
 
 interface SignOutDialogProps {
 	open: boolean;
@@ -13,7 +13,7 @@ export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
 	const handleSignOut = () => {
 		const currentPath = location.href;
 		navigate({
-			to: "/logout",
+			to:"/logout",
 			search: { redirect: currentPath },
 			replace: true,
 		});

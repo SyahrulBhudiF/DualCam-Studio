@@ -1,39 +1,11 @@
-import { lazy, Suspense, type ComponentType } from "react";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "@/components/ui/card";
-import {
-	type ChartConfig,
-	ChartContainer,
-	ChartTooltip,
-	ChartTooltipContent,
-} from "@/components/ui/chart";
+} from"@/components/ui/card";
 
-const asComponent = <T,>(component: T) =>
-	component as unknown as ComponentType<Record<string, unknown>>;
-
-const Bar = lazy(() =>
-	import("recharts").then((m) => ({ default: asComponent(m.Bar) })),
-);
-const BarChart = lazy(() =>
-	import("recharts").then((m) => ({ default: asComponent(m.BarChart) })),
-);
-const CartesianGrid = lazy(() =>
-	import("recharts").then((m) => ({ default: asComponent(m.CartesianGrid) })),
-);
-const LabelList = lazy(() =>
-	import("recharts").then((m) => ({ default: asComponent(m.LabelList) })),
-);
-const XAxis = lazy(() =>
-	import("recharts").then((m) => ({ default: asComponent(m.XAxis) })),
-);
-const YAxis = lazy(() =>
-	import("recharts").then((m) => ({ default: asComponent(m.YAxis) })),
-);
 
 type AnalysisPoint = {
 	label: string;
@@ -49,12 +21,9 @@ type DashboardAnalysisChartProps = {
 	emptyMessage?: string;
 };
 
-const chartConfig = {
-	value: {
-		label: "Score",
-		color: "hsl(var(--primary))",
-	},
-} satisfies ChartConfig;
+function formatValue(value: number) {
+	return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+}
 
 export function DashboardAnalysisChart({
 	title,
@@ -62,19 +31,15 @@ export function DashboardAnalysisChart({
 	data,
 	maxValue,
 	isLoading = false,
-	emptyMessage = "No data available",
+	emptyMessage ="No data available",
 }: DashboardAnalysisChartProps) {
 	const safeData = (data ?? []).map((d) => ({
 		label: d.label,
 		value: d.value,
 	}));
-
 	const maxVal =
 		maxValue ??
 		(safeData.length > 0 ? Math.max(...safeData.map((d) => d.value)) : 10);
-
-	// Menambahkan buffer sekitar 15-20% agar angka di kanan tidak terpotong
-	const domainMax = Math.ceil(maxVal * 1.2);
 
 	return (
 		<Card className="flex h-full flex-col">
@@ -82,72 +47,43 @@ export function DashboardAnalysisChart({
 				<CardTitle>{title}</CardTitle>
 				{subtitle && <CardDescription>{subtitle}</CardDescription>}
 			</CardHeader>
-			<CardContent className="flex-1 pb-0">
+			<CardContent className="flex-1">
 				{isLoading ? (
-					<div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+					<div className="flex min-h-[300px] items-center justify-center text-sm text-muted-foreground">
 						Loading…
 					</div>
 				) : safeData.length === 0 ? (
-					<div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+					<div className="flex min-h-[300px] items-center justify-center text-sm text-muted-foreground">
 						{emptyMessage}
 					</div>
 				) : (
-					<Suspense
-						fallback={
-							<div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-								Loading chart…
-							</div>
-						}
-					>
-					<ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-						<BarChart
-							accessibilityLayer
-							data={safeData}
-							layout="vertical"
-							margin={{
-								top: 0,
-								right: 40, // Margin kanan ditambah untuk angka
-								bottom: 0,
-								left: 0,
-							}}
-						>
-							<CartesianGrid horizontal={false} vertical={false} />
-							<YAxis
-								dataKey="label"
-								type="category"
-								tickLine={false}
-								tickMargin={10}
-								axisLine={false}
-								fontSize={12}
-								width={180}
-							/>
-							<XAxis
-								type="number"
-								dataKey="value"
-								domain={[0, domainMax]}
-								hide
-							/>
-							<ChartTooltip
-								cursor={false}
-								content={<ChartTooltipContent hideLabel />}
-							/>
-							<Bar
-								dataKey="value"
-								fill="var(--color-value)"
-								radius={[0, 4, 4, 0]}
-								barSize={32}
-							>
-								<LabelList
-									dataKey="value"
-									position="right"
-									offset={8}
-									className="fill-foreground font-medium"
-									fontSize={12}
-								/>
-							</Bar>
-						</BarChart>
-						</ChartContainer>
-					</Suspense>
+					<div className="min-h-[300px] space-y-3">
+						{safeData.map((item) => {
+							const percentage = Math.max(
+								0,
+								Math.min(100, maxVal > 0 ? (item.value / maxVal) * 100 : 0),
+							);
+
+							return (
+								<div key={item.label} className="grid gap-1.5">
+									<div className="flex items-start justify-between gap-4 text-sm">
+										<span className="line-clamp-2 text-muted-foreground">
+											{item.label}
+										</span>
+										<span className="shrink-0 font-medium tabular-nums text-foreground">
+											{formatValue(item.value)}
+										</span>
+									</div>
+									<div className="h-2.5 overflow-hidden bg-muted">
+										<div
+											className="h-full bg-primary transition-[width] duration-500 ease-out"
+											style={{ width: `${percentage}%` }}
+										/>
+									</div>
+								</div>
+							);
+						})}
+					</div>
 				)}
 			</CardContent>
 		</Card>

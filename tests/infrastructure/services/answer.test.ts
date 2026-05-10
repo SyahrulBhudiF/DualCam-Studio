@@ -1,17 +1,13 @@
-import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { Effect, Exit, Layer } from "effect";
-import { CommitPrototype } from "effect/Effectable";
 import { it } from "@effect/vitest";
-import { describe, expect, vi, beforeEach } from "vitest";
-import {
-	AnswerService,
-	
-} from "@/infrastructure/services/answer";
+import { Effect, Exit, Layer } from "effect";
+import { beforeEach, describe, expect, vi } from "vitest";
+import { DB } from "@/infrastructure/layers/database";
+import { AnswerService } from "@/infrastructure/services/answer";
 
 // Creates an Effect-compatible mock result for yield*
-const toEffect = <T>(data: T, methods?: Record<string, any>): any => {
-	const obj = Object.create(CommitPrototype);
-	obj.commit = () => Effect.succeed(data);
+const toEffect = <T>(data: T, methods?: Record<string, unknown>) => {
+	const obj = Effect.succeed(data) as Effect.Effect<T> &
+		Record<string, unknown>;
 	if (methods) Object.assign(obj, methods);
 	return obj;
 };
@@ -99,8 +95,8 @@ const createTestLayer = (
 			toEffect(overrides?.insertResult ? [overrides.insertResult] : []),
 		);
 
-	const MockPgDrizzle = Layer.succeed(PgDrizzle, mockDb as never);
-	return AnswerService.Default.pipe(Layer.provide(MockPgDrizzle));
+	const MockPgDrizzle = Layer.succeed(DB, mockDb as never);
+	return AnswerService.layer.pipe(Layer.provide(MockPgDrizzle));
 };
 
 describe("AnswerService", () => {
@@ -116,7 +112,7 @@ describe("AnswerService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 				const result = yield* service.getByQuestionId("q1");
 
 				expect(result).toHaveLength(2);
@@ -128,7 +124,7 @@ describe("AnswerService", () => {
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
 			return Effect.gen(function* () {
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 				const result = yield* service.getByQuestionId("non-existent");
 
 				expect(result).toHaveLength(0);
@@ -143,7 +139,7 @@ describe("AnswerService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 				const result = yield* service.getById("a1");
 
 				expect(result.id).toBe("a1");
@@ -157,7 +153,7 @@ describe("AnswerService", () => {
 			const testLayer = createTestLayer(mockDb, { selectResult: [] });
 
 			return Effect.gen(function* () {
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 				const exit = yield* Effect.exit(service.getById("non-existent"));
 
 				expect(Exit.isFailure(exit)).toBe(true);
@@ -168,12 +164,14 @@ describe("AnswerService", () => {
 	describe("getByIds", () => {
 		it.effect("should return multiple answers by ids", () => {
 			const testLayer = createTestLayer(mockDb);
-			mockDb.where = vi.fn().mockImplementation(() =>
-				toEffect([mockDb.answers[0], mockDb.answers[1]]),
-			);
+			mockDb.where = vi
+				.fn()
+				.mockImplementation(() =>
+					toEffect([mockDb.answers[0], mockDb.answers[1]]),
+				);
 
 			return Effect.gen(function* () {
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 				const result = yield* service.getByIds(["a1", "a2"]);
 
 				expect(result).toHaveLength(2);
@@ -184,7 +182,7 @@ describe("AnswerService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 				const result = yield* service.getByIds([]);
 
 				expect(result).toHaveLength(0);
@@ -207,7 +205,7 @@ describe("AnswerService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 				const result = yield* service.create({
 					questionId: "q1",
 					answerText: "New Answer",
@@ -235,7 +233,7 @@ describe("AnswerService", () => {
 			});
 
 			return Effect.gen(function* () {
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 				const result = yield* service.update("a1", {
 					answerText: "Updated Answer",
 					score: 10,
@@ -256,7 +254,7 @@ describe("AnswerService", () => {
 			const testLayer = createTestLayer(mockDb, { updateResult: undefined });
 
 			return Effect.gen(function* () {
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 				const exit = yield* Effect.exit(
 					service.update("non-existent", {
 						answerText: "New Text",
@@ -273,7 +271,7 @@ describe("AnswerService", () => {
 			const testLayer = createTestLayer(mockDb);
 
 			return Effect.gen(function* () {
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 				yield* service.delete(["a1", "a2"]);
 
 				expect(mockDb.delete).toHaveBeenCalled();

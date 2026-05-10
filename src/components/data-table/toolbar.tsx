@@ -1,9 +1,11 @@
-import { Cross2Icon } from "@radix-ui/react-icons";
-import type { Table } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { DataTableFacetedFilter } from "./faceted-filter";
-import { DataTableViewOptions } from "./view-options";
+import { Cross2Icon } from"@radix-ui/react-icons";
+import type { Table } from"@tanstack/react-table";
+import { Search } from"lucide-react";
+import { useEffect, useState } from"react";
+import { Button } from"@/components/ui/button";
+import { Input } from"@/components/ui/input";
+import { DataTableFacetedFilter } from"./faceted-filter";
+import { DataTableViewOptions } from"./view-options";
 
 type DataTableToolbarProps<TData> = {
 	table: Table<TData>;
@@ -26,35 +28,50 @@ const EMPTY_FILTERS: DataTableToolbarFilter[] = [];
 
 export function DataTableToolbar<TData>({
 	table,
-	searchPlaceholder = "Filter...",
+	searchPlaceholder ="Filter...",
 	searchKey,
 	filters = EMPTY_FILTERS,
 }: DataTableToolbarProps<TData>) {
+	const activeSearchValue = searchKey
+		? ((table.getColumn(searchKey)?.getFilterValue() as string) ??"")
+		: (table.getState().globalFilter ??"");
+	const [searchValue, setSearchValue] = useState(activeSearchValue);
 	const isFiltered =
 		table.getState().columnFilters.length > 0 || table.getState().globalFilter;
+
+	useEffect(() => {
+		const timeoutId = window.setTimeout(() => {
+			if (searchKey) {
+				table.getColumn(searchKey)?.setFilterValue(searchValue);
+				return;
+			}
+			table.setGlobalFilter(searchValue);
+		}, 300);
+
+		return () => window.clearTimeout(timeoutId);
+	}, [searchValue, searchKey, table]);
+
+	const applySearch = () => {
+		if (searchKey) {
+			table.getColumn(searchKey)?.setFilterValue(searchValue);
+			return;
+		}
+		table.setGlobalFilter(searchValue);
+	};
 
 	return (
 		<div className="flex items-center justify-between">
 			<div className="flex flex-1 flex-col-reverse items-start gap-y-2 sm:flex-row sm:items-center sm:gap-x-2">
-				{searchKey ? (
+				<div className="relative">
+					<Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
 						placeholder={searchPlaceholder}
-						value={
-							(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""
-						}
-						onChange={(event) =>
-							table.getColumn(searchKey)?.setFilterValue(event.target.value)
-						}
-						className="h-8 w-[150px] lg:w-[250px]"
+						value={searchValue}
+						onChange={(event) => setSearchValue(event.target.value)}
+						onBlur={applySearch}
+						className="h-8 w-[180px] pl-9 lg:w-[280px]"
 					/>
-				) : (
-					<Input
-						placeholder={searchPlaceholder}
-						value={table.getState().globalFilter ?? ""}
-						onChange={(event) => table.setGlobalFilter(event.target.value)}
-						className="h-8 w-[150px] lg:w-[250px]"
-					/>
-				)}
+				</div>
 				<div className="flex gap-x-2">
 					{filters.map((filter) => {
 						const column = table.getColumn(filter.columnId);
@@ -75,6 +92,7 @@ export function DataTableToolbar<TData>({
 						onClick={() => {
 							table.resetColumnFilters();
 							table.setGlobalFilter("");
+							setSearchValue("");
 						}}
 						className="h-8 px-2 lg:px-3"
 					>

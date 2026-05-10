@@ -1,12 +1,11 @@
-import { Schema } from "effect";
-import { createServerFn } from "@tanstack/react-start";
-import { Effect } from "effect";
+import { createServerFn } from"@tanstack/react-start";
+import { Effect } from"effect";
 import {
 	AnswerService,
 	QuestionnaireService,
 	QuestionService,
 	runEffect,
-} from "@/infrastructure";
+} from"@/infrastructure";
 import {
 	BulkDeleteSchema,
 	CreateAnswerSchema,
@@ -16,16 +15,17 @@ import {
 	UpdateQuestionnaireSchema,
 	UpdateQuestionSchema,
 	UUID,
-} from "@/infrastructure/schemas/questionnaire";
-import { requireAuth } from "@/utils/session";
+} from"@/infrastructure/schemas/questionnaire";
+import { requireAuth } from"@/utils/session";
+import { inputValidator } from"../../infrastructure/schemas/validator";
 
 // Questionnaire APIs
-export const getQuestionnaires = createServerFn({ method: "GET" }).handler(
+export const getQuestionnaires = createServerFn({ method:"GET" }).handler(
 	async () => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* QuestionnaireService;
+				const service = yield* QuestionnaireService.asEffect();
 				const results = yield* service.getAll();
 				return results.map((q) => ({
 					...q,
@@ -36,13 +36,13 @@ export const getQuestionnaires = createServerFn({ method: "GET" }).handler(
 	},
 );
 
-export const getQuestionnaireById = createServerFn({ method: "GET" })
-	.inputValidator(Schema.decodeUnknownSync(UUID))
+export const getQuestionnaireById = createServerFn({ method:"GET" })
+	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* QuestionnaireService;
+				const service = yield* QuestionnaireService.asEffect();
 				const q = yield* service.getById(id);
 				return {
 					...q,
@@ -52,13 +52,13 @@ export const getQuestionnaireById = createServerFn({ method: "GET" })
 		);
 	});
 
-export const createQuestionnaire = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(CreateQuestionnaireSchema))
+export const createQuestionnaire = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(CreateQuestionnaireSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* QuestionnaireService;
+				const service = yield* QuestionnaireService.asEffect();
 
 				return yield* service.create({
 					title: data.title,
@@ -69,14 +69,14 @@ export const createQuestionnaire = createServerFn({ method: "POST" })
 		);
 	});
 
-export const updateQuestionnaire = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(UpdateQuestionnaireSchema))
+export const updateQuestionnaire = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(UpdateQuestionnaireSchema))
 	.handler(async ({ data }) => {
 		const { id, ...updates } = data;
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* QuestionnaireService;
+				const service = yield* QuestionnaireService.asEffect();
 
 				return yield* service.update(id, {
 					title: updates.title,
@@ -87,26 +87,26 @@ export const updateQuestionnaire = createServerFn({ method: "POST" })
 		);
 	});
 
-export const deleteQuestionnaires = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(BulkDeleteSchema))
+export const deleteQuestionnaires = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(BulkDeleteSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* QuestionnaireService;
+				const service = yield* QuestionnaireService.asEffect();
 
-				return yield* service.delete(data.ids);
+				return yield* service.delete([...data.ids]);
 			}),
 		);
 	});
 
-const setQuestionnaireActive = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(UUID))
+const _setQuestionnaireActive = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* QuestionnaireService;
+				const service = yield* QuestionnaireService.asEffect();
 
 				return yield* service.setActive(id);
 			}),
@@ -114,13 +114,13 @@ const setQuestionnaireActive = createServerFn({ method: "POST" })
 	});
 
 // Question APIs
-export const getQuestionsByQuestionnaireId = createServerFn({ method: "GET" })
-	.inputValidator(Schema.decodeUnknownSync(UUID))
+export const getQuestionsByQuestionnaireId = createServerFn({ method:"GET" })
+	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: questionnaireId }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 				const results = yield* service.getByQuestionnaireId(questionnaireId);
 
 				return results.map((q) => ({
@@ -131,13 +131,13 @@ export const getQuestionsByQuestionnaireId = createServerFn({ method: "GET" })
 		);
 	});
 
-export const getQuestionById = createServerFn({ method: "GET" })
-	.inputValidator(Schema.decodeUnknownSync(UUID))
+export const getQuestionById = createServerFn({ method:"GET" })
+	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 				const q = yield* service.getById(id);
 
 				return {
@@ -148,13 +148,13 @@ export const getQuestionById = createServerFn({ method: "GET" })
 		);
 	});
 
-export const createQuestion = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(CreateQuestionSchema))
+export const createQuestion = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(CreateQuestionSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 
 				return yield* service.create({
 					questionnaireId: data.questionnaireId,
@@ -165,14 +165,14 @@ export const createQuestion = createServerFn({ method: "POST" })
 		);
 	});
 
-export const updateQuestion = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(UpdateQuestionSchema))
+export const updateQuestion = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(UpdateQuestionSchema))
 	.handler(async ({ data }) => {
 		const { id, ...updates } = data;
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 
 				return yield* service.update(id, {
 					questionText: updates.questionText,
@@ -182,27 +182,27 @@ export const updateQuestion = createServerFn({ method: "POST" })
 		);
 	});
 
-export const deleteQuestions = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(BulkDeleteSchema))
+export const deleteQuestions = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(BulkDeleteSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* QuestionService;
+				const service = yield* QuestionService.asEffect();
 
-				return yield* service.delete(data.ids);
+				return yield* service.delete([...data.ids]);
 			}),
 		);
 	});
 
 // Answer APIs
-export const getAnswersByQuestionId = createServerFn({ method: "GET" })
-	.inputValidator(Schema.decodeUnknownSync(UUID))
+export const getAnswersByQuestionId = createServerFn({ method:"GET" })
+	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: questionId }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 				const results = yield* service.getByQuestionId(questionId);
 
 				return results.map((a) => ({
@@ -213,13 +213,13 @@ export const getAnswersByQuestionId = createServerFn({ method: "GET" })
 		);
 	});
 
-export const createAnswer = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(CreateAnswerSchema))
+export const createAnswer = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(CreateAnswerSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 
 				return yield* service.create({
 					questionId: data.questionId,
@@ -230,14 +230,14 @@ export const createAnswer = createServerFn({ method: "POST" })
 		);
 	});
 
-export const updateAnswer = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(UpdateAnswerSchema))
+export const updateAnswer = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(UpdateAnswerSchema))
 	.handler(async ({ data }) => {
 		const { id, ...updates } = data;
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 
 				return yield* service.update(id, {
 					answerText: updates.answerText,
@@ -247,15 +247,15 @@ export const updateAnswer = createServerFn({ method: "POST" })
 		);
 	});
 
-export const deleteAnswers = createServerFn({ method: "POST" })
-	.inputValidator(Schema.decodeUnknownSync(BulkDeleteSchema))
+export const deleteAnswers = createServerFn({ method:"POST" })
+	.inputValidator(inputValidator(BulkDeleteSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
 				yield* requireAuth;
-				const service = yield* AnswerService;
+				const service = yield* AnswerService.asEffect();
 
-				return yield* service.delete(data.ids);
+				return yield* service.delete([...data.ids]);
 			}),
 		);
 	});

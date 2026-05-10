@@ -1,24 +1,11 @@
-import { describe, expect } from "vitest";
 import { it } from "@effect/vitest";
-import { Effect, Layer, Duration, Redacted, Array as Arr } from "effect";
-import { layer as pgDrizzleLayer } from "@effect/sql-drizzle/Pg";
-import { PgClient } from "@effect/sql-pg";
-import {
-	DashboardService,
-	
-} from "@/infrastructure/services/dashboard";
-import {
-	QuestionnaireService,
-	
-} from "@/infrastructure/services/questionnaire";
-import {
-	ResponseService,
-	
-} from "@/infrastructure/services/response";
-import {
-	ProfileService,
-	
-} from "@/infrastructure/services/profile";
+import { Array as Arr, Effect, Layer } from "effect";
+import { describe, expect } from "vitest";
+import { DrizzleLive } from "@/infrastructure/layers/database";
+import { DashboardService } from "@/infrastructure/services/dashboard";
+import { ProfileService } from "@/infrastructure/services/profile";
+import { QuestionnaireService } from "@/infrastructure/services/questionnaire";
+import { ResponseService } from "@/infrastructure/services/response";
 
 // Performance measurement using performance.now() for accurate timing
 const timed = <A, E, R>(
@@ -41,50 +28,38 @@ const formatDuration = (ms: number): string => {
 	return `${(ms / 1000).toFixed(2)}s`;
 };
 
-const DATABASE_URL = process.env.DATABASE_URL;
-const shouldSkip = !DATABASE_URL;
-
-// Create real database layer
-const PgClientLive = PgClient.layer({
-	url: Redacted.make(DATABASE_URL ?? ""),
-	maxConnections: 10,
-	idleTimeout: Duration.seconds(60),
-	connectTimeout: Duration.seconds(10),
-});
-
-const DrizzleLive = Layer.merge(
-	pgDrizzleLayer.pipe(Layer.provide(PgClientLive)),
-	PgClientLive,
-);
+const shouldSkip = !process.env.RUN_PERF_TESTS;
 
 // Combined service layer for all services
 const ServicesLive = Layer.mergeAll(
-	DashboardService.Default,
-	QuestionnaireService.Default,
-	ResponseService.Default,
-	ProfileService.Default,
-).pipe(Layer.provide(DrizzleLive));
+	DashboardService.layer,
+	QuestionnaireService.layer,
+	ResponseService.layer,
+	ProfileService.layer,
+).pipe(Layer.provide(DrizzleLive)) as Layer.Layer<
+	DashboardService | QuestionnaireService | ResponseService | ProfileService
+>;
 
 describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 	// Use it.layer to share the layer across all tests in this describe block
 	it.layer(ServicesLive)("Dashboard Service Performance", (it) => {
 		it.effect("getSummary should complete under 1000ms", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				yield* timed("Dashboard.getSummary", service.getSummary(), 1000);
 			}),
 		);
 
 		it.effect("getBreakdown should complete under 1000ms", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				yield* timed("Dashboard.getBreakdown", service.getBreakdown(), 1000);
 			}),
 		);
 
 		it.effect("getAnalyticsDetails should complete under 1000ms", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				yield* timed(
 					"Dashboard.getAnalyticsDetails",
 					service.getAnalyticsDetails(),
@@ -97,7 +72,7 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 	it.layer(ServicesLive)("Questionnaire Service Performance", (it) => {
 		it.effect("getAll should complete under 300ms", () =>
 			Effect.gen(function* () {
-				const service = yield* QuestionnaireService;
+				const service = yield* QuestionnaireService.asEffect();
 				yield* timed("Questionnaire.getAll", service.getAll(), 300);
 			}),
 		);
@@ -106,14 +81,14 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 	it.layer(ServicesLive)("Response Service Performance", (it) => {
 		it.effect("getAll should complete under 1000ms", () =>
 			Effect.gen(function* () {
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				yield* timed("Response.getAll", service.getAll(), 1000);
 			}),
 		);
 
 		it.effect("getAllWithDetails should complete under 2500ms", () =>
 			Effect.gen(function* () {
-				const service = yield* ResponseService;
+				const service = yield* ResponseService.asEffect();
 				yield* timed(
 					"Response.getAllWithDetails",
 					service.getAllWithDetails(),
@@ -126,15 +101,19 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 	it.layer(ServicesLive)("Profile Service Performance", (it) => {
 		it.effect("getAll should complete under 500ms", () =>
 			Effect.gen(function* () {
-				const service = yield* ProfileService;
+				const service = yield* ProfileService.asEffect();
 				yield* timed("Profile.getAll", service.getAll(), 500);
 			}),
 		);
 
 		it.effect("getUniqueClasses should complete under 500ms", () =>
 			Effect.gen(function* () {
-				const service = yield* ProfileService;
-				yield* timed("Profile.getUniqueClasses", service.getUniqueClasses(), 500);
+				const service = yield* ProfileService.asEffect();
+				yield* timed(
+					"Profile.getUniqueClasses",
+					service.getUniqueClasses(),
+					500,
+				);
 			}),
 		);
 	});
@@ -142,7 +121,7 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 	it.layer(ServicesLive)("Concurrent Load Test", (it) => {
 		it.effect("should handle 10 concurrent dashboard requests", () =>
 			Effect.gen(function* () {
-				const service = yield* DashboardService;
+				const service = yield* DashboardService.asEffect();
 				const concurrency = 10;
 
 				const start = performance.now();
@@ -168,7 +147,7 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 			"should handle 20 sequential requests efficiently",
 			() =>
 				Effect.gen(function* () {
-					const service = yield* QuestionnaireService;
+					const service = yield* QuestionnaireService.asEffect();
 					const iterations = 20;
 
 					const start = performance.now();
@@ -196,10 +175,10 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 			"should generate performance report",
 			() =>
 				Effect.gen(function* () {
-					const dashboard = yield* DashboardService;
-					const questionnaire = yield* QuestionnaireService;
-					const response = yield* ResponseService;
-					const profile = yield* ProfileService;
+					const dashboard = yield* DashboardService.asEffect();
+					const questionnaire = yield* QuestionnaireService.asEffect();
+					const response = yield* ResponseService.asEffect();
+					const profile = yield* ProfileService.asEffect();
 
 					interface PerfResult {
 						name: string;
@@ -209,10 +188,13 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 
 					const results: PerfResult[] = [];
 
-					const measure = <A, E>(name: string, effect: Effect.Effect<A, E>) =>
+					const measure = <A, E, R>(
+						name: string,
+						effect: Effect.Effect<A, E, R>,
+					) =>
 						Effect.gen(function* () {
 							const start = performance.now();
-							yield* effect.pipe(Effect.either);
+							yield* effect.pipe(Effect.result);
 							const ms = performance.now() - start;
 							results.push({ name, duration: ms, success: true });
 							return ms;
@@ -232,7 +214,10 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 						response.getAllWithDetails(),
 					);
 					yield* measure("Profile.getAll", profile.getAll());
-					yield* measure("Profile.getUniqueClasses", profile.getUniqueClasses());
+					yield* measure(
+						"Profile.getUniqueClasses",
+						profile.getUniqueClasses(),
+					);
 
 					// Print results
 					console.log("\n📊 Performance Results:");

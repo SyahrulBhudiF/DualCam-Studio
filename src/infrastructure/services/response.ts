@@ -1,14 +1,13 @@
-import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import type { SQL } from "drizzle-orm";
-import { and, desc, eq, gte, ilike, inArray, lte } from "drizzle-orm";
-import { Effect } from "effect";
+import type { SQL } from"drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, lte } from"drizzle-orm";
+import { Context, Effect, Layer } from"effect";
 import type {
 	NewResponse,
 	NewResponseDetail,
 	Profile,
 	Questionnaire,
 	Response,
-} from "../db";
+} from"../db";
 import {
 	answers,
 	profiles,
@@ -16,8 +15,9 @@ import {
 	questions,
 	responseDetails,
 	responses,
-} from "../db";
-import { DatabaseError, ResponseNotFoundError } from "../errors";
+} from"../db";
+import { DatabaseError, ResponseNotFoundError } from"../errors";
+import { DB } from"../layers/database";
 
 type VideoSegmentPath = {
 	main: string | null;
@@ -56,16 +56,13 @@ interface ResponseFilter {
 
 /** Escape LIKE wildcard characters to prevent wildcard injection */
 function escapeLikePattern(str: string): string {
-	return str.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+	return str.replace(/\\/g,"\\\\").replace(/%/g,"\\%").replace(/_/g,"\\_");
 }
 
-export class ResponseService extends Effect.Service<ResponseService>()(
-	"ResponseService",
+export class ResponseService extends Context.Service<ResponseService>()("ResponseService",
 	{
-		accessors: true,
-		dependencies: [],
-		effect: Effect.gen(function* () {
-			const db = yield* PgDrizzle;
+		make: Effect.gen(function* () {
+			const db = yield* DB.asEffect();
 
 			const getAll = Effect.fn("ResponseService.getAll")(function* () {
 				const rows = yield* db
@@ -80,11 +77,12 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 						questionnaires,
 						eq(responses.questionnaireId, questionnaires.id),
 					)
-					.orderBy(desc(responses.createdAt)).pipe(
+					.orderBy(desc(responses.createdAt))
+					.pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message: "Failed to fetch responses",
+									message:"Failed to fetch responses",
 									cause: e,
 								}),
 						),
@@ -112,11 +110,12 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 						questionnaires,
 						eq(responses.questionnaireId, questionnaires.id),
 					)
-					.where(eq(responses.id, id)).pipe(
+					.where(eq(responses.id, id))
+					.pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message: "Failed to fetch response",
+									message:"Failed to fetch response",
 									cause: e,
 								}),
 						),
@@ -136,11 +135,12 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 					.leftJoin(questions, eq(responseDetails.questionId, questions.id))
 					.leftJoin(answers, eq(responseDetails.answerId, answers.id))
 					.where(eq(responseDetails.responseId, id))
-					.orderBy(questions.orderNumber).pipe(
+					.orderBy(questions.orderNumber)
+					.pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message: "Failed to fetch response details",
+									message:"Failed to fetch response details",
 									cause: e,
 								}),
 						),
@@ -156,11 +156,12 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 					const allAnswers = yield* db
 						.select()
 						.from(answers)
-						.where(inArray(answers.questionId, questionIds)).pipe(
+						.where(inArray(answers.questionId, questionIds))
+						.pipe(
 							Effect.mapError(
 								(e) =>
 									new DatabaseError({
-										message: "Failed to fetch answers for scoring",
+										message:"Failed to fetch answers for scoring",
 										cause: e,
 									}),
 							),
@@ -177,7 +178,7 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 				const details: ResponseDetail[] = detailRows.map((row) => {
 					let videoSegmentPath: VideoSegmentPath = null;
 					if (row.detail.videoSegmentPath != null) {
-						if (typeof row.detail.videoSegmentPath === "string") {
+						if (typeof row.detail.videoSegmentPath ==="string") {
 							try {
 								videoSegmentPath = JSON.parse(row.detail.videoSegmentPath);
 							} catch {
@@ -186,9 +187,9 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 									secondary: null,
 								};
 							}
-						} else if (typeof row.detail.videoSegmentPath === "object") {
-							videoSegmentPath =
-								row.detail.videoSegmentPath as VideoSegmentPath;
+						} else if (typeof row.detail.videoSegmentPath ==="object") {
+							videoSegmentPath = row.detail
+								.videoSegmentPath as VideoSegmentPath;
 						}
 					}
 
@@ -202,7 +203,8 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 						questionText: row.question?.questionText ?? null,
 						orderNumber: row.question?.orderNumber ?? null,
 						answerText: row.answer?.answerText ?? null,
-						maxScore: maxScoreMap.get(row.detail.questionId) ?? row.detail.score,
+						maxScore:
+							maxScoreMap.get(row.detail.questionId) ?? row.detail.score,
 					};
 				});
 
@@ -214,8 +216,7 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 				};
 			});
 
-			const getByQuestionnaireId = Effect.fn(
-				"ResponseService.getByQuestionnaireId",
+			const getByQuestionnaireId = Effect.fn("ResponseService.getByQuestionnaireId",
 			)(function* (questionnaireId: string) {
 				const rows = yield* db
 					.select({
@@ -230,11 +231,12 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 						eq(responses.questionnaireId, questionnaires.id),
 					)
 					.where(eq(responses.questionnaireId, questionnaireId))
-					.orderBy(desc(responses.createdAt)).pipe(
+					.orderBy(desc(responses.createdAt))
+					.pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message: "Failed to fetch responses",
+									message:"Failed to fetch responses",
 									cause: e,
 								}),
 						),
@@ -292,7 +294,7 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 					Effect.mapError(
 						(e) =>
 							new DatabaseError({
-								message: "Failed to fetch filtered responses",
+								message:"Failed to fetch filtered responses",
 								cause: e,
 							}),
 					),
@@ -306,34 +308,41 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 			});
 
 			const create = Effect.fn("ResponseService.create")(function* (
-				data: Omit<NewResponse, "id" | "createdAt">,
-				details: Omit<NewResponseDetail, "id" | "responseId">[],
+				data: Omit<NewResponse,"id" |"createdAt">,
+				details: Omit<NewResponseDetail,"id" |"responseId">[],
 			) {
-				const [response] = yield* db.insert(responses).values(data).returning().pipe(
-					Effect.mapError(
-						(e) =>
-							new DatabaseError({
-								message: "Failed to create response",
-								cause: e,
-							}),
-					),
-				);
-
-				if (details.length > 0) {
-					yield* db.insert(responseDetails).values(
-						details.map((d) => ({
-							...d,
-							responseId: (response as Response).id,
-						})),
-					).pipe(
+				const [response] = yield* db
+					.insert(responses)
+					.values(data)
+					.returning()
+					.pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message: "Failed to create response details",
+									message:"Failed to create response",
 									cause: e,
 								}),
 						),
 					);
+
+				if (details.length > 0) {
+					yield* db
+						.insert(responseDetails)
+						.values(
+							details.map((d) => ({
+								...d,
+								responseId: (response as Response).id,
+							})),
+						)
+						.pipe(
+							Effect.mapError(
+								(e) =>
+									new DatabaseError({
+										message:"Failed to create response details",
+										cause: e,
+									}),
+							),
+						);
 				}
 
 				return response as Response;
@@ -344,15 +353,18 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 				ids: string[],
 			) {
 				if (ids.length > 0) {
-					yield* db.delete(responses).where(inArray(responses.id, ids)).pipe(
-						Effect.mapError(
-							(e) =>
-								new DatabaseError({
-									message: "Failed to delete responses",
-									cause: e,
-								}),
-						),
-					);
+					yield* db
+						.delete(responses)
+						.where(inArray(responses.id, ids))
+						.pipe(
+							Effect.mapError(
+								(e) =>
+									new DatabaseError({
+										message:"Failed to delete responses",
+										cause: e,
+									}),
+							),
+						);
 				}
 			});
 
@@ -387,12 +399,12 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 								)
 								.leftJoin(answers, eq(responseDetails.answerId, answers.id)),
 						],
-						{ concurrency: "unbounded" },
+						{ concurrency:"unbounded" },
 					).pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message: "Failed to fetch responses with details",
+									message:"Failed to fetch responses with details",
 									cause: e,
 								}),
 						),
@@ -410,7 +422,7 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 						const rawVideoSegmentPath = detail.videoSegmentPath;
 						let videoSegmentPath: VideoSegmentPath = null;
 						if (rawVideoSegmentPath != null) {
-							if (typeof rawVideoSegmentPath === "string") {
+							if (typeof rawVideoSegmentPath ==="string") {
 								try {
 									videoSegmentPath = JSON.parse(rawVideoSegmentPath);
 								} catch {
@@ -419,7 +431,7 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 										secondary: null,
 									};
 								}
-							} else if (typeof rawVideoSegmentPath === "object") {
+							} else if (typeof rawVideoSegmentPath ==="object") {
 								videoSegmentPath = rawVideoSegmentPath as VideoSegmentPath;
 							}
 						}
@@ -459,4 +471,6 @@ export class ResponseService extends Effect.Service<ResponseService>()(
 			};
 		}),
 	},
-) {}
+) {
+	static readonly layer = Layer.effect(this, this.make);
+}

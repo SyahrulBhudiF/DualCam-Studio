@@ -1,6 +1,5 @@
-import { PgDrizzle } from "@effect/sql-drizzle/Pg";
-import { avg, count, countDistinct, eq, sql, sum } from "drizzle-orm";
-import { Effect } from "effect";
+import { avg, count, countDistinct, eq, sql, sum } from"drizzle-orm";
+import { Context, Effect, Layer } from"effect";
 import {
 	answers,
 	profiles,
@@ -8,8 +7,9 @@ import {
 	questions,
 	responseDetails,
 	responses,
-} from "../db";
-import { DatabaseError } from "../errors";
+} from"../db";
+import { DatabaseError } from"../errors";
+import { DB } from"../layers/database";
 
 interface DashboardSummary {
 	totalQuestionnaires: number;
@@ -68,13 +68,10 @@ interface AnalyticsDetails {
 	};
 }
 
-export class DashboardService extends Effect.Service<DashboardService>()(
-	"DashboardService",
+export class DashboardService extends Context.Service<DashboardService>()("DashboardService",
 	{
-		accessors: true,
-		dependencies: [],
-		effect: Effect.gen(function* () {
-			const db = yield* PgDrizzle;
+		make: Effect.gen(function* () {
+			const db = yield* DB.asEffect();
 
 			const getSummary = Effect.fn("DashboardService.getSummary")(function* () {
 				const [
@@ -85,7 +82,9 @@ export class DashboardService extends Effect.Service<DashboardService>()(
 				] = yield* Effect.all(
 					[
 						// Count total questionnaires
-						db.select({ count: count() }).from(questionnaires),
+						db
+							.select({ count: count() })
+							.from(questionnaires),
 						// Count active questionnaires
 						db
 							.select({ count: count() })
@@ -103,12 +102,12 @@ export class DashboardService extends Effect.Service<DashboardService>()(
 							.select({ count: countDistinct(profiles.class) })
 							.from(profiles),
 					],
-					{ concurrency: "unbounded" },
+					{ concurrency:"unbounded" },
 				).pipe(
 					Effect.mapError(
 						(e) =>
 							new DatabaseError({
-								message: "Failed to fetch dashboard summary",
+								message:"Failed to fetch dashboard summary",
 								cause: e,
 							}),
 					),
@@ -152,12 +151,12 @@ export class DashboardService extends Effect.Service<DashboardService>()(
 								.innerJoin(profiles, eq(responses.userId, profiles.id))
 								.groupBy(profiles.class),
 						],
-						{ concurrency: "unbounded" },
+						{ concurrency:"unbounded" },
 					).pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message: "Failed to fetch dashboard breakdown",
+									message:"Failed to fetch dashboard breakdown",
 									cause: e,
 								}),
 						),
@@ -200,8 +199,7 @@ export class DashboardService extends Effect.Service<DashboardService>()(
 				},
 			);
 
-			const getAnalyticsDetails = Effect.fn(
-				"DashboardService.getAnalyticsDetails",
+			const getAnalyticsDetails = Effect.fn("DashboardService.getAnalyticsDetails",
 			)(function* () {
 				const [questionRows, answerRows, timelineRows, [{ total, withVideo }]] =
 					yield* Effect.all(
@@ -239,16 +237,11 @@ export class DashboardService extends Effect.Service<DashboardService>()(
 									responseDetails,
 									eq(answers.id, responseDetails.answerId),
 								)
-								.groupBy(
-									answers.id,
-									answers.answerText,
-									answers.questionId,
-								),
+								.groupBy(answers.id, answers.answerText, answers.questionId),
 							// Timeline using SQL GROUP BY with date truncation
 							db
 								.select({
-									date: sql<Date | string>`DATE(${responses.createdAt})`.as(
-										"date",
+									date: sql<Date | string>`DATE(${responses.createdAt})`.as("date",
 									),
 									totalResponses: count(),
 									totalScore: sum(responses.totalScore),
@@ -264,12 +257,12 @@ export class DashboardService extends Effect.Service<DashboardService>()(
 								})
 								.from(responses),
 						],
-						{ concurrency: "unbounded" },
+						{ concurrency:"unbounded" },
 					).pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message: "Failed to fetch analytics details",
+									message:"Failed to fetch analytics details",
 									cause: e,
 								}),
 						),
@@ -317,4 +310,6 @@ export class DashboardService extends Effect.Service<DashboardService>()(
 			};
 		}),
 	},
-) {}
+) {
+	static readonly layer = Layer.effect(this, this.make);
+}
