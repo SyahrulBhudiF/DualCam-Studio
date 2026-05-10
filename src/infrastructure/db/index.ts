@@ -8,7 +8,7 @@ export {
 	responses,
 	sessions,
 	users,
-} from"./schema";
+} from "./schema";
 
 export type {
 	Answer,
@@ -26,4 +26,4 @@ export type {
 	Response,
 	Session,
 	User,
-} from"./types";
+} from "./types";

@@ -1,4 +1,4 @@
-import { Schema } from"effect";
+import { Schema } from "effect";
 
 // Common UUID schema
 export const UUID = Schema.String.check(Schema.isUUID());

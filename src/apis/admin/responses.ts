@@ -1,20 +1,20 @@
-import { createServerFn } from"@tanstack/react-start";
-import { Effect } from"effect";
+import { createServerFn } from "@tanstack/react-start";
+import { Effect } from "effect";
 import {
 	ProfileService,
 	QuestionnaireService,
 	ResponseService,
 	runEffect,
-} from"@/infrastructure";
+} from "@/infrastructure";
 import {
 	BulkDeleteSchema,
 	ResponseFilterSchema,
 	UUID,
-} from"@/infrastructure/schemas/questionnaire";
-import { requireAuth } from"@/utils/session";
-import { inputValidator } from"../../infrastructure/schemas/validator";
+} from "@/infrastructure/schemas/questionnaire";
+import { requireAuth } from "@/utils/session";
+import { inputValidator } from "../../infrastructure/schemas/validator";
 
-export const getResponses = createServerFn({ method:"GET" }).handler(
+export const getResponses = createServerFn({ method: "GET" }).handler(
 	async () => {
 		return runEffect(
 			Effect.gen(function* () {
@@ -47,7 +47,7 @@ export const getResponses = createServerFn({ method:"GET" }).handler(
 	},
 );
 
-export const getResponseById = createServerFn({ method:"GET" })
+export const getResponseById = createServerFn({ method: "GET" })
 	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(
@@ -100,7 +100,7 @@ export const getResponseById = createServerFn({ method:"GET" })
 		);
 	});
 
-export const getResponsesByQuestionnaireId = createServerFn({ method:"GET" })
+export const getResponsesByQuestionnaireId = createServerFn({ method: "GET" })
 	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: questionnaireId }) => {
 		return runEffect(
@@ -131,7 +131,7 @@ export const getResponsesByQuestionnaireId = createServerFn({ method:"GET" })
 		);
 	});
 
-export const deleteResponses = createServerFn({ method:"POST" })
+export const deleteResponses = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(BulkDeleteSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
@@ -143,7 +143,7 @@ export const deleteResponses = createServerFn({ method:"POST" })
 		);
 	});
 
-export const getResponsesFiltered = createServerFn({ method:"POST" })
+export const getResponsesFiltered = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(ResponseFilterSchema))
 	.handler(async ({ data: filters }) => {
 		return runEffect(
@@ -183,7 +183,7 @@ export const getResponsesFiltered = createServerFn({ method:"POST" })
 	});
 
 export const getAllResponsesWithDetails = createServerFn({
-	method:"GET",
+	method: "GET",
 }).handler(async () => {
 	return runEffect(
 		Effect.gen(function* () {
@@ -221,7 +221,7 @@ export const getAllResponsesWithDetails = createServerFn({
 	);
 });
 
-export const getFilterOptions = createServerFn({ method:"GET" }).handler(
+export const getFilterOptions = createServerFn({ method: "GET" }).handler(
 	async () => {
 		return runEffect(
 			Effect.gen(function* () {
@@ -236,7 +236,7 @@ export const getFilterOptions = createServerFn({ method:"GET" }).handler(
 				]);
 
 				const names = profiles.reduce<string[]>((acc, profile) => {
-					if (typeof profile.name ==="string") acc.push(profile.name);
+					if (typeof profile.name === "string") acc.push(profile.name);
 					return acc;
 				}, []);
 

@@ -1,11 +1,11 @@
-import { Cross2Icon } from"@radix-ui/react-icons";
-import type { Table } from"@tanstack/react-table";
-import { Search } from"lucide-react";
-import { useEffect, useState } from"react";
-import { Button } from"@/components/ui/button";
-import { Input } from"@/components/ui/input";
-import { DataTableFacetedFilter } from"./faceted-filter";
-import { DataTableViewOptions } from"./view-options";
+import { Cross2Icon } from "@radix-ui/react-icons";
+import type { Table } from "@tanstack/react-table";
+import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DataTableFacetedFilter } from "./faceted-filter";
+import { DataTableViewOptions } from "./view-options";
 
 type DataTableToolbarProps<TData> = {
 	table: Table<TData>;
@@ -28,13 +28,13 @@ const EMPTY_FILTERS: DataTableToolbarFilter[] = [];
 
 export function DataTableToolbar<TData>({
 	table,
-	searchPlaceholder ="Filter...",
+	searchPlaceholder = "Filter...",
 	searchKey,
 	filters = EMPTY_FILTERS,
 }: DataTableToolbarProps<TData>) {
 	const activeSearchValue = searchKey
-		? ((table.getColumn(searchKey)?.getFilterValue() as string) ??"")
-		: (table.getState().globalFilter ??"");
+		? ((table.getColumn(searchKey)?.getFilterValue() as string) ?? "")
+		: (table.getState().globalFilter ?? "");
 	const [searchValue, setSearchValue] = useState(activeSearchValue);
 	const isFiltered =
 		table.getState().columnFilters.length > 0 || table.getState().globalFilter;

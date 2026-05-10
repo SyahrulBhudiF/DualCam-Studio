@@ -1,24 +1,24 @@
-import { queryOptions, useQuery } from"@tanstack/react-query";
-import { createFileRoute } from"@tanstack/react-router";
+import { queryOptions, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import {
 	getAnalyticsDetails,
 	getDashboardBreakdown,
 	getDashboardSummary,
-} from"@/apis/dashboard";
-import { Dashboard } from"@/features/dashboard";
+} from "@/apis/dashboard";
+import { Dashboard } from "@/features/dashboard";
 
 const summaryOptions = queryOptions({
-	queryKey: ["dashboard","summary"],
+	queryKey: ["dashboard", "summary"],
 	queryFn: () => getDashboardSummary(),
 });
 
 const breakdownOptions = queryOptions({
-	queryKey: ["dashboard","breakdown"],
+	queryKey: ["dashboard", "breakdown"],
 	queryFn: () => getDashboardBreakdown(),
 });
 
 const analyticsOptions = queryOptions({
-	queryKey: ["dashboard","analytics"],
+	queryKey: ["dashboard", "analytics"],
 	queryFn: () => getAnalyticsDetails(),
 });
 

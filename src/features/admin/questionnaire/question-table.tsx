@@ -1,5 +1,5 @@
-import { useForm } from"@tanstack/react-form";
-import { useMutation, useQueryClient } from"@tanstack/react-query";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
 	flexRender,
 	getCoreRowModel,
@@ -7,33 +7,33 @@ import {
 	getPaginationRowModel,
 	getSortedRowModel,
 	useReactTable,
-} from"@tanstack/react-table";
-import { Plus, Trash } from"lucide-react";
-import { toast } from"sonner";
+} from "@tanstack/react-table";
+import { Plus, Trash } from "lucide-react";
+import { toast } from "sonner";
 import {
 	createQuestion,
 	deleteQuestions,
 	updateQuestion,
-} from"@/apis/admin/questionnaires";
+} from "@/apis/admin/questionnaires";
 import {
 	DataTableBulkActions,
 	DataTablePagination,
 	DataTableToolbar,
-} from"@/components/data-table";
-import { Button } from"@/components/ui/button";
+} from "@/components/data-table";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-} from"@/components/ui/dialog";
-import { Input } from"@/components/ui/input";
-import { Label } from"@/components/ui/label";
-import { createQuestionSchema } from"@/libs/schemas/questionnaire";
-import { getQuestionColumns } from"./components/columns";
-import { useQuestionTableState } from"./hooks/use-question-table-state";
-import type { Question } from"./questionnaires.types";
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { createQuestionSchema } from "@/libs/schemas/questionnaire";
+import { getQuestionColumns } from "./components/columns";
+import { useQuestionTableState } from "./hooks/use-question-table-state";
+import type { Question } from "./questionnaires.types";
 
 const questionFormSchema = createQuestionSchema.omit({
 	questionnaireId: true,
@@ -52,7 +52,7 @@ function CreateQuestionForm({
 		mutationFn: createQuestion,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["admin","questions", questionnaireId],
+				queryKey: ["admin", "questions", questionnaireId],
 			});
 			onSuccess();
 
@@ -66,7 +66,7 @@ function CreateQuestionForm({
 
 	const form = useForm({
 		defaultValues: {
-			questionText:"",
+			questionText: "",
 			orderNumber: 0,
 		},
 		validators: {
@@ -118,7 +118,7 @@ function CreateQuestionForm({
 						/>
 						{field.state.meta.errors ? (
 							<p className="text-sm text-destructive">
-								{field.state.meta.errors.join(",")}
+								{field.state.meta.errors.join(", ")}
 							</p>
 						) : null}
 					</div>
@@ -137,7 +137,7 @@ function CreateQuestionForm({
 						/>
 						{field.state.meta.errors ? (
 							<p className="text-sm text-destructive">
-								{field.state.meta.errors.join(",")}
+								{field.state.meta.errors.join(", ")}
 							</p>
 						) : null}
 					</div>
@@ -170,7 +170,7 @@ function EditQuestionForm({
 		mutationFn: updateQuestion,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["admin","questions", questionnaireId],
+				queryKey: ["admin", "questions", questionnaireId],
 			});
 			onSuccess();
 
@@ -236,7 +236,7 @@ function EditQuestionForm({
 						/>
 						{field.state.meta.errors ? (
 							<p className="text-sm text-destructive">
-								{field.state.meta.errors.join(",")}
+								{field.state.meta.errors.join(", ")}
 							</p>
 						) : null}
 					</div>
@@ -255,7 +255,7 @@ function EditQuestionForm({
 						/>
 						{field.state.meta.errors ? (
 							<p className="text-sm text-destructive">
-								{field.state.meta.errors.join(",")}
+								{field.state.meta.errors.join(", ")}
 							</p>
 						) : null}
 					</div>
@@ -299,7 +299,7 @@ export function QuestionTable({
 		mutationFn: deleteQuestions,
 		onSuccess: () => {
 			queryClient.invalidateQueries({
-				queryKey: ["admin","questions", questionnaireId],
+				queryKey: ["admin", "questions", questionnaireId],
 			});
 			setRowSelection({});
 
@@ -364,7 +364,7 @@ export function QuestionTable({
 			</div>
 
 			<DataTableToolbar table={table} searchKey="questionText" />
-			<div className="border overflow-auto">
+			<div className="rounded-md border overflow-auto">
 				<table className="w-full caption-bottom text-sm">
 					<thead className="[&_tr]:border-b">
 						{table.getHeaderGroups().map((headerGroup) => (

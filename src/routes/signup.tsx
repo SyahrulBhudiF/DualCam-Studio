@@ -1,9 +1,9 @@
-import { useForm } from"@tanstack/react-form";
-import { useMutation, useQueryClient } from"@tanstack/react-query";
-import { createFileRoute, useRouter } from"@tanstack/react-router";
-import { signupFn } from"@/apis/user";
-import { Auth } from"@/components/Auth";
-import { getValidationErrorMessage } from"@/utils/utils";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { signupFn } from "@/apis/user";
+import { Auth } from "@/components/Auth";
+import { getValidationErrorMessage } from "@/utils/utils";
 
 export const Route = createFileRoute("/signup")({
 	component: SignupComp,
@@ -18,7 +18,7 @@ function SignupComp() {
 			if (!data?.error) {
 				await queryClient.invalidateQueries({ queryKey: ["user"] });
 				await router.invalidate();
-				router.navigate({ to:"/admin/dashboard" });
+				router.navigate({ to: "/admin/dashboard" });
 			}
 		},
 	});
@@ -31,14 +31,14 @@ function SignupComp() {
 	const displayError = validationError || handlerError;
 	const form = useForm({
 		defaultValues: {
-			email:"",
-			password:"",
+			email: "",
+			password: "",
 		},
 		onSubmit: async ({ value }) => {
 			signupMutation.mutate({
 				data: {
 					...value,
-					redirectUrl:"/admin/dashboard",
+					redirectUrl: "/admin/dashboard",
 				},
 			});
 		},
@@ -58,13 +58,13 @@ function SignupComp() {
 					onSubmit={() => form.handleSubmit()}
 					emailField={{
 						value: values.email,
-						onBlur: () => form.validateField("email","blur"),
+						onBlur: () => form.validateField("email", "blur"),
 						onChange: (value) => form.setFieldValue("email", value),
 						errors: [],
 					}}
 					passwordField={{
 						value: values.password,
-						onBlur: () => form.validateField("password","blur"),
+						onBlur: () => form.validateField("password", "blur"),
 						onChange: (value) => form.setFieldValue("password", value),
 						errors: [],
 					}}

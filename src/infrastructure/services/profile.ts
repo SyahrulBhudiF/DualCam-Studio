@@ -1,11 +1,12 @@
-import { eq, isNotNull } from"drizzle-orm";
-import { Context, Effect, Layer } from"effect";
-import type { NewProfile, Profile } from"../db";
-import { profiles } from"../db";
-import { DatabaseError, ProfileNotFoundError } from"../errors";
-import { DB } from"../layers/database";
+import { eq, isNotNull } from "drizzle-orm";
+import { Context, Effect, Layer } from "effect";
+import type { NewProfile, Profile } from "../db";
+import { profiles } from "../db";
+import { DatabaseError, ProfileNotFoundError } from "../errors";
+import { DB } from "../layers/database";
 
-export class ProfileService extends Context.Service<ProfileService>()("ProfileService",
+export class ProfileService extends Context.Service<ProfileService>()(
+	"ProfileService",
 	{
 		make: Effect.gen(function* () {
 			const db = yield* DB.asEffect();
@@ -21,7 +22,7 @@ export class ProfileService extends Context.Service<ProfileService>()("ProfileSe
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to fetch profile",
+									message: "Failed to fetch profile",
 									cause: e,
 								}),
 						),
@@ -43,7 +44,7 @@ export class ProfileService extends Context.Service<ProfileService>()("ProfileSe
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to fetch profile by email",
+									message: "Failed to fetch profile by email",
 									cause: e,
 								}),
 						),
@@ -52,7 +53,7 @@ export class ProfileService extends Context.Service<ProfileService>()("ProfileSe
 			});
 
 			const create = Effect.fn("ProfileService.create")(function* (
-				data: Omit<NewProfile,"id" |"createdAt">,
+				data: Omit<NewProfile, "id" | "createdAt">,
 			) {
 				const [result] = yield* db
 					.insert(profiles)
@@ -62,7 +63,7 @@ export class ProfileService extends Context.Service<ProfileService>()("ProfileSe
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to create profile",
+									message: "Failed to create profile",
 									cause: e,
 								}),
 						),
@@ -73,7 +74,7 @@ export class ProfileService extends Context.Service<ProfileService>()("ProfileSe
 			const upsertByEmail = Effect.fn("ProfileService.upsertByEmail")(
 				function* (
 					email: string,
-					data: Omit<NewProfile,"id" |"createdAt" |"email">,
+					data: Omit<NewProfile, "id" | "createdAt" | "email">,
 				) {
 					const existing = yield* getByEmail(email);
 
@@ -87,7 +88,7 @@ export class ProfileService extends Context.Service<ProfileService>()("ProfileSe
 								Effect.mapError(
 									(e) =>
 										new DatabaseError({
-											message:"Failed to upsert profile",
+											message: "Failed to upsert profile",
 											cause: e,
 										}),
 								),
@@ -107,7 +108,7 @@ export class ProfileService extends Context.Service<ProfileService>()("ProfileSe
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to fetch profiles",
+									message: "Failed to fetch profiles",
 									cause: e,
 								}),
 						),
@@ -125,7 +126,7 @@ export class ProfileService extends Context.Service<ProfileService>()("ProfileSe
 							Effect.mapError(
 								(e) =>
 									new DatabaseError({
-										message:"Failed to fetch unique classes",
+										message: "Failed to fetch unique classes",
 										cause: e,
 									}),
 							),

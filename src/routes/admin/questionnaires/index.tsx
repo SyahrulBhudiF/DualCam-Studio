@@ -1,10 +1,10 @@
-import { queryOptions, useQuery } from"@tanstack/react-query";
-import { createFileRoute } from"@tanstack/react-router";
-import { getQuestionnaires } from"@/apis/admin/questionnaires";
-import { QuestionnaireList } from"@/features/admin/questionnaire/questionnaire-list";
+import { queryOptions, useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { getQuestionnaires } from "@/apis/admin/questionnaires";
+import { QuestionnaireList } from "@/features/admin/questionnaire/questionnaire-list";
 
 const questionnairesQueryOptions = queryOptions({
-	queryKey: ["admin","questionnaires"],
+	queryKey: ["admin", "questionnaires"],
 	queryFn: () => getQuestionnaires(),
 });
 

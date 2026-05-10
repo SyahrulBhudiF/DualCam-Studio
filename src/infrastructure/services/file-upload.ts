@@ -1,12 +1,13 @@
-import * as path from"node:path";
-import { Context, Effect, FileSystem, Layer } from"effect";
-import { FileError } from"../errors/file";
+import * as path from "node:path";
+import { Context, Effect, FileSystem, Layer } from "effect";
+import { FileError } from "../errors/file";
 
-export class FileUploadService extends Context.Service<FileUploadService>()("FileUploadService",
+export class FileUploadService extends Context.Service<FileUploadService>()(
+	"FileUploadService",
 	{
 		make: Effect.gen(function* () {
 			const fs = yield* FileSystem.FileSystem;
-			const uploadRoot = path.join(process.cwd(),"video_uploads");
+			const uploadRoot = path.join(process.cwd(), "video_uploads");
 
 			const ensureDirectory = Effect.fn("FileUploadService.ensureDirectory")(
 				function* (dirPath: string) {
@@ -65,7 +66,7 @@ export class FileUploadService extends Context.Service<FileUploadService>()("Fil
 					const base64Data = data.fileBase64.includes(",")
 						? data.fileBase64.split(",")[1]
 						: data.fileBase64;
-					const buffer = Buffer.from(base64Data,"base64");
+					const buffer = Buffer.from(base64Data, "base64");
 
 					yield* saveFile(filePath, buffer);
 

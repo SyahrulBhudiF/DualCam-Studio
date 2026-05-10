@@ -6,9 +6,9 @@ import {
 	Play,
 	Volume2,
 	VolumeX,
-} from"lucide-react";
-import { useRef, useState } from"react";
-import { Button } from"@/components/ui/button";
+} from "lucide-react";
+import { useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 type SingleVideoPlayerProps = {
 	src: string;
@@ -19,7 +19,7 @@ type SingleVideoPlayerProps = {
  * Check if the video format requires download (not supported by browser)
  */
 function isDownloadOnlyFormat(src: string): boolean {
-	const downloadOnlyExtensions = [".avi",".mov",".wmv",".flv",".mkv"];
+	const downloadOnlyExtensions = [".avi", ".mov", ".wmv", ".flv", ".mkv"];
 	const lowerSrc = src.toLowerCase();
 	return downloadOnlyExtensions.some((ext) => lowerSrc.endsWith(ext));
 }
@@ -29,7 +29,7 @@ function isDownloadOnlyFormat(src: string): boolean {
  */
 function getFilename(src: string): string {
 	const parts = src.split("/");
-	return parts[parts.length - 1] ||"video";
+	return parts[parts.length - 1] || "video";
 }
 
 /**
@@ -37,7 +37,7 @@ function getFilename(src: string): string {
  */
 function getExtension(src: string): string {
 	const parts = src.split(".");
-	return parts[parts.length - 1]?.toUpperCase() ||"VIDEO";
+	return parts[parts.length - 1]?.toUpperCase() || "VIDEO";
 }
 
 export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
@@ -88,7 +88,7 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 	if (isDownloadOnly) {
 		return (
 			<div className="space-y-3">
-				<div className="relative overflow-hidden bg-muted aspect-video flex flex-col items-center justify-center p-4">
+				<div className="relative rounded-lg overflow-hidden bg-muted aspect-video flex flex-col items-center justify-center p-4">
 					<FileVideo className="size-12 sm:h-16 sm:w-16 text-muted-foreground mb-3" />
 					<p className="text-sm sm:text-base font-medium text-center mb-1">
 						{getExtension(src)} Video (Raw Dataset)
@@ -114,7 +114,7 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 
 	return (
 		<div className="space-y-3">
-			<div className="relative overflow-hidden bg-foreground aspect-video">
+			<div className="relative rounded-lg overflow-hidden bg-foreground aspect-video">
 				<video
 					ref={videoRef}
 					src={src || undefined}

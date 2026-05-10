@@ -1,12 +1,13 @@
-import { eq, lt, sql } from"drizzle-orm";
-import { Context, Effect, Layer } from"effect";
-import { RateLimitConfig } from"../config";
-import { rateLimits } from"../db";
-import { DatabaseError } from"../errors";
-import { RateLimitError } from"../errors/auth";
-import { DB } from"../layers/database";
+import { eq, lt, sql } from "drizzle-orm";
+import { Context, Effect, Layer } from "effect";
+import { RateLimitConfig } from "../config";
+import { rateLimits } from "../db";
+import { DatabaseError } from "../errors";
+import { RateLimitError } from "../errors/auth";
+import { DB } from "../layers/database";
 
-export class RateLimitService extends Context.Service<RateLimitService>()("RateLimitService",
+export class RateLimitService extends Context.Service<RateLimitService>()(
+	"RateLimitService",
 	{
 		make: Effect.gen(function* () {
 			const db = yield* DB.asEffect();
@@ -40,7 +41,7 @@ export class RateLimitService extends Context.Service<RateLimitService>()("RateL
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to update rate limit",
+									message: "Failed to update rate limit",
 									cause: e,
 								}),
 						),
@@ -55,7 +56,7 @@ export class RateLimitService extends Context.Service<RateLimitService>()("RateL
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to fetch rate limit",
+									message: "Failed to fetch rate limit",
 									cause: e,
 								}),
 						),
@@ -80,7 +81,7 @@ export class RateLimitService extends Context.Service<RateLimitService>()("RateL
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to cleanup rate limits",
+									message: "Failed to cleanup rate limits",
 									cause: e,
 								}),
 						),

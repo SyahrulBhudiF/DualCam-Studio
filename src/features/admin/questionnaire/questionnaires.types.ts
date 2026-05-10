@@ -39,7 +39,7 @@ type CreateQuestionInput = {
 };
 
 type UpdateQuestionInput = Partial<
-	Omit<CreateQuestionInput,"questionnaireId">
+	Omit<CreateQuestionInput, "questionnaireId">
 > & {
 	id: string;
 };
@@ -50,7 +50,7 @@ type CreateAnswerInput = {
 	score: number;
 };
 
-type UpdateAnswerInput = Partial<Omit<CreateAnswerInput,"questionId">> & {
+type UpdateAnswerInput = Partial<Omit<CreateAnswerInput, "questionId">> & {
 	id: string;
 };
 

@@ -1,28 +1,28 @@
-import { Link } from"@tanstack/react-router";
-import { ArrowLeft } from"lucide-react";
-import { useMemo } from"react";
-import { Main } from"@/components/layout/main";
-import { Button } from"@/components/ui/button";
-import { ProfileCard } from"./components/profile-card";
-import { ResponseAnswers } from"./components/response-answers";
-import { ExportResponseDetailButton } from"./components/response-export";
-import { SegmentedVideoPlayer } from"./components/segmented-video-player";
-import { VideoPlayer } from"./components/video-player";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { useMemo } from "react";
+import { Main } from "@/components/layout/main";
+import { Button } from "@/components/ui/button";
+import { ProfileCard } from "./components/profile-card";
+import { ResponseAnswers } from "./components/response-answers";
+import { ExportResponseDetailButton } from "./components/response-export";
+import { SegmentedVideoPlayer } from "./components/segmented-video-player";
+import { VideoPlayer } from "./components/video-player";
 import type {
 	ResponseDetail as ResponseDetailType,
 	SegmentedVideoPath,
 	VideoData,
-} from"./responses.types";
+} from "./responses.types";
 
 /**
  * Convert a video path from storage format to API URL
- * e.g."/video_uploads/folder/file.webm" ->"/api/video/folder/file.webm"
- * or"video_uploads/folder/file.webm" ->"/api/video/folder/file.webm"
+ * e.g. "/video_uploads/folder/file.webm" -> "/api/video/folder/file.webm"
+ * or "video_uploads/folder/file.webm" -> "/api/video/folder/file.webm"
  */
 function toVideoApiUrl(videoPath: string | null): string | null {
-	if (!videoPath || videoPath ==="null") return null;
+	if (!videoPath || videoPath === "null") return null;
 
-	// Remove leading slash and"video_uploads/" prefix if present
+	// Remove leading slash and "video_uploads/" prefix if present
 	let cleanPath = videoPath;
 	if (cleanPath.startsWith("/")) {
 		cleanPath = cleanPath.slice(1);
@@ -44,14 +44,14 @@ function buildFallbackSegmentedPath(
 	questionId: string,
 	userName: string | null,
 ): { main: string | null; secondary: string | null } {
-	// Clean the folder name - remove"segmented/" prefix if present for building path
+	// Clean the folder name - remove "segmented/" prefix if present for building path
 	let basePath = folderName;
 	if (!basePath.startsWith("segmented/")) {
 		basePath = `segmented/${basePath}`;
 	}
 
 	const subFolder = `q${questionNumber}`;
-	const safeName = (userName ||"Anon").replace(/[^a-z0-9]/gi,"_");
+	const safeName = (userName || "Anon").replace(/[^a-z0-9]/gi, "_");
 
 	// Build paths based on naming convention from segmented-upload.ts
 	const mainPath = `/api/video/${basePath}/${subFolder}/${safeName}_${questionNumber}_${questionId}_main.webm`;
@@ -65,11 +65,11 @@ function buildFallbackSegmentedPath(
 
 /**
  * Check if the video_path indicates segmented mode
- * Segmented mode: video_path is just a folder name (e.g."segmented/ahmad_123")
+ * Segmented mode: video_path is just a folder name (e.g. "segmented/ahmad_123")
  * Full mode: video_path is JSON with main/secondary paths
  */
 function isSegmentedMode(videoPathString: string | null): boolean {
-	if (!videoPathString || videoPathString ==="null") return false;
+	if (!videoPathString || videoPathString === "null") return false;
 
 	// Try to parse as JSON - if it's valid JSON with main/secondary, it's full mode
 	try {
@@ -96,19 +96,19 @@ function parseVideoData(
 	details: ResponseDetailType["details"],
 	profileName: string | null,
 ): VideoData {
-	if (!videoPathString || videoPathString ==="null") {
-		return { mode:"full", fullVideo: undefined };
+	if (!videoPathString || videoPathString === "null") {
+		return { mode: "full", fullVideo: undefined };
 	}
 
 	// Check if any details have video_segment_path filled
 	const hasSegmentedVideosInDb = details.some(
-		(d) => d.videoSegmentPath && d.videoSegmentPath !=="null",
+		(d) => d.videoSegmentPath && d.videoSegmentPath !== "null",
 	);
 
 	// If video_segment_path exists in DB, use it
 	if (hasSegmentedVideosInDb) {
 		const segmentedVideos: SegmentedVideoPath[] = details
-			.filter((d) => d.videoSegmentPath && d.videoSegmentPath !=="null")
+			.filter((d) => d.videoSegmentPath && d.videoSegmentPath !== "null")
 			.sort((a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0))
 			.map((detail, index) => {
 				let main: string | null = null;
@@ -136,7 +136,7 @@ function parseVideoData(
 			});
 
 		return {
-			mode:"segmented",
+			mode: "segmented",
 			segmentedVideos,
 		};
 	}
@@ -164,7 +164,7 @@ function parseVideoData(
 			});
 
 		return {
-			mode:"segmented",
+			mode: "segmented",
 			segmentedVideos,
 		};
 	}
@@ -174,7 +174,7 @@ function parseVideoData(
 		const parsed = JSON.parse(videoPathString);
 
 		return {
-			mode:"full",
+			mode: "full",
 			fullVideo: {
 				main: toVideoApiUrl(parsed.main ?? null),
 				secondary: toVideoApiUrl(parsed.secondary ?? null),
@@ -182,7 +182,7 @@ function parseVideoData(
 		};
 	} catch {
 		return {
-			mode:"full",
+			mode: "full",
 			fullVideo: {
 				main: toVideoApiUrl(videoPathString),
 				secondary: null,
@@ -230,7 +230,7 @@ export function ResponseDetail({ response }: ResponseDetailProps) {
 					createdAt={response.createdAt}
 					questionnaireTitle={response.questionnaire?.title ?? null}
 				/>
-				{videoData.mode ==="full" ? (
+				{videoData.mode === "full" ? (
 					<VideoPlayer videoPath={videoData.fullVideo ?? null} />
 				) : (
 					<SegmentedVideoPlayer

@@ -1,20 +1,20 @@
-import { useForm } from"@tanstack/react-form";
-import { useMutation, useQueryClient } from"@tanstack/react-query";
-import { useLoaderData, useNavigate } from"@tanstack/react-router";
-import { Loader2 } from"lucide-react";
-import { useEffect, useState } from"react";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLoaderData, useNavigate } from "@tanstack/react-router";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
 	submitSegmentedResponse,
 	uploadVideoChunk,
-} from"@/apis/segmented-upload";
-import { CameraControlPanel } from"@/components/CameraControlPanel";
-import { Button } from"@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
-import { Label } from"@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from"@/components/ui/radio-group";
-import { useCameraSetup } from"@/libs/hooks/use-camera-setup";
-import { useQuestionnaireStore } from"@/libs/store/QuestionnaireStore";
-import { useUserStore } from"@/libs/store/UserStore";
+} from "@/apis/segmented-upload";
+import { CameraControlPanel } from "@/components/CameraControlPanel";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useCameraSetup } from "@/libs/hooks/use-camera-setup";
+import { useQuestionnaireStore } from "@/libs/store/QuestionnaireStore";
+import { useUserStore } from "@/libs/store/UserStore";
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
 	return new Promise((resolve) => {
@@ -31,7 +31,7 @@ interface Answer {
 
 export function SegmentedPage() {
 	const { questionnaire, questions } = useLoaderData({
-		from:"/questionnaire/segmented/",
+		from: "/questionnaire/segmented/",
 	});
 	const user = useUserStore((s) => s.user);
 	const store = useQuestionnaireStore();
@@ -67,16 +67,16 @@ export function SegmentedPage() {
 	const submitMutation = useMutation({
 		mutationFn: submitSegmentedResponse,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["admin","responses"] });
+			queryClient.invalidateQueries({ queryKey: ["admin", "responses"] });
 			queryClient.invalidateQueries({ queryKey: ["dashboard"] });
 			store.reset();
-			navigate({ to:"/success" });
+			navigate({ to: "/success" });
 		},
 	});
 
 	const form = useForm({
 		defaultValues: {
-			answerId:"",
+			answerId: "",
 		},
 		onSubmit: async ({ value }) => {
 			setIsProcessing(true);
@@ -85,12 +85,12 @@ export function SegmentedPage() {
 			realSenseRef.current?.stopRecording();
 			const { blobMain } = await stopRecording();
 
-			const base64Main = blobMain.size > 0 ? await blobToBase64(blobMain) :"";
+			const base64Main = blobMain.size > 0 ? await blobToBase64(blobMain) : "";
 
 			const subFolder = `q${currentIndex + 1}`;
-			const mainFileName = `/${subFolder}/${user?.name ??"Anon"}_${currentIndex + 1}_${currentQ.id}_main.webm`;
+			const mainFileName = `/${subFolder}/${user?.name ?? "Anon"}_${currentIndex + 1}_${currentQ.id}_main.webm`;
 
-			let uploadPath ="";
+			let uploadPath = "";
 			if (base64Main) {
 				const uploadRes = await uploadMutation.mutateAsync({
 					data: {
@@ -106,7 +106,7 @@ export function SegmentedPage() {
 				questionId: currentQ.id,
 				answerId: value.answerId,
 				videoMainPath: uploadPath,
-				videoSecPath: `/video_uploads/${store.folderName}/${subFolder}/${user?.name ??"Anon"}_${currentIndex + 1}_${currentQ.id}_sec.avi`,
+				videoSecPath: `/video_uploads/${store.folderName}/${subFolder}/${user?.name ?? "Anon"}_${currentIndex + 1}_${currentQ.id}_sec.avi`,
 			});
 
 			form.reset();
@@ -116,13 +116,13 @@ export function SegmentedPage() {
 				setIsProcessing(false);
 			} else {
 				const finalData = {
-					userEmail: user?.email ||"anon@example.com",
-					userName: user?.name ||"Anon",
-					userClass: user?.class ||"-",
-					userGender: user?.gender ||"-",
+					userEmail: user?.email || "anon@example.com",
+					userName: user?.name || "Anon",
+					userClass: user?.class || "-",
+					userGender: user?.gender || "-",
 					userAge: user?.age || 0,
-					userNim: user?.nim ||"-",
-					userSemester: user?.semester ||"-",
+					userNim: user?.nim || "-",
+					userSemester: user?.semester || "-",
 					questionnaireId: questionnaire.id,
 					folderName: store.folderName,
 					answers: Object.values(useQuestionnaireStore.getState().answers),
@@ -134,7 +134,7 @@ export function SegmentedPage() {
 
 	useEffect(() => {
 		if (user?.name && !store.folderName) {
-			const safeName = user.name.replace(/[^a-z0-9]/gi,"_").toLowerCase();
+			const safeName = user.name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
 			store.setFolderName(`segmented/${safeName}_${Date.now()}`);
 		}
 	}, [user, store.folderName, store.setFolderName]);
@@ -148,7 +148,7 @@ export function SegmentedPage() {
 			const secFileName = `${subFolder}/answer_${currentIndex + 1}_${currentQ.id}_sec.avi`;
 
 			startRecording({
-				mode:"SEGMENT",
+				mode: "SEGMENT",
 				folderName: store.folderName,
 				fileName: secFileName,
 			});
@@ -169,8 +169,8 @@ export function SegmentedPage() {
 	return (
 		<div className="min-h-screen bg-muted/40 p-4 pb-48">
 			{/* Loading overlay — sits on top while camera isn't ready yet.
-			 The CameraControlPanel below is always mounted so its video
-			 element never gets replaced and srcObject assignment persists. */}
+			    The CameraControlPanel below is always mounted so its video
+			    element never gets replaced and srcObject assignment persists. */}
 			{!allReady && (
 				<div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-muted/80 gap-4">
 					<div className="animate-spin">
@@ -232,10 +232,10 @@ export function SegmentedPage() {
 								disabled={!answerId || !!isSubmitting || isProcessing}
 							>
 								{isSubmitting || isProcessing
-									?"Saving & Uploading…"
+									? "Saving & Uploading…"
 									: currentIndex === questions.length - 1
-										?"Finish"
-										:"Next Question"}
+										? "Finish"
+										: "Next Question"}
 							</Button>
 						)}
 					</form.Subscribe>

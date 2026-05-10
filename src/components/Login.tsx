@@ -1,11 +1,11 @@
-import { useForm } from"@tanstack/react-form";
-import { useMutation, useQueryClient } from"@tanstack/react-query";
-import { useRouter } from"@tanstack/react-router";
-import { toast } from"sonner";
-import { loginFn, signupFn } from"@/apis/user";
-import { getValidationErrorMessage } from"@/utils/utils";
-import { Auth } from"./Auth";
-import { Button } from"./ui/button";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { loginFn, signupFn } from "@/apis/user";
+import { getValidationErrorMessage } from "@/utils/utils";
+import { Auth } from "./Auth";
+import { Button } from "./ui/button";
 
 export function Login() {
 	const router = useRouter();
@@ -22,7 +22,7 @@ export function Login() {
 			toast.success("Logged in");
 			await queryClient.invalidateQueries({ queryKey: ["user"] });
 			await router.invalidate();
-			router.navigate({ to:"/admin/dashboard" });
+			router.navigate({ to: "/admin/dashboard" });
 		},
 	});
 
@@ -37,14 +37,14 @@ export function Login() {
 			toast.success("Account created");
 			await queryClient.invalidateQueries({ queryKey: ["user"] });
 			await router.invalidate();
-			router.navigate({ to:"/admin/dashboard" });
+			router.navigate({ to: "/admin/dashboard" });
 		},
 	});
 
 	const form = useForm({
 		defaultValues: {
-			email:"",
-			password:"",
+			email: "",
+			password: "",
 		},
 		onSubmit: async ({ value }) => {
 			loginMutation.mutate({ data: value });
@@ -72,13 +72,13 @@ export function Login() {
 					onSubmit={() => form.handleSubmit()}
 					emailField={{
 						value: values.email,
-						onBlur: () => form.validateField("email","blur"),
+						onBlur: () => form.validateField("email", "blur"),
 						onChange: (value) => form.setFieldValue("email", value),
 						errors: [],
 					}}
 					passwordField={{
 						value: values.password,
-						onBlur: () => form.validateField("password","blur"),
+						onBlur: () => form.validateField("password", "blur"),
 						onChange: (value) => form.setFieldValue("password", value),
 						errors: [],
 					}}
@@ -88,8 +88,8 @@ export function Login() {
 								<p className="text-destructive text-sm">{displayError}</p>
 							)}
 
-							{(handlerError ==="Invalid login credentials" ||
-								handlerError ==="Invalid credentials") && (
+							{(handlerError === "Invalid login credentials" ||
+								handlerError === "Invalid credentials") && (
 								<div>
 									<Button
 										variant="link"
@@ -99,7 +99,7 @@ export function Login() {
 												data: {
 													email: form.getFieldValue("email"),
 													password: form.getFieldValue("password"),
-													redirectUrl:"/admin/dashboard",
+													redirectUrl: "/admin/dashboard",
 												},
 											});
 										}}

@@ -4,7 +4,7 @@ import {
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from"@/components/ui/card";
+} from "@/components/ui/card";
 
 
 type AnalysisPoint = {
@@ -31,7 +31,7 @@ export function DashboardAnalysisChart({
 	data,
 	maxValue,
 	isLoading = false,
-	emptyMessage ="No data available",
+	emptyMessage = "No data available",
 }: DashboardAnalysisChartProps) {
 	const safeData = (data ?? []).map((d) => ({
 		label: d.label,
@@ -74,9 +74,9 @@ export function DashboardAnalysisChart({
 											{formatValue(item.value)}
 										</span>
 									</div>
-									<div className="h-2.5 overflow-hidden bg-muted">
+									<div className="h-2.5 overflow-hidden rounded-full bg-muted">
 										<div
-											className="h-full bg-primary transition-[width] duration-500 ease-out"
+											className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
 											style={{ width: `${percentage}%` }}
 										/>
 									</div>

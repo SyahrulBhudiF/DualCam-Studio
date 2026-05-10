@@ -1,4 +1,4 @@
-import * as React from"react";
+import * as React from "react";
 
 export type ChartConfig = {
 	[k in string]: {
@@ -6,7 +6,7 @@ export type ChartConfig = {
 		icon?: React.ComponentType;
 	} & (
 		| { color?: string; theme?: never }
-		| { color?: never; theme: Record<"light" |"dark", string> }
+		| { color?: never; theme: Record<"light" | "dark", string> }
 	);
 };
 

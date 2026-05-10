@@ -1,17 +1,17 @@
-import { useQuery } from"@tanstack/react-query";
-import { Link } from"@tanstack/react-router";
-import { Eye, Video } from"lucide-react";
-import { getResponses } from"@/apis/admin/responses";
-import { ClientDate } from"@/components/client-date";
-import { Badge } from"@/components/ui/badge";
-import { Button } from"@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { Eye, Video } from "lucide-react";
+import { getResponses } from "@/apis/admin/responses";
+import { ClientDate } from "@/components/client-date";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from"@/components/ui/card";
+} from "@/components/ui/card";
 import {
 	Table,
 	TableBody,
@@ -19,11 +19,11 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
-} from"@/components/ui/table";
+} from "@/components/ui/table";
 
 export function DashboardResponses() {
 	const responsesQuery = useQuery({
-		queryKey: ["admin","responses"],
+		queryKey: ["admin", "responses"],
 		queryFn: () => getResponses(),
 	});
 
@@ -73,21 +73,21 @@ export function DashboardResponses() {
 							{recentResponses.map((response) => (
 								<TableRow key={response.id}>
 									<TableCell className="font-medium">
-										{response.profile?.name ??"-"}
+										{response.profile?.name ?? "-"}
 									</TableCell>
 									<TableCell>
 										<Badge variant="outline">
-											{response.profile?.class ??"-"}
+											{response.profile?.class ?? "-"}
 										</Badge>
 									</TableCell>
 									<TableCell className="max-w-[150px] truncate">
-										{response.questionnaireTitle ??"-"}
+										{response.questionnaireTitle ?? "-"}
 									</TableCell>
 									<TableCell>
 										<Badge variant="secondary">{response.totalScore}</Badge>
 									</TableCell>
 									<TableCell>
-										{response.videoPath && response.videoPath !=="null" ? (
+										{response.videoPath && response.videoPath !== "null" ? (
 											<Badge variant="default" className="gap-1">
 												<Video className="size-3" />
 												Yes

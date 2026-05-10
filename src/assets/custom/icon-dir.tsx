@@ -1,6 +1,6 @@
-import type { SVGProps } from"react";
-import type { Direction } from"@/libs/context/direction-provider";
-import { cn } from"@/utils/utils";
+import type { SVGProps } from "react";
+import type { Direction } from "@/libs/context/direction-provider";
+import { cn } from "@/utils/utils";
 
 type IconDirProps = SVGProps<SVGSVGElement> & {
 	dir: Direction;
@@ -12,7 +12,7 @@ export function IconDir({ dir, className, ...props }: IconDirProps) {
 			data-name={`icon-dir-${dir}`}
 			xmlns="http://www.w3.org/2000/svg"
 			viewBox="0 0 79.86 51.14"
-			className={cn(dir ==="rtl" &&"rotate-y-180", className)}
+			className={cn(dir === "rtl" && "rotate-y-180", className)}
 			{...props}
 		>
 			<title>{`icon-dir-${dir}`}</title>

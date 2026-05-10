@@ -4,10 +4,10 @@ import {
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from"@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from"@/components/ui/tabs";
-import type { VideoPath } from"../responses.types";
-import { SingleVideoPlayer } from"./single-video-player";
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { VideoPath } from "../responses.types";
+import { SingleVideoPlayer } from "./single-video-player";
 
 type VideoPlayerProps = {
 	videoPath: VideoPath | null;
@@ -24,7 +24,7 @@ export function VideoPlayer({ videoPath }: VideoPlayerProps) {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<div className="flex items-center justify-center h-48 bg-muted">
+					<div className="flex items-center justify-center h-48 bg-muted rounded-lg">
 						<span className="text-muted-foreground">No video recorded</span>
 					</div>
 				</CardContent>
@@ -32,8 +32,8 @@ export function VideoPlayer({ videoPath }: VideoPlayerProps) {
 		);
 	}
 
-	const hasMain = videoPath.main && videoPath.main !=="null";
-	const hasSecondary = videoPath.secondary && videoPath.secondary !=="null";
+	const hasMain = videoPath.main && videoPath.main !== "null";
+	const hasSecondary = videoPath.secondary && videoPath.secondary !== "null";
 
 	if (!hasMain && !hasSecondary) {
 		return (
@@ -45,7 +45,7 @@ export function VideoPlayer({ videoPath }: VideoPlayerProps) {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<div className="flex items-center justify-center h-48 bg-muted">
+					<div className="flex items-center justify-center h-48 bg-muted rounded-lg">
 						<span className="text-muted-foreground">No video recorded</span>
 					</div>
 				</CardContent>
@@ -53,8 +53,8 @@ export function VideoPlayer({ videoPath }: VideoPlayerProps) {
 		);
 	}
 
-	const mainSrc = videoPath.main ??"";
-	const secondarySrc = videoPath.secondary ??"";
+	const mainSrc = videoPath.main ?? "";
+	const secondarySrc = videoPath.secondary ?? "";
 
 	if (hasMain && !hasSecondary) {
 		return (

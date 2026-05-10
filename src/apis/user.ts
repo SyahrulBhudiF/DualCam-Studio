@@ -1,19 +1,19 @@
-import { redirect } from"@tanstack/react-router";
-import { createServerFn } from"@tanstack/react-start";
-import { getRequestIP } from"@tanstack/react-start/server";
-import { Effect, Exit, Result } from"effect";
-import { AuthService, RateLimitService, runEffectExit } from"@/infrastructure";
-import { LoginSchema, SignupSchema } from"@/infrastructure/schemas/auth";
-import { verifyCsrfOrigin } from"@/utils/csrf";
+import { redirect } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import { getRequestIP } from "@tanstack/react-start/server";
+import { Effect, Exit, Result } from "effect";
+import { AuthService, RateLimitService, runEffectExit } from "@/infrastructure";
+import { LoginSchema, SignupSchema } from "@/infrastructure/schemas/auth";
+import { verifyCsrfOrigin } from "@/utils/csrf";
 import {
 	clearSessionCookie,
 	extractErrorMessage,
 	getSessionToken,
 	setSessionCookie,
-} from"@/utils/session";
-import { inputValidator } from"../infrastructure/schemas/validator";
+} from "@/utils/session";
+import { inputValidator } from "../infrastructure/schemas/validator";
 
-export const fetchUser = createServerFn({ method:"GET" }).handler(async () => {
+export const fetchUser = createServerFn({ method: "GET" }).handler(async () => {
 	const exit = await runEffectExit(
 		Effect.gen(function* () {
 			const token = yield* getSessionToken;
@@ -41,7 +41,7 @@ export const fetchUser = createServerFn({ method:"GET" }).handler(async () => {
 	return exit.value;
 });
 
-export const loginFn = createServerFn({ method:"POST" })
+export const loginFn = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(LoginSchema))
 	.handler(async ({ data }) => {
 		const exit = await runEffectExit(
@@ -50,7 +50,7 @@ export const loginFn = createServerFn({ method:"POST" })
 				yield* verifyCsrfOrigin;
 
 				// Rate limiting by IP
-				const ip = getRequestIP() ??"unknown";
+				const ip = getRequestIP() ?? "unknown";
 				const rateLimiter = yield* RateLimitService.asEffect();
 				yield* rateLimiter.check(`login:${ip}`);
 
@@ -67,7 +67,7 @@ export const loginFn = createServerFn({ method:"POST" })
 		if (Exit.isFailure(exit)) {
 			return {
 				error: true,
-				message: extractErrorMessage(exit.cause,"Login failed"),
+				message: extractErrorMessage(exit.cause, "Login failed"),
 			};
 		}
 
@@ -92,11 +92,11 @@ export const logoutFn = createServerFn().handler(async () => {
 	);
 
 	throw redirect({
-		href:"/",
+		href: "/",
 	});
 });
 
-export const signupFn = createServerFn({ method:"POST" })
+export const signupFn = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(SignupSchema))
 	.handler(async ({ data }) => {
 		const exit = await runEffectExit(
@@ -105,7 +105,7 @@ export const signupFn = createServerFn({ method:"POST" })
 				yield* verifyCsrfOrigin;
 
 				// Rate limiting by IP
-				const ip = getRequestIP() ??"unknown";
+				const ip = getRequestIP() ?? "unknown";
 				const rateLimiter = yield* RateLimitService.asEffect();
 				yield* rateLimiter.check(`signup:${ip}`);
 
@@ -121,11 +121,11 @@ export const signupFn = createServerFn({ method:"POST" })
 		if (Exit.isFailure(exit)) {
 			return {
 				error: true,
-				message: extractErrorMessage(exit.cause,"Signup failed"),
+				message: extractErrorMessage(exit.cause, "Signup failed"),
 			};
 		}
 
 		throw redirect({
-			href: data.redirectUrl ||"/",
+			href: data.redirectUrl || "/",
 		});
 	});

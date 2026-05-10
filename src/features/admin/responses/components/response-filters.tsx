@@ -1,28 +1,28 @@
-import { useMutation, useQueryClient } from"@tanstack/react-query";
-import { format } from"date-fns";
-import { CalendarIcon, Filter, X } from"lucide-react";
-import { useCallback, useEffect, useMemo } from"react";
-import { getResponsesFiltered } from"@/apis/admin/responses";
-import { Button } from"@/components/ui/button";
-import { Calendar } from"@/components/ui/calendar";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { CalendarIcon, Filter, X } from "lucide-react";
+import { useCallback, useEffect, useMemo } from "react";
+import { getResponsesFiltered } from "@/apis/admin/responses";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
-} from"@/components/ui/popover";
+} from "@/components/ui/popover";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from"@/components/ui/select";
-import { cn } from"@/utils/utils";
-import type { FilterOptions, ResponseListItem } from"../responses.types";
+} from "@/components/ui/select";
+import { cn } from "@/utils/utils";
+import type { FilterOptions, ResponseListItem } from "../responses.types";
 import {
 	ALL_FILTER_VALUE,
 	useResponseFiltersState,
-} from"./hooks/use-response-filters-state";
+} from "./hooks/use-response-filters-state";
 
 type ResponseFiltersProps = {
 	filterOptions?: FilterOptions;
@@ -53,7 +53,7 @@ export function ResponseFilters({
 	const filterMutation = useMutation({
 		mutationFn: getResponsesFiltered,
 		onSuccess: (data) => {
-			queryClient.setQueryData(["admin","responses","filtered"], data);
+			queryClient.setQueryData(["admin", "responses", "filtered"], data);
 			onFilterApply(data);
 		},
 	});
@@ -105,20 +105,20 @@ export function ResponseFilters({
 	// Show loading skeleton if filterOptions not ready
 	if (!filterOptions) {
 		return (
-			<div className="flex flex-wrap items-center gap-3 p-4 border bg-muted/30 animate-pulse">
+			<div className="flex flex-wrap items-center gap-3 p-4 border rounded-lg bg-muted/30 animate-pulse">
 				<div className="flex items-center gap-2">
 					<Filter className="size-4 text-muted-foreground" />
 					<span className="text-sm font-medium">Filters:</span>
 				</div>
-				<div className="h-10 w-[200px] bg-muted" />
-				<div className="h-10 w-[150px] bg-muted" />
-				<div className="h-10 w-[150px] bg-muted" />
+				<div className="h-10 w-[200px] bg-muted rounded" />
+				<div className="h-10 w-[150px] bg-muted rounded" />
+				<div className="h-10 w-[150px] bg-muted rounded" />
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex flex-wrap items-center gap-3 p-4 border bg-muted/30">
+		<div className="flex flex-wrap items-center gap-3 p-4 border rounded-lg bg-muted/30">
 			<div className="flex items-center gap-2">
 				<Filter className="size-4 text-muted-foreground" />
 				<span className="text-sm font-medium">Filters:</span>
@@ -170,12 +170,13 @@ export function ResponseFilters({
 				<PopoverTrigger asChild>
 					<Button
 						variant="outline"
-						className={cn("w-[140px] justify-start text-left font-normal",
-							!startDate &&"text-muted-foreground",
+						className={cn(
+							"w-[140px] justify-start text-left font-normal",
+							!startDate && "text-muted-foreground",
 						)}
 					>
 						<CalendarIcon className="mr-2 size-4" />
-						{startDate ? format(startDate,"dd/MM/yyyy") :"Start Date"}
+						{startDate ? format(startDate, "dd/MM/yyyy") : "Start Date"}
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="w-auto p-0" align="start">
@@ -192,12 +193,13 @@ export function ResponseFilters({
 				<PopoverTrigger asChild>
 					<Button
 						variant="outline"
-						className={cn("w-[140px] justify-start text-left font-normal",
-							!endDate &&"text-muted-foreground",
+						className={cn(
+							"w-[140px] justify-start text-left font-normal",
+							!endDate && "text-muted-foreground",
 						)}
 					>
 						<CalendarIcon className="mr-2 size-4" />
-						{endDate ? format(endDate,"dd/MM/yyyy") :"End Date"}
+						{endDate ? format(endDate, "dd/MM/yyyy") : "End Date"}
 					</Button>
 				</PopoverTrigger>
 				<PopoverContent className="w-auto p-0" align="start">

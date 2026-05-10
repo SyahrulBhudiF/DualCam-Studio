@@ -1,7 +1,7 @@
 // Config
 
 // Runtime
-export { runEffect, runEffectExit } from"./runtime";
+export { runEffect, runEffectExit } from "./runtime";
 export {
 	AnswerService,
 	AuthService,
@@ -12,4 +12,4 @@ export {
 	QuestionService,
 	RateLimitService,
 	ResponseService,
-} from"./services";
+} from "./services";

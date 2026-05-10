@@ -1,15 +1,15 @@
-import type { Table } from"@tanstack/react-table";
-import { X } from"lucide-react";
-import { useRef } from"react";
-import { Badge } from"@/components/ui/badge";
-import { Button } from"@/components/ui/button";
-import { Separator } from"@/components/ui/separator";
+import type { Table } from "@tanstack/react-table";
+import { X } from "lucide-react";
+import { useRef } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
-} from"@/components/ui/tooltip";
-import { cn } from"@/utils/utils";
+} from "@/components/ui/tooltip";
+import { cn } from "@/utils/utils";
 
 type DataTableBulkActionsProps<TData> = {
 	table: Table<TData>;
@@ -23,7 +23,7 @@ type DataTableBulkActionsProps<TData> = {
  * @template TData The type of data in the table.
  * @param {object} props The component props.
  * @param {Table<TData>} props.table The react-table instance.
- * @param {string} props.entityName The name of the entity being acted upon (e.g.,"task","user").
+ * @param {string} props.entityName The name of the entity being acted upon (e.g., "task", "user").
  * @param {React.ReactNode} props.children The action buttons to be rendered inside the toolbar.
  * @returns {React.ReactNode | null} The rendered component or null if no rows are selected.
  */
@@ -37,8 +37,8 @@ export function DataTableBulkActions<TData>({
 	const toolbarRef = useRef<HTMLDivElement>(null);
 	const announcement =
 		selectedCount > 0
-			? `${selectedCount} ${entityName}${selectedCount > 1 ?"s" :""} selected. Bulk actions toolbar is available.`
-			:"";
+			? `${selectedCount} ${entityName}${selectedCount > 1 ? "s" : ""} selected. Bulk actions toolbar is available.`
+			: "";
 
 	const handleClearSelection = () => {
 		table.resetRowSelection();
@@ -53,28 +53,28 @@ export function DataTableBulkActions<TData>({
 		);
 
 		switch (event.key) {
-			case"ArrowRight": {
+			case "ArrowRight": {
 				event.preventDefault();
 				const nextIndex = (currentIndex + 1) % buttons.length;
 				buttons[nextIndex]?.focus();
 				break;
 			}
-			case"ArrowLeft": {
+			case "ArrowLeft": {
 				event.preventDefault();
 				const prevIndex =
 					currentIndex === 0 ? buttons.length - 1 : currentIndex - 1;
 				buttons[prevIndex]?.focus();
 				break;
 			}
-			case"Home":
+			case "Home":
 				event.preventDefault();
 				buttons[0]?.focus();
 				break;
-			case"End":
+			case "End":
 				event.preventDefault();
 				buttons[buttons.length - 1]?.focus();
 				break;
-			case"Escape": {
+			case "Escape": {
 				// Check if the Escape key came from a dropdown trigger or content
 				// We can't check dropdown state because Radix UI closes it before our handler runs
 				const target = event.target as HTMLElement;
@@ -82,8 +82,9 @@ export function DataTableBulkActions<TData>({
 
 				// Check if the event target or currently focused element is a dropdown trigger
 				const isFromDropdownTrigger =
-					target?.getAttribute("data-slot") ==="dropdown-menu-trigger" ||
-					activeElement?.getAttribute("data-slot") ==="dropdown-menu-trigger" ||
+					target?.getAttribute("data-slot") === "dropdown-menu-trigger" ||
+					activeElement?.getAttribute("data-slot") ===
+						"dropdown-menu-trigger" ||
 					target?.closest('[data-slot="dropdown-menu-trigger"]') ||
 					activeElement?.closest('[data-slot="dropdown-menu-trigger"]');
 
@@ -124,15 +125,22 @@ export function DataTableBulkActions<TData>({
 			<div
 				ref={toolbarRef}
 				role="toolbar"
-				aria-label={`Bulk actions for ${selectedCount} selected ${entityName}${selectedCount > 1 ?"s" :""}`}
+				aria-label={`Bulk actions for ${selectedCount} selected ${entityName}${selectedCount > 1 ? "s" : ""}`}
 				aria-describedby="bulk-actions-description"
 				tabIndex={-1}
 				onKeyDown={handleKeyDown}
-				className={cn("fixed bottom-6 left-1/2 z-50 -translate-x-1/2","transition-all delay-100 duration-300 ease-out hover:scale-105","focus-visible:ring-ring/50 focus-visible:ring-2 focus-visible:outline-none",
+				className={cn(
+					"fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl",
+					"transition-all delay-100 duration-300 ease-out hover:scale-105",
+					"focus-visible:ring-ring/50 focus-visible:ring-2 focus-visible:outline-none",
 				)}
 			>
 				<div
-					className={cn("p-2","border","bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur-lg","flex items-center gap-x-2",
+					className={cn(
+						"p-2 shadow-xl",
+						"rounded-xl border",
+						"bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur-lg",
+						"flex items-center gap-x-2",
 					)}
 				>
 					<Tooltip>
@@ -141,7 +149,7 @@ export function DataTableBulkActions<TData>({
 								variant="outline"
 								size="icon"
 								onClick={handleClearSelection}
-								className="size-6"
+								className="size-6 rounded-full"
 								aria-label="Clear selection"
 								title="Clear selection (Escape)"
 							>
@@ -166,15 +174,15 @@ export function DataTableBulkActions<TData>({
 					>
 						<Badge
 							variant="default"
-							className="min-w-8"
+							className="min-w-8 rounded-lg"
 							aria-label={`${selectedCount} selected`}
 						>
 							{selectedCount}
-						</Badge>{""}
+						</Badge>{" "}
 						<span className="hidden sm:inline">
 							{entityName}
-							{selectedCount > 1 ?"s" :""}
-						</span>{""}
+							{selectedCount > 1 ? "s" : ""}
+						</span>{" "}
 						selected
 					</div>
 

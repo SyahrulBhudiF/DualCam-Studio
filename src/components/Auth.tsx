@@ -1,10 +1,10 @@
-import { Eye, EyeOff } from"lucide-react";
-import type { ReactNode } from"react";
-import { useState } from"react";
-import { Button } from"./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from"./ui/card";
-import { Input } from"./ui/input";
-import { Label } from"./ui/label";
+import { Eye, EyeOff } from "lucide-react";
+import type { ReactNode } from "react";
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 
 export function Auth({
 	actionText,
@@ -15,7 +15,7 @@ export function Auth({
 	onSubmit,
 }: {
 	actionText: string;
-	status:"pending" |"idle" |"success" |"error";
+	status: "pending" | "idle" | "success" | "error";
 	afterSubmit?: ReactNode;
 	emailField: {
 		value: string;
@@ -61,7 +61,7 @@ export function Auth({
 							/>
 						{emailField.errors.length > 0 ? (
 								<p className="text-destructive text-sm">
-									{emailField.errors.join(",")}
+									{emailField.errors.join(", ")}
 								</p>
 							) : null}
 						</div>
@@ -69,7 +69,7 @@ export function Auth({
 							<Label htmlFor="password">Password</Label>
 							<div className="relative">
 								<Input
-									type={showPassword ?"text" :"password"}
+									type={showPassword ? "text" : "password"}
 									name="password"
 									id="password"
 									placeholder="password123"
@@ -85,7 +85,7 @@ export function Auth({
 									variant="ghost"
 									size="icon"
 									className="absolute top-1/2 right-1 size-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-									aria-label={showPassword ?"Hide password" :"Show password"}
+									aria-label={showPassword ? "Hide password" : "Show password"}
 									onClick={() => setShowPassword((value) => !value)}
 								>
 									{showPassword ? (
@@ -97,16 +97,16 @@ export function Auth({
 							</div>
 							{passwordField.errors.length > 0 ? (
 								<p className="text-destructive text-sm">
-									{passwordField.errors.join(",")}
+									{passwordField.errors.join(", ")}
 								</p>
 							) : null}
 						</div>
 						<Button
 							type="submit"
 							className="w-full uppercase"
-							disabled={status ==="pending"}
+							disabled={status === "pending"}
 						>
-							{status ==="pending" ?"…" : actionText}
+							{status === "pending" ? "…" : actionText}
 						</Button>
 						{afterSubmit ? afterSubmit : null}
 					</form>

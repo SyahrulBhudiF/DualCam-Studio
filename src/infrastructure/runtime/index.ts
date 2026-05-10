@@ -1,6 +1,6 @@
-import { type Effect, Layer, ManagedRuntime } from"effect";
-import { DatabaseLive } from"../layers/database";
-import { AllServicesLive } from"../services";
+import { type Effect, Layer, ManagedRuntime } from "effect";
+import { DatabaseLive } from "../layers/database";
+import { AllServicesLive } from "../services";
 
 const AppLayer = AllServicesLive.pipe(Layer.provide(DatabaseLive));
 

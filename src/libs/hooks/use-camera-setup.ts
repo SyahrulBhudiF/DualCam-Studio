@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from"react";
-import type { RealSenseHandle } from"@/components/RealSenseCanvas";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { RealSenseHandle } from "@/components/RealSenseCanvas";
 
 const stopRecorderSafe = (recorder: MediaRecorder | null): Promise<void> => {
 	return new Promise((resolve) => {
-		if (!recorder || recorder.state ==="inactive") {
+		if (!recorder || recorder.state === "inactive") {
 			resolve();
 			return;
 		}
@@ -14,7 +14,7 @@ const stopRecorderSafe = (recorder: MediaRecorder | null): Promise<void> => {
 
 export interface RecordingOptions {
 	folderName: string;
-	mode:"FULL" |"SEGMENT";
+	mode: "FULL" | "SEGMENT";
 	fileName?: string;
 }
 
@@ -45,7 +45,7 @@ export function useCameraSetup() {
 			try {
 				await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 				const devices = await navigator.mediaDevices.enumerateDevices();
-				const cameras = devices.filter((d) => d.kind ==="videoinput");
+				const cameras = devices.filter((d) => d.kind === "videoinput");
 				setVideoDevices(cameras);
 				if (cameras.length > 0) setDeviceIdMain(cameras[0].deviceId);
 			} catch (err) {
@@ -105,7 +105,7 @@ export function useCameraSetup() {
 
 	// Secondary camera setup
 	useEffect(() => {
-		if (deviceIdSec ==="ws-realsense") {
+		if (deviceIdSec === "ws-realsense") {
 			// RealSense readiness is set externally via setSecReady
 			return;
 		}
@@ -134,7 +134,7 @@ export function useCameraSetup() {
 				}
 
 				const mediaRecorder = new MediaRecorder(stream, {
-					mimeType:"video/webm",
+					mimeType: "video/webm",
 				});
 				secChunksRef.current = [];
 				mediaRecorder.ondataavailable = (event) => {
@@ -164,17 +164,17 @@ export function useCameraSetup() {
 
 			if (
 				mainRecorderRef.current &&
-				mainRecorderRef.current.state ==="inactive"
+				mainRecorderRef.current.state === "inactive"
 			) {
 				mainChunksRef.current = [];
 				mainRecorderRef.current.start(1000);
 			}
 
-			if (deviceIdSec ==="ws-realsense") {
+			if (deviceIdSec === "ws-realsense") {
 				realSenseRef.current?.startRecording(options);
 			} else if (
 				secRecorderRef.current &&
-				secRecorderRef.current.state ==="inactive"
+				secRecorderRef.current.state === "inactive"
 			) {
 				secChunksRef.current = [];
 				secRecorderRef.current.start(1000);
@@ -192,7 +192,7 @@ export function useCameraSetup() {
 	const stopRecording = useCallback(async () => {
 		await stopRecorderSafe(mainRecorderRef.current);
 
-		if (deviceIdSec ==="ws-realsense") {
+		if (deviceIdSec === "ws-realsense") {
 			realSenseRef.current?.stopRecording();
 		} else {
 			await stopRecorderSafe(secRecorderRef.current);
@@ -202,10 +202,10 @@ export function useCameraSetup() {
 		isStartingRef.current = false;
 
 		return {
-			blobMain: new Blob(mainChunksRef.current, { type:"video/webm" }),
+			blobMain: new Blob(mainChunksRef.current, { type: "video/webm" }),
 			blobSec:
-				deviceIdSec !=="ws-realsense"
-					? new Blob(secChunksRef.current, { type:"video/webm" })
+				deviceIdSec !== "ws-realsense"
+					? new Blob(secChunksRef.current, { type: "video/webm" })
 					: null,
 		};
 	}, [deviceIdSec]);

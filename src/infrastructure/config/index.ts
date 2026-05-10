@@ -1,4 +1,4 @@
-import { Config, ConfigProvider } from"effect";
+import { Config, ConfigProvider } from "effect";
 
 const envProvider = ConfigProvider.fromEnv();
 
@@ -16,7 +16,7 @@ const SessionConfigDescriptor = Config.all({
 	),
 	durationDays: Config.number("SESSION_DURATION_DAYS").pipe(Config.withDefault(7)),
 	secure: Config.string("NODE_ENV").pipe(
-		Config.map((env) => env ==="production"),
+		Config.map((env) => env === "production"),
 		Config.withDefault(false),
 	),
 });

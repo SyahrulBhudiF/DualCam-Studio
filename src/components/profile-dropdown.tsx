@@ -1,5 +1,5 @@
-import { SignOutDialog } from"@/components/sign-out-dialog";
-import { Button } from"@/components/ui/button";
+import { SignOutDialog } from "@/components/sign-out-dialog";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -8,8 +8,8 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuShortcut,
 	DropdownMenuTrigger,
-} from"@/components/ui/dropdown-menu";
-import useDialogState from"@/libs/hooks/use-dialog-state";
+} from "@/components/ui/dropdown-menu";
+import useDialogState from "@/libs/hooks/use-dialog-state";
 
 export function ProfileDropdown() {
 	const [open, setOpen] = useDialogState();
@@ -18,7 +18,7 @@ export function ProfileDropdown() {
 		<>
 			<DropdownMenu modal={false}>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" className="relative size-8">
+					<Button variant="ghost" className="relative size-8 rounded-full">
 						a
 					</Button>
 				</DropdownMenuTrigger>
