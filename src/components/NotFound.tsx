@@ -1,6 +1,6 @@
-import { Link } from"@tanstack/react-router";
-import { ArrowLeft, FileQuestion, Home } from"lucide-react";
-import { Button } from"@/components/ui/button";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft, FileQuestion, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -8,7 +8,7 @@ import {
 	CardFooter,
 	CardHeader,
 	CardTitle,
-} from"@/components/ui/card";
+} from "@/components/ui/card";
 
 interface NotFoundProps {
 	children?: React.ReactNode;
@@ -18,14 +18,14 @@ interface NotFoundProps {
 
 export function NotFound({
 	children,
-	title ="Page Not Found",
-	description ="The page you are looking for does not exist or has been moved.",
+	title = "Page Not Found",
+	description = "The page you are looking for does not exist or has been moved.",
 }: NotFoundProps) {
 	return (
 		<div className="flex min-h-[50vh] flex-col items-center justify-center p-4">
 			<Card className="w-full max-w-md">
 				<CardHeader className="text-center">
-					<div className="mx-auto mb-4 flex size-16 items-center justify-center bg-muted">
+					<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
 						<FileQuestion className="size-8 text-muted-foreground" />
 					</div>
 					<CardTitle className="text-xl">{title}</CardTitle>
@@ -34,7 +34,7 @@ export function NotFound({
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<div className="bg-muted/50 p-4 text-center">
+					<div className="rounded-lg bg-muted/50 p-4 text-center">
 						<p className="text-6xl font-bold text-muted-foreground/50">404</p>
 					</div>
 				</CardContent>

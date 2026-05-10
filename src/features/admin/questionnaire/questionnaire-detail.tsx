@@ -1,17 +1,17 @@
-import { useForm } from"@tanstack/react-form";
-import { useMutation, useQuery, useQueryClient } from"@tanstack/react-query";
-import { Link } from"@tanstack/react-router";
-import { ArrowLeft, Eye, Save, Video } from"lucide-react";
-import { toast } from"sonner";
-import { updateQuestionnaire } from"@/apis/admin/questionnaires";
-import { getResponsesByQuestionnaireId } from"@/apis/admin/responses";
-import { ClientDate } from"@/components/client-date";
-import { Main } from"@/components/layout/main";
-import { Badge } from"@/components/ui/badge";
-import { Button } from"@/components/ui/button";
-import { Input } from"@/components/ui/input";
-import { Label } from"@/components/ui/label";
-import { Switch } from"@/components/ui/switch";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { ArrowLeft, Eye, Save, Video } from "lucide-react";
+import { toast } from "sonner";
+import { updateQuestionnaire } from "@/apis/admin/questionnaires";
+import { getResponsesByQuestionnaireId } from "@/apis/admin/responses";
+import { ClientDate } from "@/components/client-date";
+import { Main } from "@/components/layout/main";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
 	Table,
 	TableBody,
@@ -19,12 +19,12 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
-} from"@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from"@/components/ui/tabs";
-import { Textarea } from"@/components/ui/textarea";
-import { createQuestionnaireSchema } from"@/libs/schemas/questionnaire";
-import { QuestionTable } from"./question-table";
-import type { Question, Questionnaire } from"./questionnaires.types";
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { createQuestionnaireSchema } from "@/libs/schemas/questionnaire";
+import { QuestionTable } from "./question-table";
+import type { Question, Questionnaire } from "./questionnaires.types";
 
 interface QuestionnaireDetailProps {
 	questionnaire: Questionnaire;
@@ -38,16 +38,16 @@ export function QuestionnaireDetail({
 	const queryClient = useQueryClient();
 
 	const responsesQuery = useQuery({
-		queryKey: ["admin","questionnaire", questionnaire.id,"responses"],
+		queryKey: ["admin", "questionnaire", questionnaire.id, "responses"],
 		queryFn: () => getResponsesByQuestionnaireId({ data: questionnaire.id }),
 	});
 
 	const updateMutation = useMutation({
 		mutationFn: updateQuestionnaire,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["admin","questionnaires"] });
+			queryClient.invalidateQueries({ queryKey: ["admin", "questionnaires"] });
 			queryClient.invalidateQueries({
-				queryKey: ["admin","questionnaire", questionnaire.id],
+				queryKey: ["admin", "questionnaire", questionnaire.id],
 			});
 
 			toast.success("Questionnaire updated successfully");
@@ -61,7 +61,7 @@ export function QuestionnaireDetail({
 	const form = useForm({
 		defaultValues: {
 			title: questionnaire.title,
-			description: questionnaire.description ||"",
+			description: questionnaire.description || "",
 			isActive: questionnaire.isActive,
 		},
 		validators: {
@@ -126,7 +126,7 @@ export function QuestionnaireDetail({
 								e.stopPropagation();
 								form.handleSubmit();
 							}}
-							className="space-y-4 border p-4"
+							className="space-y-4 rounded-lg border p-4"
 						>
 							<form.Field name="title">
 								{(field) => (
@@ -141,7 +141,7 @@ export function QuestionnaireDetail({
 										/>
 										{field.state.meta.errors ? (
 											<p className="text-sm text-destructive">
-												{field.state.meta.errors.join(",")}
+												{field.state.meta.errors.join(", ")}
 											</p>
 										) : null}
 									</div>
@@ -160,7 +160,7 @@ export function QuestionnaireDetail({
 										/>
 										{field.state.meta.errors ? (
 											<p className="text-sm text-destructive">
-												{field.state.meta.errors.join(",")}
+												{field.state.meta.errors.join(", ")}
 											</p>
 										) : null}
 									</div>
@@ -178,7 +178,7 @@ export function QuestionnaireDetail({
 										<Label htmlFor="isActive">Active</Label>
 										{field.state.meta.errors ? (
 											<p className="text-sm text-destructive">
-												{field.state.meta.errors.join(",")}
+												{field.state.meta.errors.join(", ")}
 											</p>
 										) : null}
 									</div>
@@ -193,7 +193,7 @@ export function QuestionnaireDetail({
 				</TabsContent>
 
 				<TabsContent value="questions" className="space-y-4">
-					<div className="border p-4">
+					<div className="rounded-lg border p-4">
 						<QuestionTable
 							data={questions}
 							questionnaireId={questionnaire.id}
@@ -202,7 +202,7 @@ export function QuestionnaireDetail({
 				</TabsContent>
 
 				<TabsContent value="responses" className="space-y-4">
-					<div className="border overflow-auto">
+					<div className="rounded-lg border overflow-auto">
 						{responsesQuery.isLoading ? (
 							<div className="flex items-center justify-center h-32">
 								<span className="text-muted-foreground">
@@ -232,21 +232,21 @@ export function QuestionnaireDetail({
 									{responses.map((response) => (
 										<TableRow key={response.id}>
 											<TableCell className="font-medium">
-												{response.profile?.name ??"-"}
+												{response.profile?.name ?? "-"}
 											</TableCell>
 											<TableCell>
 												<Badge variant="outline">
-													{response.profile?.class ??"-"}
+													{response.profile?.class ?? "-"}
 												</Badge>
 											</TableCell>
 											<TableCell className="text-muted-foreground">
-												{response.profile?.nim ??"-"}
+												{response.profile?.nim ?? "-"}
 											</TableCell>
 											<TableCell>
 												<Badge variant="secondary">{response.totalScore}</Badge>
 											</TableCell>
 											<TableCell>
-												{response.videoPath && response.videoPath !=="null" ? (
+												{response.videoPath && response.videoPath !== "null" ? (
 													<Badge variant="default" className="gap-1">
 														<Video className="size-3" />
 														Yes

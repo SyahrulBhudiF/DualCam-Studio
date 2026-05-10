@@ -1,5 +1,5 @@
-import { ChevronsUpDown, LogOut } from"lucide-react";
-import { SignOutDialog } from"@/components/sign-out-dialog";
+import { ChevronsUpDown, LogOut } from "lucide-react";
+import { SignOutDialog } from "@/components/sign-out-dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -7,14 +7,14 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
-} from"@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	useSidebar,
-} from"@/components/ui/sidebar";
-import useDialogState from"@/libs/hooks/use-dialog-state";
+} from "@/components/ui/sidebar";
+import useDialogState from "@/libs/hooks/use-dialog-state";
 
 type NavUserProps = {
 	user: {
@@ -46,8 +46,8 @@ export function NavUser({ user }: NavUserProps) {
 							</SidebarMenuButton>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent
-							className="w-(--radix-dropdown-menu-trigger-width) min-w-56"
-							side={isMobile ?"bottom" :"right"}
+							className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+							side={isMobile ? "bottom" : "right"}
 							align="end"
 							sideOffset={4}
 						>

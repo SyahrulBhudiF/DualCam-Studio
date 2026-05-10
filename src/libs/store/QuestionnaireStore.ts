@@ -1,4 +1,4 @@
-import { create } from"zustand";
+import { create } from "zustand";
 
 interface AnswerData {
 	questionId: string;
@@ -16,12 +16,12 @@ interface QuestionnaireState {
 }
 
 export const useQuestionnaireStore = create<QuestionnaireState>((set) => ({
-	folderName:"",
+	folderName: "",
 	answers: {},
 	setFolderName: (name) => set({ folderName: name }),
 	addAnswer: (qId, data) =>
 		set((state) => ({
 			answers: { ...state.answers, [qId]: data },
 		})),
-	reset: () => set({ folderName:"", answers: {} }),
+	reset: () => set({ folderName: "", answers: {} }),
 }));

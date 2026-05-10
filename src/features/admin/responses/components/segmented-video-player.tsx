@@ -1,24 +1,24 @@
-import { useState } from"react";
+import { useState } from "react";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from"@/components/ui/card";
+} from "@/components/ui/card";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from"@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from"@/components/ui/tabs";
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
 	ResponseDetailItem,
 	SegmentedVideoPath,
-} from"../responses.types";
-import { SingleVideoPlayer } from"./single-video-player";
+} from "../responses.types";
+import { SingleVideoPlayer } from "./single-video-player";
 
 type SegmentedVideoPlayerProps = {
 	videos: SegmentedVideoPath[];
@@ -30,7 +30,7 @@ export function SegmentedVideoPlayer({
 	details,
 }: SegmentedVideoPlayerProps) {
 	const [selectedQuestion, setSelectedQuestion] = useState<string>(
-		videos.length > 0 ? videos[0].questionId :"",
+		videos.length > 0 ? videos[0].questionId : "",
 	);
 
 	if (videos.length === 0) {
@@ -41,7 +41,7 @@ export function SegmentedVideoPlayer({
 					<CardDescription>Segmented video recordings</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<div className="flex items-center justify-center h-48 bg-muted">
+					<div className="flex items-center justify-center h-48 bg-muted rounded-lg">
 						<span className="text-muted-foreground">
 							No segmented videos available
 						</span>
@@ -94,7 +94,7 @@ export function SegmentedVideoPlayer({
 				{selectedVideo && (
 					<div className="space-y-4">
 						{selectedDetail && (
-							<div className="p-3 bg-muted">
+							<div className="p-3 bg-muted rounded-lg">
 								<div className="text-xs text-muted-foreground mb-1">
 									Question {selectedVideo.questionNumber}
 								</div>
@@ -103,7 +103,7 @@ export function SegmentedVideoPlayer({
 								</div>
 								{selectedDetail.answerText && (
 									<div className="text-xs text-muted-foreground mt-2">
-										Answer: {selectedDetail.answerText} (Score:{""}
+										Answer: {selectedDetail.answerText} (Score:{" "}
 										{selectedDetail.score})
 									</div>
 								)}
@@ -123,7 +123,7 @@ export function SegmentedVideoPlayer({
 										title={`Q${selectedVideo.questionNumber} Main`}
 									/>
 								) : (
-									<div className="flex items-center justify-center h-48 bg-muted">
+									<div className="flex items-center justify-center h-48 bg-muted rounded-lg">
 										<span className="text-muted-foreground">
 											Main video not available
 										</span>
@@ -137,7 +137,7 @@ export function SegmentedVideoPlayer({
 										title={`Q${selectedVideo.questionNumber} Secondary`}
 									/>
 								) : (
-									<div className="flex items-center justify-center h-48 bg-muted">
+									<div className="flex items-center justify-center h-48 bg-muted rounded-lg">
 										<span className="text-muted-foreground">
 											Secondary video not available
 										</span>
@@ -154,7 +154,7 @@ export function SegmentedVideoPlayer({
 												title={`Q${selectedVideo.questionNumber} Main Side`}
 											/>
 										) : (
-											<div className="flex items-center justify-center h-32 bg-muted">
+											<div className="flex items-center justify-center h-32 bg-muted rounded-lg">
 												<span className="text-muted-foreground text-sm">
 													Not available
 												</span>
@@ -171,7 +171,7 @@ export function SegmentedVideoPlayer({
 												title={`Q${selectedVideo.questionNumber} Secondary Side`}
 											/>
 										) : (
-											<div className="flex items-center justify-center h-32 bg-muted">
+											<div className="flex items-center justify-center h-32 bg-muted rounded-lg">
 												<span className="text-muted-foreground text-sm">
 													Not available
 												</span>

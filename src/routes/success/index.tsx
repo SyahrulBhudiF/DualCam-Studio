@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from"@tanstack/react-router";
-import { CheckCircle2 } from"lucide-react";
-import { Button } from"@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from"@/components/ui/card";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/success/")({
 	component: SuccessPage,
@@ -10,7 +10,7 @@ export const Route = createFileRoute("/success/")({
 function SuccessPage() {
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-background p-4">
-			<Card className="w-full max-w-md text-center">
+			<Card className="w-full max-w-md text-center shadow-lg">
 				<CardHeader>
 					<div className="flex justify-center mb-4">
 						<CheckCircle2 className="size-16 text-primary" />

@@ -1,5 +1,5 @@
-import { avg, count, countDistinct, eq, sql, sum } from"drizzle-orm";
-import { Context, Effect, Layer } from"effect";
+import { avg, count, countDistinct, eq, sql, sum } from "drizzle-orm";
+import { Context, Effect, Layer } from "effect";
 import {
 	answers,
 	profiles,
@@ -7,9 +7,9 @@ import {
 	questions,
 	responseDetails,
 	responses,
-} from"../db";
-import { DatabaseError } from"../errors";
-import { DB } from"../layers/database";
+} from "../db";
+import { DatabaseError } from "../errors";
+import { DB } from "../layers/database";
 
 interface DashboardSummary {
 	totalQuestionnaires: number;
@@ -68,7 +68,8 @@ interface AnalyticsDetails {
 	};
 }
 
-export class DashboardService extends Context.Service<DashboardService>()("DashboardService",
+export class DashboardService extends Context.Service<DashboardService>()(
+	"DashboardService",
 	{
 		make: Effect.gen(function* () {
 			const db = yield* DB.asEffect();
@@ -102,12 +103,12 @@ export class DashboardService extends Context.Service<DashboardService>()("Dashb
 							.select({ count: countDistinct(profiles.class) })
 							.from(profiles),
 					],
-					{ concurrency:"unbounded" },
+					{ concurrency: "unbounded" },
 				).pipe(
 					Effect.mapError(
 						(e) =>
 							new DatabaseError({
-								message:"Failed to fetch dashboard summary",
+								message: "Failed to fetch dashboard summary",
 								cause: e,
 							}),
 					),
@@ -151,12 +152,12 @@ export class DashboardService extends Context.Service<DashboardService>()("Dashb
 								.innerJoin(profiles, eq(responses.userId, profiles.id))
 								.groupBy(profiles.class),
 						],
-						{ concurrency:"unbounded" },
+						{ concurrency: "unbounded" },
 					).pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to fetch dashboard breakdown",
+									message: "Failed to fetch dashboard breakdown",
 									cause: e,
 								}),
 						),
@@ -199,7 +200,8 @@ export class DashboardService extends Context.Service<DashboardService>()("Dashb
 				},
 			);
 
-			const getAnalyticsDetails = Effect.fn("DashboardService.getAnalyticsDetails",
+			const getAnalyticsDetails = Effect.fn(
+				"DashboardService.getAnalyticsDetails",
 			)(function* () {
 				const [questionRows, answerRows, timelineRows, [{ total, withVideo }]] =
 					yield* Effect.all(
@@ -241,7 +243,8 @@ export class DashboardService extends Context.Service<DashboardService>()("Dashb
 							// Timeline using SQL GROUP BY with date truncation
 							db
 								.select({
-									date: sql<Date | string>`DATE(${responses.createdAt})`.as("date",
+									date: sql<Date | string>`DATE(${responses.createdAt})`.as(
+										"date",
 									),
 									totalResponses: count(),
 									totalScore: sum(responses.totalScore),
@@ -257,12 +260,12 @@ export class DashboardService extends Context.Service<DashboardService>()("Dashb
 								})
 								.from(responses),
 						],
-						{ concurrency:"unbounded" },
+						{ concurrency: "unbounded" },
 					).pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to fetch analytics details",
+									message: "Failed to fetch analytics details",
 									cause: e,
 								}),
 						),

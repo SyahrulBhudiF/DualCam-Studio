@@ -1,25 +1,26 @@
-import * as bcrypt from"bcryptjs";
-import { and, eq, gt, lt } from"drizzle-orm";
-import { Context, Effect, Layer } from"effect";
-import { generateToken } from"@/utils/crypto";
-import { AuthConfig } from"../config";
-import type { NewSession, NewUser, Session, User } from"../db";
-import { sessions, users } from"../db";
-import { DatabaseError } from"../errors";
+import * as bcrypt from "bcryptjs";
+import { and, eq, gt, lt } from "drizzle-orm";
+import { Context, Effect, Layer } from "effect";
+import { generateToken } from "@/utils/crypto";
+import { AuthConfig } from "../config";
+import type { NewSession, NewUser, Session, User } from "../db";
+import { sessions, users } from "../db";
+import { DatabaseError } from "../errors";
 import {
 	InvalidCredentialsError,
 	SessionExpiredError,
 	SignupError,
 	TokenError,
-} from"../errors/auth";
-import { DB } from"../layers/database";
+} from "../errors/auth";
+import { DB } from "../layers/database";
 
 export class AuthService extends Context.Service<AuthService>()("AuthService", {
 	make: Effect.gen(function* () {
 		const db = yield* DB.asEffect();
 		const config = yield* AuthConfig;
 
-		const deleteExpiredSessions = Effect.fn("AuthService.deleteExpiredSessions",
+		const deleteExpiredSessions = Effect.fn(
+			"AuthService.deleteExpiredSessions",
 		)(function* () {
 			yield* db
 				.delete(sessions)
@@ -28,7 +29,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					Effect.mapError(
 						(e) =>
 							new DatabaseError({
-								message:"Failed to delete expired sessions",
+								message: "Failed to delete expired sessions",
 								cause: e,
 							}),
 					),
@@ -48,7 +49,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					Effect.mapError(
 						(e) =>
 							new DatabaseError({
-								message:"Failed to check existing user",
+								message: "Failed to check existing user",
 								cause: e,
 							}),
 					),
@@ -56,7 +57,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 
 			if (existingUser) {
 				return yield* Effect.fail(
-					new SignupError({ message:"User already exists" }),
+					new SignupError({ message: "User already exists" }),
 				);
 			}
 
@@ -65,7 +66,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 				try: () => bcrypt.hash(password, config.saltRounds),
 				catch: (error) =>
 					new SignupError({
-						message:"Failed to hash password",
+						message: "Failed to hash password",
 						cause: error,
 					}),
 			});
@@ -76,11 +77,11 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 				.values({
 					email,
 					passwordHash,
-				} satisfies Omit<NewUser,"id" |"createdAt" |"updatedAt">)
+				} satisfies Omit<NewUser, "id" | "createdAt" | "updatedAt">)
 				.returning()
 				.pipe(
 					Effect.mapError(
-						(e) => new DatabaseError({ message:"Failed to signup", cause: e }),
+						(e) => new DatabaseError({ message: "Failed to signup", cause: e }),
 					),
 				);
 
@@ -99,13 +100,13 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 				.pipe(
 					Effect.mapError(
 						(e) =>
-							new DatabaseError({ message:"Failed to find user", cause: e }),
+							new DatabaseError({ message: "Failed to find user", cause: e }),
 					),
 				);
 
 			if (!user) {
 				return yield* Effect.fail(
-					new InvalidCredentialsError({ message:"Invalid credentials" }),
+					new InvalidCredentialsError({ message: "Invalid credentials" }),
 				);
 			}
 
@@ -113,12 +114,12 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 			const isValid = yield* Effect.tryPromise({
 				try: () => bcrypt.compare(password, user.passwordHash),
 				catch: () =>
-					new InvalidCredentialsError({ message:"Invalid credentials" }),
+					new InvalidCredentialsError({ message: "Invalid credentials" }),
 			});
 
 			if (!isValid) {
 				return yield* Effect.fail(
-					new InvalidCredentialsError({ message:"Invalid credentials" }),
+					new InvalidCredentialsError({ message: "Invalid credentials" }),
 				);
 			}
 
@@ -130,7 +131,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					Effect.mapError(
 						(e) =>
 							new DatabaseError({
-								message:"Failed to delete old sessions",
+								message: "Failed to delete old sessions",
 								cause: e,
 							}),
 					),
@@ -149,13 +150,13 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					userId: user.id,
 					token,
 					expiresAt,
-				} satisfies Omit<NewSession,"id" |"createdAt">)
+				} satisfies Omit<NewSession, "id" | "createdAt">)
 				.returning()
 				.pipe(
 					Effect.mapError(
 						(e) =>
 							new DatabaseError({
-								message:"Failed to create session",
+								message: "Failed to create session",
 								cause: e,
 							}),
 					),
@@ -172,7 +173,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					Effect.mapError(
 						(e) =>
 							new DatabaseError({
-								message:"Failed to delete session",
+								message: "Failed to delete session",
 								cause: e,
 							}),
 					),
@@ -184,7 +185,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 		) {
 			if (!token) {
 				return yield* Effect.fail(
-					new TokenError({ message:"No token provided" }),
+					new TokenError({ message: "No token provided" }),
 				);
 			}
 
@@ -199,7 +200,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					Effect.mapError(
 						(e) =>
 							new DatabaseError({
-								message:"Failed to validate session",
+								message: "Failed to validate session",
 								cause: e,
 							}),
 					),
@@ -207,7 +208,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 
 			if (!result) {
 				return yield* Effect.fail(
-					new SessionExpiredError({ message:"Session expired or invalid" }),
+					new SessionExpiredError({ message: "Session expired or invalid" }),
 				);
 			}
 
@@ -219,13 +220,13 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 				.pipe(
 					Effect.mapError(
 						(e) =>
-							new DatabaseError({ message:"Failed to fetch user", cause: e }),
+							new DatabaseError({ message: "Failed to fetch user", cause: e }),
 					),
 				);
 
 			if (!user) {
 				return yield* Effect.fail(
-					new SessionExpiredError({ message:"User not found" }),
+					new SessionExpiredError({ message: "User not found" }),
 				);
 			}
 
@@ -243,7 +244,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					Effect.mapError(
 						(e) =>
 							new DatabaseError({
-								message:"Failed to fetch user by email",
+								message: "Failed to fetch user by email",
 								cause: e,
 							}),
 					),
@@ -268,7 +269,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					Effect.mapError(
 						(e) =>
 							new DatabaseError({
-								message:"Failed to refresh session",
+								message: "Failed to refresh session",
 								cause: e,
 							}),
 					),
@@ -276,7 +277,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 
 			if (!updated) {
 				return yield* Effect.fail(
-					new SessionExpiredError({ message:"Session not found" }),
+					new SessionExpiredError({ message: "Session not found" }),
 				);
 			}
 

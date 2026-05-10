@@ -1,12 +1,13 @@
-import { PgClient } from"@effect/sql-pg";
-import { eq, inArray } from"drizzle-orm";
-import { Context, Effect, Layer } from"effect";
-import type { NewQuestionnaire, Questionnaire } from"../db";
-import { answers, questionnaires, questions } from"../db";
-import { DatabaseError, QuestionnaireNotFoundError } from"../errors";
-import { DB } from"../layers/database";
+import { PgClient } from "@effect/sql-pg";
+import { eq, inArray } from "drizzle-orm";
+import { Context, Effect, Layer } from "effect";
+import type { NewQuestionnaire, Questionnaire } from "../db";
+import { answers, questionnaires, questions } from "../db";
+import { DatabaseError, QuestionnaireNotFoundError } from "../errors";
+import { DB } from "../layers/database";
 
-export class QuestionnaireService extends Context.Service<QuestionnaireService>()("QuestionnaireService",
+export class QuestionnaireService extends Context.Service<QuestionnaireService>()(
+	"QuestionnaireService",
 	{
 		make: Effect.gen(function* () {
 			const db = yield* DB.asEffect();
@@ -21,7 +22,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to fetch questionnaires",
+									message: "Failed to fetch questionnaires",
 									cause: e,
 								}),
 						),
@@ -40,7 +41,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to fetch questionnaire",
+									message: "Failed to fetch questionnaire",
 									cause: e,
 								}),
 						),
@@ -62,7 +63,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 							Effect.mapError(
 								(e) =>
 									new DatabaseError({
-										message:"Failed to fetch active questionnaire",
+										message: "Failed to fetch active questionnaire",
 										cause: e,
 									}),
 							),
@@ -70,7 +71,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 
 					if (!questionnaire) {
 						return yield* Effect.fail(
-							new QuestionnaireNotFoundError({ id:"active" }),
+							new QuestionnaireNotFoundError({ id: "active" }),
 						);
 					}
 
@@ -93,7 +94,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 							Effect.mapError(
 								(e) =>
 									new DatabaseError({
-										message:"Failed to fetch active questionnaire questions",
+										message: "Failed to fetch active questionnaire questions",
 										cause: e,
 									}),
 							),
@@ -141,7 +142,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 			);
 
 			const create = Effect.fn("QuestionnaireService.create")(function* (
-				data: Omit<NewQuestionnaire,"id" |"createdAt">,
+				data: Omit<NewQuestionnaire, "id" | "createdAt">,
 			) {
 				if (data.isActive) {
 					// Use transaction for atomic deactivate-all + create
@@ -164,7 +165,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 							Effect.mapError(
 								(e) =>
 									new DatabaseError({
-										message:"Failed to create questionnaire",
+										message: "Failed to create questionnaire",
 										cause: e,
 									}),
 							),
@@ -179,7 +180,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to create questionnaire",
+									message: "Failed to create questionnaire",
 									cause: e,
 								}),
 						),
@@ -189,7 +190,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 
 			const update = Effect.fn("QuestionnaireService.update")(function* (
 				id: string,
-				data: Partial<Omit<NewQuestionnaire,"id" |"createdAt">>,
+				data: Partial<Omit<NewQuestionnaire, "id" | "createdAt">>,
 			) {
 				if (data.isActive) {
 					// Use transaction for atomic deactivate-all + update
@@ -221,7 +222,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 								e instanceof QuestionnaireNotFoundError
 									? e
 									: new DatabaseError({
-											message:"Failed to update questionnaire",
+											message: "Failed to update questionnaire",
 											cause: e,
 										}),
 							),
@@ -237,7 +238,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to update questionnaire",
+									message: "Failed to update questionnaire",
 									cause: e,
 								}),
 						),
@@ -260,7 +261,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 								Effect.mapError(
 									(e) =>
 										new DatabaseError({
-											message:"Failed to delete questionnaires",
+											message: "Failed to delete questionnaires",
 											cause: e,
 										}),
 								),
@@ -299,7 +300,7 @@ export class QuestionnaireService extends Context.Service<QuestionnaireService>(
 							e instanceof QuestionnaireNotFoundError
 								? e
 								: new DatabaseError({
-										message:"Failed to activate questionnaire",
+										message: "Failed to activate questionnaire",
 										cause: e,
 									}),
 						),

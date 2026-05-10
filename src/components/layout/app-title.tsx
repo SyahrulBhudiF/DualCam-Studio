@@ -1,13 +1,13 @@
-import { Link } from"@tanstack/react-router";
-import { Menu, X } from"lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Menu, X } from "lucide-react";
 import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	useSidebar,
-} from"@/components/ui/sidebar";
-import { cn } from"@/utils/utils";
-import { Button } from"../ui/button";
+} from "@/components/ui/sidebar";
+import { cn } from "@/utils/utils";
+import { Button } from "../ui/button";
 
 export function AppTitle() {
 	const { setOpenMobile } = useSidebar();

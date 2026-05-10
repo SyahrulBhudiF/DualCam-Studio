@@ -1,4 +1,4 @@
-import { Schema } from"effect";
+import { Schema } from "effect";
 
 export const inputValidator =
 	<S extends Schema.Decoder<unknown, never>>(schema: S) =>

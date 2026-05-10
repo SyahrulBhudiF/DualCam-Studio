@@ -1,16 +1,18 @@
-import { eq, inArray } from"drizzle-orm";
-import { Context, Effect, Layer } from"effect";
-import type { NewQuestion, Question } from"../db";
-import { questions } from"../db";
-import { DatabaseError, QuestionNotFoundError } from"../errors";
-import { DB } from"../layers/database";
+import { eq, inArray } from "drizzle-orm";
+import { Context, Effect, Layer } from "effect";
+import type { NewQuestion, Question } from "../db";
+import { questions } from "../db";
+import { DatabaseError, QuestionNotFoundError } from "../errors";
+import { DB } from "../layers/database";
 
-export class QuestionService extends Context.Service<QuestionService>()("QuestionService",
+export class QuestionService extends Context.Service<QuestionService>()(
+	"QuestionService",
 	{
 		make: Effect.gen(function* () {
 			const db = yield* DB.asEffect();
 
-			const getByQuestionnaireId = Effect.fn("QuestionService.getByQuestionnaireId",
+			const getByQuestionnaireId = Effect.fn(
+				"QuestionService.getByQuestionnaireId",
 			)(function* (questionnaireId: string) {
 				const rows = yield* db
 					.select()
@@ -21,7 +23,7 @@ export class QuestionService extends Context.Service<QuestionService>()("Questio
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to fetch questions",
+									message: "Failed to fetch questions",
 									cause: e,
 								}),
 						),
@@ -40,7 +42,7 @@ export class QuestionService extends Context.Service<QuestionService>()("Questio
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to fetch question",
+									message: "Failed to fetch question",
 									cause: e,
 								}),
 						),
@@ -52,7 +54,7 @@ export class QuestionService extends Context.Service<QuestionService>()("Questio
 			});
 
 			const create = Effect.fn("QuestionService.create")(function* (
-				data: Omit<NewQuestion,"id">,
+				data: Omit<NewQuestion, "id">,
 			) {
 				const [result] = yield* db
 					.insert(questions)
@@ -62,7 +64,7 @@ export class QuestionService extends Context.Service<QuestionService>()("Questio
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to create question",
+									message: "Failed to create question",
 									cause: e,
 								}),
 						),
@@ -72,7 +74,7 @@ export class QuestionService extends Context.Service<QuestionService>()("Questio
 
 			const update = Effect.fn("QuestionService.update")(function* (
 				id: string,
-				data: Partial<Omit<NewQuestion,"id" |"questionnaireId">>,
+				data: Partial<Omit<NewQuestion, "id" | "questionnaireId">>,
 			) {
 				const [result] = yield* db
 					.update(questions)
@@ -83,7 +85,7 @@ export class QuestionService extends Context.Service<QuestionService>()("Questio
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to update question",
+									message: "Failed to update question",
 									cause: e,
 								}),
 						),
@@ -105,7 +107,7 @@ export class QuestionService extends Context.Service<QuestionService>()("Questio
 							Effect.mapError(
 								(e) =>
 									new DatabaseError({
-										message:"Failed to delete questions",
+										message: "Failed to delete questions",
 										cause: e,
 									}),
 							),

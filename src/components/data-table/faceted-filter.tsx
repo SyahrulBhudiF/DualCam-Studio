@@ -1,8 +1,8 @@
-import { CheckIcon, PlusCircledIcon } from"@radix-ui/react-icons";
-import type { Column } from"@tanstack/react-table";
-import type * as React from"react";
-import { Badge } from"@/components/ui/badge";
-import { Button } from"@/components/ui/button";
+import { CheckIcon, PlusCircledIcon } from "@radix-ui/react-icons";
+import type { Column } from "@tanstack/react-table";
+import type * as React from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Command,
 	CommandEmpty,
@@ -11,14 +11,14 @@ import {
 	CommandItem,
 	CommandList,
 	CommandSeparator,
-} from"@/components/ui/command";
+} from "@/components/ui/command";
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
-} from"@/components/ui/popover";
-import { Separator } from"@/components/ui/separator";
-import { cn } from"@/utils/utils";
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/utils/utils";
 
 type DataTableFacetedFilterProps<TData, TValue> = {
 	column?: Column<TData, TValue>;
@@ -49,7 +49,7 @@ export function DataTableFacetedFilter<TData, TValue>({
 							<Separator orientation="vertical" className="mx-2 h-4" />
 							<Badge
 								variant="secondary"
-								className="px-1 font-normal lg:hidden"
+								className="rounded-sm px-1 font-normal lg:hidden"
 							>
 								{selectedValues.size}
 							</Badge>
@@ -57,7 +57,7 @@ export function DataTableFacetedFilter<TData, TValue>({
 								{selectedValues.size > 2 ? (
 									<Badge
 										variant="secondary"
-										className="px-1 font-normal"
+										className="rounded-sm px-1 font-normal"
 									>
 										{selectedValues.size} selected
 									</Badge>
@@ -69,7 +69,7 @@ export function DataTableFacetedFilter<TData, TValue>({
 											<Badge
 												variant="secondary"
 												key={option.value}
-												className="px-1 font-normal"
+												className="rounded-sm px-1 font-normal"
 											>
 												{option.label}
 											</Badge>,
@@ -106,10 +106,11 @@ export function DataTableFacetedFilter<TData, TValue>({
 										}}
 									>
 										<div
-											className={cn("border-primary flex size-4 items-center justify-center border",
+											className={cn(
+												"border-primary flex size-4 items-center justify-center rounded-sm border",
 												isSelected
-													?"bg-primary text-primary-foreground"
-													:"opacity-50 [&_svg]:invisible",
+													? "bg-primary text-primary-foreground"
+													: "opacity-50 [&_svg]:invisible",
 											)}
 										>
 											<CheckIcon className={cn("text-background size-4")} />

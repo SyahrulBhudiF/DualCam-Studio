@@ -2,11 +2,11 @@ import {
 	deleteCookie,
 	getCookies,
 	setCookie,
-} from"@tanstack/react-start/server";
-import { Cause, Effect, Option } from"effect";
-import { SessionConfig } from"@/infrastructure/config";
-import { UnauthorizedError } from"@/infrastructure/errors/auth";
-import { AuthService } from"@/infrastructure/services/auth";
+} from "@tanstack/react-start/server";
+import { Cause, Effect, Option } from "effect";
+import { SessionConfig } from "@/infrastructure/config";
+import { UnauthorizedError } from "@/infrastructure/errors/auth";
+import { AuthService } from "@/infrastructure/services/auth";
 
 // Get the session token from cookies
 export const getSessionToken = Effect.gen(function* () {
@@ -21,7 +21,7 @@ export const requireAuth = Effect.gen(function* () {
 
 	if (!token) {
 		return yield* Effect.fail(
-			new UnauthorizedError({ message:"Authentication required" }),
+			new UnauthorizedError({ message: "Authentication required" }),
 		);
 	}
 
@@ -30,7 +30,7 @@ export const requireAuth = Effect.gen(function* () {
 		.validateSession(token)
 		.pipe(
 			Effect.mapError(
-				() => new UnauthorizedError({ message:"Invalid or expired session" }),
+				() => new UnauthorizedError({ message: "Invalid or expired session" }),
 			),
 		);
 
@@ -44,8 +44,8 @@ export const setSessionCookie = (token: string) =>
 		setCookie(config.cookieName, token, {
 			httpOnly: true,
 			secure: config.secure,
-			sameSite:"lax",
-			path:"/",
+			sameSite: "lax",
+			path: "/",
 			maxAge: config.durationDays * 24 * 60 * 60,
 		});
 	});
@@ -62,7 +62,7 @@ export const extractErrorMessage = (
 	defaultMessage: string,
 ): string => {
 	if (!Cause.isCause(cause)) {
-		if (cause && typeof cause ==="object" &&"error" in cause) {
+		if (cause && typeof cause === "object" && "error" in cause) {
 			const legacy = cause as { error?: { message?: string } };
 			if (legacy.error?.message) return legacy.error.message;
 		}
@@ -73,7 +73,7 @@ export const extractErrorMessage = (
 	if (Option.isSome(error)) {
 		const value = error.value;
 		if (value instanceof Error) return value.message;
-		if (value && typeof value ==="object" &&"message" in value) {
+		if (value && typeof value === "object" && "message" in value) {
 			return String(value.message);
 		}
 		return String(value);

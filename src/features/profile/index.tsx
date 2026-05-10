@@ -1,14 +1,14 @@
-import { useForm } from"@tanstack/react-form";
-import { useNavigate } from"@tanstack/react-router";
-import { useState } from"react";
-import { Button } from"@/components/ui/button";
+import { useForm } from "@tanstack/react-form";
+import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from"@/components/ui/card";
+} from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -16,19 +16,19 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-} from"@/components/ui/dialog";
-import { Input } from"@/components/ui/input";
-import { Label } from"@/components/ui/label";
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from"@/components/ui/select";
-import { profileSchema } from"@/libs/schemas/user";
-import { useQuestionnaireStore } from"@/libs/store/QuestionnaireStore";
-import { useUserStore } from"@/libs/store/UserStore";
+} from "@/components/ui/select";
+import { profileSchema } from "@/libs/schemas/user";
+import { useQuestionnaireStore } from "@/libs/store/QuestionnaireStore";
+import { useUserStore } from "@/libs/store/UserStore";
 
 function useProfileState() {
 	const navigate = useNavigate();
@@ -38,14 +38,14 @@ function useProfileState() {
 
 	const form = useForm({
 		defaultValues: {
-			email:"",
-			name:"",
-			nim:"",
-			class:"",
-			semester:"",
-			age:"",
-			gender:"",
-			mode:"segmented",
+			email: "",
+			name: "",
+			nim: "",
+			class: "",
+			semester: "",
+			age: "",
+			gender: "",
+			mode: "segmented",
 		},
 		validators: {
 			onSubmit: ({ value }) => {
@@ -92,7 +92,7 @@ function useProfileState() {
 	const handleStart = () => {
 		const mode = form.getFieldValue("mode");
 		const target =
-			mode ==="segmented" ?"/questionnaire/segmented" :"/questionnaire";
+			mode === "segmented" ? "/questionnaire/segmented" : "/questionnaire";
 		void navigate({ to: target });
 	};
 
@@ -100,14 +100,14 @@ function useProfileState() {
 }
 
 type ProfileForm = ReturnType<typeof useProfileState>["form"];
-type TextFieldName ="email" |"name" |"nim" |"class" |"semester" |"age";
+type TextFieldName = "email" | "name" | "nim" | "class" | "semester" | "age";
 
 type ProfileTextFieldProps = {
 	form: ProfileForm;
 	name: TextFieldName;
 	label: string;
 	placeholder: string;
-	type?:"text" |"number";
+	type?: "text" | "number";
 };
 
 export function Profile() {
@@ -128,7 +128,7 @@ export function Profile() {
 
 function ProfileCard({ form }: { form: ProfileForm }) {
 	return (
-		<Card className="w-full max-w-md">
+		<Card className="w-full max-w-md shadow-lg">
 			<CardHeader className="text-center">
 				<CardTitle className="text-2xl font-bold">Student Profile</CardTitle>
 				<CardDescription>
@@ -205,7 +205,7 @@ function ProfileTextField({
 	name,
 	label,
 	placeholder,
-	type ="text",
+	type = "text",
 }: ProfileTextFieldProps) {
 	return (
 		<form.Field name={name}>
@@ -309,8 +309,8 @@ function InstructionsContent() {
 				rasakan secara spontan. Jawaban anda akan sangat membantu dalam memahami
 				perasaan anda terkait kebutuhan psikologis dalam kehidupan sehari-hari.
 			</p>
-			<div className="p-3 border-2 border-primary/50 text-destructive text-xs">
-				<strong>Contoh:</strong> Jika pernyataan berbunyi{""}
+			<div className="p-3 rounded border-2 border-primary/50 text-destructive text-xs">
+				<strong>Contoh:</strong> Jika pernyataan berbunyi{" "}
 				<em>"Saya merasa aman di sekolah"</em>, dan kamu merasa bahwa pernyataan
 				ini sangat sesuai dengan dirimu, maka kamu dapat memilih angka 4 pada
 				skala tersebut.
@@ -321,7 +321,7 @@ function InstructionsContent() {
 
 function InstructionSteps() {
 	return (
-		<div className="bg-muted/50 p-4 border border-border">
+		<div className="bg-muted/50 p-4 rounded-lg border border-border">
 			<strong className="block mb-2 text-foreground">Cara mengisi:</strong>
 			<ol className="list-decimal pl-5 space-y-1">
 				<li>Bacalah setiap pernyataan dengan cermat.</li>

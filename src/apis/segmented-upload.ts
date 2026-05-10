@@ -1,20 +1,20 @@
-import { createServerFn } from"@tanstack/react-start";
-import { Effect } from"effect";
+import { createServerFn } from "@tanstack/react-start";
+import { Effect } from "effect";
 import {
 	AnswerService,
 	FileUploadService,
 	ProfileService,
 	ResponseService,
 	runEffect,
-} from"@/infrastructure";
+} from "@/infrastructure";
 import {
 	FinalSubmitSchema,
 	UploadChunkSchema,
-} from"@/infrastructure/schemas/questionnaire";
-import { verifyCsrfOrigin } from"@/utils/csrf";
-import { inputValidator } from"../infrastructure/schemas/validator";
+} from "@/infrastructure/schemas/questionnaire";
+import { verifyCsrfOrigin } from "@/utils/csrf";
+import { inputValidator } from "../infrastructure/schemas/validator";
 
-export const uploadVideoChunk = createServerFn({ method:"POST" })
+export const uploadVideoChunk = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(UploadChunkSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
@@ -31,7 +31,7 @@ export const uploadVideoChunk = createServerFn({ method:"POST" })
 		);
 	});
 
-export const submitSegmentedResponse = createServerFn({ method:"POST" })
+export const submitSegmentedResponse = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(FinalSubmitSchema))
 	.handler(async ({ data }) => {
 		return runEffect(

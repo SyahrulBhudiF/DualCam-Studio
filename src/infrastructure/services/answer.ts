@@ -1,11 +1,12 @@
-import { eq, inArray } from"drizzle-orm";
-import { Context, Effect, Layer } from"effect";
-import type { Answer, NewAnswer } from"../db";
-import { answers } from"../db";
-import { AnswerNotFoundError, DatabaseError } from"../errors";
-import { DB } from"../layers/database";
+import { eq, inArray } from "drizzle-orm";
+import { Context, Effect, Layer } from "effect";
+import type { Answer, NewAnswer } from "../db";
+import { answers } from "../db";
+import { AnswerNotFoundError, DatabaseError } from "../errors";
+import { DB } from "../layers/database";
 
-export class AnswerService extends Context.Service<AnswerService>()("AnswerService",
+export class AnswerService extends Context.Service<AnswerService>()(
+	"AnswerService",
 	{
 		make: Effect.gen(function* () {
 			const db = yield* DB.asEffect();
@@ -21,7 +22,7 @@ export class AnswerService extends Context.Service<AnswerService>()("AnswerServi
 							Effect.mapError(
 								(e) =>
 									new DatabaseError({
-										message:"Failed to fetch answers",
+										message: "Failed to fetch answers",
 										cause: e,
 									}),
 							),
@@ -41,7 +42,7 @@ export class AnswerService extends Context.Service<AnswerService>()("AnswerServi
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to fetch answer",
+									message: "Failed to fetch answer",
 									cause: e,
 								}),
 						),
@@ -64,7 +65,7 @@ export class AnswerService extends Context.Service<AnswerService>()("AnswerServi
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to fetch answers by ids",
+									message: "Failed to fetch answers by ids",
 									cause: e,
 								}),
 						),
@@ -73,7 +74,7 @@ export class AnswerService extends Context.Service<AnswerService>()("AnswerServi
 			});
 
 			const create = Effect.fn("AnswerService.create")(function* (
-				data: Omit<NewAnswer,"id">,
+				data: Omit<NewAnswer, "id">,
 			) {
 				const [result] = yield* db
 					.insert(answers)
@@ -83,7 +84,7 @@ export class AnswerService extends Context.Service<AnswerService>()("AnswerServi
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to create answer",
+									message: "Failed to create answer",
 									cause: e,
 								}),
 						),
@@ -93,7 +94,7 @@ export class AnswerService extends Context.Service<AnswerService>()("AnswerServi
 
 			const update = Effect.fn("AnswerService.update")(function* (
 				id: string,
-				data: Partial<Omit<NewAnswer,"id" |"questionId">>,
+				data: Partial<Omit<NewAnswer, "id" | "questionId">>,
 			) {
 				const [result] = yield* db
 					.update(answers)
@@ -104,7 +105,7 @@ export class AnswerService extends Context.Service<AnswerService>()("AnswerServi
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message:"Failed to update answer",
+									message: "Failed to update answer",
 									cause: e,
 								}),
 						),
@@ -126,7 +127,7 @@ export class AnswerService extends Context.Service<AnswerService>()("AnswerServi
 							Effect.mapError(
 								(e) =>
 									new DatabaseError({
-										message:"Failed to delete answers",
+										message: "Failed to delete answers",
 										cause: e,
 									}),
 							),

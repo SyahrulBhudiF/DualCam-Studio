@@ -4,8 +4,8 @@ import {
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from"@/components/ui/card";
-import type { BreakdownData, SummaryData } from"./types";
+} from "@/components/ui/card";
+import type { BreakdownData, SummaryData } from "./types";
 
 type DashboardOverviewProps = {
 	summary: SummaryData;
@@ -29,7 +29,7 @@ export function DashboardOverview({
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{isLoading ?"…" : (summary?.totalQuestionnaires ?? 0)}
+							{isLoading ? "…" : (summary?.totalQuestionnaires ?? 0)}
 						</div>
 						<p className="text-muted-foreground text-xs">
 							Semua kuesioner yang terdaftar
@@ -44,7 +44,7 @@ export function DashboardOverview({
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{isLoading ?"…" : (summary?.activeQuestionnaires ?? 0)}
+							{isLoading ? "…" : (summary?.activeQuestionnaires ?? 0)}
 						</div>
 						<p className="text-muted-foreground text-xs">
 							Sedang dibuka untuk respon
@@ -59,7 +59,7 @@ export function DashboardOverview({
 					</CardHeader>
 					<CardContent>
 						<div className="text-2xl font-bold">
-							{isLoading ?"…" : (summary?.totalResponses ?? 0)}
+							{isLoading ? "…" : (summary?.totalResponses ?? 0)}
 						</div>
 						<p className="text-muted-foreground text-xs">
 							Semua respon yang sudah masuk
@@ -75,7 +75,7 @@ export function DashboardOverview({
 					<CardContent>
 						<div className="text-2xl font-bold">
 							{isLoading
-								?"…"
+								? "…"
 								: Math.round((summary?.averageScore ?? 0) * 10) / 10}
 						</div>
 						<p className="text-muted-foreground text-xs">
@@ -110,7 +110,7 @@ export function DashboardOverview({
 									<div>
 										<div className="text-sm font-medium">{q.title}</div>
 										<div className="text-xs text-muted-foreground">
-											{q.totalResponses} responses • avg score{""}
+											{q.totalResponses} responses • avg score{" "}
 											{Math.round(q.averageScore * 10) / 10}
 										</div>
 									</div>
@@ -143,7 +143,7 @@ export function DashboardOverview({
 									<div>
 										<div className="text-sm font-medium">{c.className}</div>
 										<div className="text-xs text-muted-foreground">
-											{c.totalResponses} responses • avg score{""}
+											{c.totalResponses} responses • avg score{" "}
 											{Math.round(c.averageScore * 10) / 10}
 										</div>
 									</div>

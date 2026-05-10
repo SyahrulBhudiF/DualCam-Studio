@@ -1,7 +1,7 @@
-import type { ErrorComponentProps } from"@tanstack/react-router";
-import { Link, rootRouteId, useMatch, useRouter } from"@tanstack/react-router";
-import { AlertCircle, ArrowLeft, Home, RefreshCcw } from"lucide-react";
-import { Button } from"@/components/ui/button";
+import type { ErrorComponentProps } from "@tanstack/react-router";
+import { Link, rootRouteId, useMatch, useRouter } from "@tanstack/react-router";
+import { AlertCircle, ArrowLeft, Home, RefreshCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -9,7 +9,7 @@ import {
 	CardFooter,
 	CardHeader,
 	CardTitle,
-} from"@/components/ui/card";
+} from "@/components/ui/card";
 
 export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
 	const router = useRouter();
@@ -21,14 +21,14 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
 	console.error(error);
 
 	const errorMessage =
-		error instanceof Error ? error.message :"An unexpected error occurred";
-	const errorName = error instanceof Error ? error.name :"Error";
+		error instanceof Error ? error.message : "An unexpected error occurred";
+	const errorName = error instanceof Error ? error.name : "Error";
 
 	return (
 		<div className="flex min-h-[50vh] flex-col items-center justify-center p-4">
 			<Card className="w-full max-w-md">
 				<CardHeader className="text-center">
-					<div className="mx-auto mb-4 flex size-16 items-center justify-center bg-destructive/10">
+					<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-destructive/10">
 						<AlertCircle className="size-8 text-destructive" />
 					</div>
 					<CardTitle className="text-xl">{errorName}</CardTitle>
@@ -37,11 +37,11 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<div className="bg-muted p-3">
+					<div className="rounded-lg bg-muted p-3">
 						<p className="text-xs text-muted-foreground font-mono break-all">
 							{error instanceof Error && error.stack
 								? error.stack.split("\n").slice(0, 3).join("\n")
-								:"No stack trace available"}
+								: "No stack trace available"}
 						</p>
 					</div>
 				</CardContent>

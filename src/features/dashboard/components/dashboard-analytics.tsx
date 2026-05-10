@@ -1,13 +1,13 @@
-import { useMemo } from"react";
+import { useMemo } from "react";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from"@/components/ui/card";
-import { DashboardAnalysisChart } from"./dashboard-analysis-chart";
-import type { AnalyticsData } from"./types";
+} from "@/components/ui/card";
+import { DashboardAnalysisChart } from "./dashboard-analysis-chart";
+import type { AnalyticsData } from "./types";
 
 type DashboardAnalyticsProps = {
 	analytics: AnalyticsData;
@@ -72,9 +72,9 @@ export function DashboardAnalytics({
 										</div>
 									</div>
 								</div>
-								<div className="h-2 w-full overflow-hidden bg-muted">
+								<div className="h-2 w-full overflow-hidden rounded-full bg-muted">
 									<div
-										className="h-2 bg-primary"
+										className="h-2 rounded-full bg-primary"
 										style={{
 											width: analytics?.video.total
 												? `${Math.min(
@@ -83,7 +83,7 @@ export function DashboardAnalytics({
 															(analytics.video.total || 1)) *
 															100,
 													)}%`
-												:"0%",
+												: "0%",
 										}}
 									/>
 								</div>
@@ -117,7 +117,7 @@ export function DashboardAnalytics({
 								>
 									<div className="text-sm">{t.date}</div>
 									<div className="text-xs text-muted-foreground">
-										{t.totalResponses} responses • avg{""}
+										{t.totalResponses} responses • avg{" "}
 										{Math.round(t.averageScore * 10) / 10}
 									</div>
 								</div>
@@ -146,7 +146,7 @@ export function DashboardAnalytics({
 								>
 									<div className="text-sm font-medium">{a.text}</div>
 									<div className="text-xs text-muted-foreground">
-										{a.totalResponses} responses • avg{""}
+										{a.totalResponses} responses • avg{" "}
 										{Math.round(a.averageScore * 10) / 10}
 									</div>
 								</div>

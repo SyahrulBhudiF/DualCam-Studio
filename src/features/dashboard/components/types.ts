@@ -2,7 +2,7 @@ import type {
 	getAnalyticsDetails,
 	getDashboardBreakdown,
 	getDashboardSummary,
-} from"@/apis/dashboard";
+} from "@/apis/dashboard";
 
 export type SummaryData =
 	| Awaited<ReturnType<typeof getDashboardSummary>>

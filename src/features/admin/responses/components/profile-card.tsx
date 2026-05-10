@@ -1,14 +1,14 @@
-import { Calendar, GraduationCap, Hash, Mail, User, Users } from"lucide-react";
-import { ClientDate } from"@/components/client-date";
-import { Badge } from"@/components/ui/badge";
+import { Calendar, GraduationCap, Hash, Mail, User, Users } from "lucide-react";
+import { ClientDate } from "@/components/client-date";
+import { Badge } from "@/components/ui/badge";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from"@/components/ui/card";
-import type { ResponseProfile } from"../responses.types";
+} from "@/components/ui/card";
+import type { ResponseProfile } from "../responses.types";
 
 type ProfileCardProps = {
 	profile: ResponseProfile | null;
@@ -44,7 +44,7 @@ export function ProfileCard({
 					<div className="min-w-0">
 						<CardTitle className="flex items-center gap-2">
 							<User className="size-5 shrink-0" />
-							<span className="truncate">{profile.name ??"Unknown"}</span>
+							<span className="truncate">{profile.name ?? "Unknown"}</span>
 						</CardTitle>
 						<CardDescription>Respondent Profile</CardDescription>
 					</div>

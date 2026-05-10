@@ -1,6 +1,6 @@
-import { create } from"zustand";
-import { persist } from"zustand/middleware";
-import type { Profile } from"../models/profile";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { Profile } from "../models/profile";
 
 type UserState = {
 	user: Partial<Profile> | null;
@@ -14,7 +14,7 @@ export const useUserStore = create<UserState>()(
 			setUser: (user) => set({ user }),
 		}),
 		{
-			name:"user-storage",
+			name: "user-storage",
 		},
 	),
 );

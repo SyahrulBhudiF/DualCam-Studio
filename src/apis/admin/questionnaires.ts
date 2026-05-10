@@ -1,11 +1,11 @@
-import { createServerFn } from"@tanstack/react-start";
-import { Effect } from"effect";
+import { createServerFn } from "@tanstack/react-start";
+import { Effect } from "effect";
 import {
 	AnswerService,
 	QuestionnaireService,
 	QuestionService,
 	runEffect,
-} from"@/infrastructure";
+} from "@/infrastructure";
 import {
 	BulkDeleteSchema,
 	CreateAnswerSchema,
@@ -15,12 +15,12 @@ import {
 	UpdateQuestionnaireSchema,
 	UpdateQuestionSchema,
 	UUID,
-} from"@/infrastructure/schemas/questionnaire";
-import { requireAuth } from"@/utils/session";
-import { inputValidator } from"../../infrastructure/schemas/validator";
+} from "@/infrastructure/schemas/questionnaire";
+import { requireAuth } from "@/utils/session";
+import { inputValidator } from "../../infrastructure/schemas/validator";
 
 // Questionnaire APIs
-export const getQuestionnaires = createServerFn({ method:"GET" }).handler(
+export const getQuestionnaires = createServerFn({ method: "GET" }).handler(
 	async () => {
 		return runEffect(
 			Effect.gen(function* () {
@@ -36,7 +36,7 @@ export const getQuestionnaires = createServerFn({ method:"GET" }).handler(
 	},
 );
 
-export const getQuestionnaireById = createServerFn({ method:"GET" })
+export const getQuestionnaireById = createServerFn({ method: "GET" })
 	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(
@@ -52,7 +52,7 @@ export const getQuestionnaireById = createServerFn({ method:"GET" })
 		);
 	});
 
-export const createQuestionnaire = createServerFn({ method:"POST" })
+export const createQuestionnaire = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(CreateQuestionnaireSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
@@ -69,7 +69,7 @@ export const createQuestionnaire = createServerFn({ method:"POST" })
 		);
 	});
 
-export const updateQuestionnaire = createServerFn({ method:"POST" })
+export const updateQuestionnaire = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(UpdateQuestionnaireSchema))
 	.handler(async ({ data }) => {
 		const { id, ...updates } = data;
@@ -87,7 +87,7 @@ export const updateQuestionnaire = createServerFn({ method:"POST" })
 		);
 	});
 
-export const deleteQuestionnaires = createServerFn({ method:"POST" })
+export const deleteQuestionnaires = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(BulkDeleteSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
@@ -100,7 +100,7 @@ export const deleteQuestionnaires = createServerFn({ method:"POST" })
 		);
 	});
 
-const _setQuestionnaireActive = createServerFn({ method:"POST" })
+const _setQuestionnaireActive = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(
@@ -114,7 +114,7 @@ const _setQuestionnaireActive = createServerFn({ method:"POST" })
 	});
 
 // Question APIs
-export const getQuestionsByQuestionnaireId = createServerFn({ method:"GET" })
+export const getQuestionsByQuestionnaireId = createServerFn({ method: "GET" })
 	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: questionnaireId }) => {
 		return runEffect(
@@ -131,7 +131,7 @@ export const getQuestionsByQuestionnaireId = createServerFn({ method:"GET" })
 		);
 	});
 
-export const getQuestionById = createServerFn({ method:"GET" })
+export const getQuestionById = createServerFn({ method: "GET" })
 	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: id }) => {
 		return runEffect(
@@ -148,7 +148,7 @@ export const getQuestionById = createServerFn({ method:"GET" })
 		);
 	});
 
-export const createQuestion = createServerFn({ method:"POST" })
+export const createQuestion = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(CreateQuestionSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
@@ -165,7 +165,7 @@ export const createQuestion = createServerFn({ method:"POST" })
 		);
 	});
 
-export const updateQuestion = createServerFn({ method:"POST" })
+export const updateQuestion = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(UpdateQuestionSchema))
 	.handler(async ({ data }) => {
 		const { id, ...updates } = data;
@@ -182,7 +182,7 @@ export const updateQuestion = createServerFn({ method:"POST" })
 		);
 	});
 
-export const deleteQuestions = createServerFn({ method:"POST" })
+export const deleteQuestions = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(BulkDeleteSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
@@ -196,7 +196,7 @@ export const deleteQuestions = createServerFn({ method:"POST" })
 	});
 
 // Answer APIs
-export const getAnswersByQuestionId = createServerFn({ method:"GET" })
+export const getAnswersByQuestionId = createServerFn({ method: "GET" })
 	.inputValidator(inputValidator(UUID))
 	.handler(async ({ data: questionId }) => {
 		return runEffect(
@@ -213,7 +213,7 @@ export const getAnswersByQuestionId = createServerFn({ method:"GET" })
 		);
 	});
 
-export const createAnswer = createServerFn({ method:"POST" })
+export const createAnswer = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(CreateAnswerSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
@@ -230,7 +230,7 @@ export const createAnswer = createServerFn({ method:"POST" })
 		);
 	});
 
-export const updateAnswer = createServerFn({ method:"POST" })
+export const updateAnswer = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(UpdateAnswerSchema))
 	.handler(async ({ data }) => {
 		const { id, ...updates } = data;
@@ -247,7 +247,7 @@ export const updateAnswer = createServerFn({ method:"POST" })
 		);
 	});
 
-export const deleteAnswers = createServerFn({ method:"POST" })
+export const deleteAnswers = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(BulkDeleteSchema))
 	.handler(async ({ data }) => {
 		return runEffect(

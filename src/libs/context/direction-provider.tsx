@@ -1,11 +1,11 @@
-import { DirectionProvider as RdxDirProvider } from"@radix-ui/react-direction";
-import { createContext, use, useEffect, useState } from"react";
-import { getCookie, removeCookie, setCookie } from"@/libs/cookie";
+import { DirectionProvider as RdxDirProvider } from "@radix-ui/react-direction";
+import { createContext, use, useEffect, useState } from "react";
+import { getCookie, removeCookie, setCookie } from "@/libs/cookie";
 
-export type Direction ="ltr" |"rtl";
+export type Direction = "ltr" | "rtl";
 
-const DEFAULT_DIRECTION ="ltr";
-const DIRECTION_COOKIE_NAME ="dir";
+const DEFAULT_DIRECTION = "ltr";
+const DIRECTION_COOKIE_NAME = "dir";
 const DIRECTION_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
 type DirectionContextType = {

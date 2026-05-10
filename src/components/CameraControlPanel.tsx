@@ -1,8 +1,8 @@
-import type React from"react";
+import type React from "react";
 import {
 	RealSenseCanvas,
 	type RealSenseHandle,
-} from"@/components/RealSenseCanvas";
+} from "@/components/RealSenseCanvas";
 
 interface CameraControlPanelProps {
 	videoDevices: MediaDeviceInfo[];
@@ -32,11 +32,11 @@ export function CameraControlPanel({
 	return (
 		<div className="fixed bottom-4 right-4 flex flex-row gap-4 z-50 items-end">
 			<div className="flex flex-col gap-2">
-				<div className="bg-card/90 backdrop-blur px-2 py-1 text-[10px] font-bold text-center border border-border text-card-foreground">
+				<div className="bg-card/90 backdrop-blur px-2 py-1 rounded shadow text-[10px] font-bold text-center border border-border text-card-foreground">
 					Main Cam (Audio ON)
 				</div>
 				<select
-					className="w-48 text-xs bg-card border border-border p-1 dark:text-foreground"
+					className="w-48 text-xs bg-card border border-border rounded p-1 shadow-sm dark:text-foreground"
 					value={deviceIdMain}
 					onChange={(e) => setDeviceIdMain(e.target.value)}
 				>
@@ -46,7 +46,7 @@ export function CameraControlPanel({
 						</option>
 					))}
 				</select>
-				<div className="w-48 h-36 bg-foreground overflow-hidden border-2 border-border">
+				<div className="w-48 h-36 bg-foreground rounded-lg overflow-hidden border-2 border-border shadow-xl">
 					<video
 						ref={videoRefMain}
 						autoPlay
@@ -58,11 +58,11 @@ export function CameraControlPanel({
 			</div>
 
 			<div className="flex flex-col gap-2">
-				<div className="bg-primary/15 backdrop-blur px-2 py-1 text-[10px] font-bold text-center text-primary border border-primary/30">
+				<div className="bg-primary/15 backdrop-blur px-2 py-1 rounded shadow text-[10px] font-bold text-center text-primary border border-primary/30">
 					Secondary / D415
 				</div>
 				<select
-					className="w-48 text-xs bg-card border border-primary/40 p-1 dark:text-foreground"
+					className="w-48 text-xs bg-card border border-primary/40 rounded p-1 shadow-sm dark:text-foreground"
 					value={deviceIdSec}
 					onChange={(e) => setDeviceIdSec(e.target.value)}
 				>
@@ -76,8 +76,8 @@ export function CameraControlPanel({
 						</option>
 					))}
 				</select>
-				<div className="w-48 h-36 bg-foreground overflow-hidden border-2 border-primary relative group">
-					{deviceIdSec ==="ws-realsense" ? (
+				<div className="w-48 h-36 bg-foreground rounded-lg overflow-hidden border-2 border-primary shadow-xl relative group">
+					{deviceIdSec === "ws-realsense" ? (
 						<RealSenseCanvas ref={realSenseRef} onReady={onSecReady} />
 					) : (
 						<video
@@ -89,7 +89,7 @@ export function CameraControlPanel({
 						/>
 					)}
 					<div
-						className={`absolute top-2 left-2 px-2 py-0.5 bg-destructive text-destructive-foreground text-[10px] font-bold transition-opacity ${isRecording ?"opacity-100 animate-pulse" :"opacity-0"}`}
+						className={`absolute top-2 left-2 px-2 py-0.5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full transition-opacity ${isRecording ? "opacity-100 animate-pulse" : "opacity-0"}`}
 					>
 						REC
 					</div>

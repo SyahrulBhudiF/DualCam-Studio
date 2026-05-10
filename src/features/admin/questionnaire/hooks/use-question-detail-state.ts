@@ -2,9 +2,9 @@ import type {
 	OnChangeFn,
 	RowSelectionState,
 	SortingState,
-} from"@tanstack/react-table";
-import { useReducer } from"react";
-import type { Answer } from"../questionnaires.types";
+} from "@tanstack/react-table";
+import { useReducer } from "react";
+import type { Answer } from "../questionnaires.types";
 
 type QuestionDetailState = {
 	sorting: SortingState;
@@ -15,26 +15,26 @@ type QuestionDetailState = {
 };
 
 type QuestionDetailAction =
-	| { type:"sorting"; value: SortingState }
-	| { type:"rowSelection"; value: RowSelectionState }
-	| { type:"globalFilter"; value: string }
-	| { type:"createOpen"; value: boolean }
-	| { type:"editingAnswer"; value: Answer | null };
+	| { type: "sorting"; value: SortingState }
+	| { type: "rowSelection"; value: RowSelectionState }
+	| { type: "globalFilter"; value: string }
+	| { type: "createOpen"; value: boolean }
+	| { type: "editingAnswer"; value: Answer | null };
 
 function questionDetailReducer(
 	state: QuestionDetailState,
 	action: QuestionDetailAction,
 ): QuestionDetailState {
 	switch (action.type) {
-		case"sorting":
+		case "sorting":
 			return { ...state, sorting: action.value };
-		case"rowSelection":
+		case "rowSelection":
 			return { ...state, rowSelection: action.value };
-		case"globalFilter":
+		case "globalFilter":
 			return { ...state, globalFilter: action.value };
-		case"createOpen":
+		case "createOpen":
 			return { ...state, isCreateOpen: action.value };
-		case"editingAnswer":
+		case "editingAnswer":
 			return { ...state, editingAnswer: action.value };
 	}
 }
@@ -42,7 +42,7 @@ function questionDetailReducer(
 const INITIAL_STATE: QuestionDetailState = {
 	sorting: [],
 	rowSelection: {},
-	globalFilter:"",
+	globalFilter: "",
 	isCreateOpen: false,
 	editingAnswer: null,
 };
@@ -52,15 +52,15 @@ export function useQuestionDetailState() {
 
 	const setSorting: OnChangeFn<SortingState> = (updater) =>
 		dispatch({
-			type:"sorting",
-			value: typeof updater ==="function" ? updater(state.sorting) : updater,
+			type: "sorting",
+			value: typeof updater === "function" ? updater(state.sorting) : updater,
 		});
 
 	const setRowSelection: OnChangeFn<RowSelectionState> = (updater) =>
 		dispatch({
-			type:"rowSelection",
+			type: "rowSelection",
 			value:
-				typeof updater ==="function" ? updater(state.rowSelection) : updater,
+				typeof updater === "function" ? updater(state.rowSelection) : updater,
 		});
 
 	return {
@@ -68,10 +68,10 @@ export function useQuestionDetailState() {
 		setSorting,
 		setRowSelection,
 		setGlobalFilter: (value: string) =>
-			dispatch({ type:"globalFilter", value }),
+			dispatch({ type: "globalFilter", value }),
 		setIsCreateOpen: (value: boolean) =>
-			dispatch({ type:"createOpen", value }),
+			dispatch({ type: "createOpen", value }),
 		setEditingAnswer: (value: Answer | null) =>
-			dispatch({ type:"editingAnswer", value }),
+			dispatch({ type: "editingAnswer", value }),
 	};
 }

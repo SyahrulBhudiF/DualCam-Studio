@@ -1,16 +1,16 @@
-import { format } from"date-fns";
-import { Download, FileSpreadsheet, Loader2 } from"lucide-react";
-import { useState } from"react";
-import { toast } from"sonner";
-import { getAllResponsesWithDetails } from"@/apis/admin/responses";
-import { Button } from"@/components/ui/button";
+import { format } from "date-fns";
+import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { getAllResponsesWithDetails } from "@/apis/admin/responses";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-} from"@/components/ui/dropdown-menu";
-import type { ResponseDetail, ResponseListItem } from"../responses.types";
+} from "@/components/ui/dropdown-menu";
+import type { ResponseDetail, ResponseListItem } from "../responses.types";
 
 type ExportListProps = {
 	responses: ResponseListItem[];
@@ -23,19 +23,22 @@ type ExportDetailProps = {
 async function exportResponsesToExcel(responses: ResponseListItem[]) {
 	const XLSX = await import("xlsx");
 	const data = responses.map((r) => ({
-		Name: r.profile?.name ??"-",
-		Email: r.profile?.email ??"-",
-		NIM: r.profile?.nim ??"-",
-		Class: r.profile?.class ??"-",
-		Semester: r.profile?.semester ??"-",
-		Gender: r.profile?.gender ??"-",
-		Age: r.profile?.age ??"-",
-		Questionnaire: r.questionnaireTitle ??"-","Total Score": r.totalScore,"Has Video": r.videoPath && r.videoPath !=="null" ?"Yes" :"No","Submitted At": format(new Date(r.createdAt),"dd/MM/yyyy HH:mm:ss"),
+		Name: r.profile?.name ?? "-",
+		Email: r.profile?.email ?? "-",
+		NIM: r.profile?.nim ?? "-",
+		Class: r.profile?.class ?? "-",
+		Semester: r.profile?.semester ?? "-",
+		Gender: r.profile?.gender ?? "-",
+		Age: r.profile?.age ?? "-",
+		Questionnaire: r.questionnaireTitle ?? "-",
+		"Total Score": r.totalScore,
+		"Has Video": r.videoPath && r.videoPath !== "null" ? "Yes" : "No",
+		"Submitted At": format(new Date(r.createdAt), "dd/MM/yyyy HH:mm:ss"),
 	}));
 
 	const worksheet = XLSX.utils.json_to_sheet(data);
 	const workbook = XLSX.utils.book_new();
-	XLSX.utils.book_append_sheet(workbook, worksheet,"Responses");
+	XLSX.utils.book_append_sheet(workbook, worksheet, "Responses");
 
 	const colWidths = [
 		{ wch: 25 },
@@ -52,7 +55,7 @@ async function exportResponsesToExcel(responses: ResponseListItem[]) {
 	];
 	worksheet["!cols"] = colWidths;
 
-	const filename = `responses_${format(new Date(),"yyyyMMdd_HHmmss")}.xlsx`;
+	const filename = `responses_${format(new Date(), "yyyyMMdd_HHmmss")}.xlsx`;
 	XLSX.writeFile(workbook, filename);
 }
 
@@ -60,44 +63,44 @@ async function exportResponseDetailToExcel(response: ResponseDetail) {
 	const XLSX = await import("xlsx");
 	const profileData = [
 		{
-			Field:"Name",
-			Value: response.profile?.name ??"-",
+			Field: "Name",
+			Value: response.profile?.name ?? "-",
 		},
 		{
-			Field:"Email",
-			Value: response.profile?.email ??"-",
+			Field: "Email",
+			Value: response.profile?.email ?? "-",
 		},
 		{
-			Field:"NIM",
-			Value: response.profile?.nim ??"-",
+			Field: "NIM",
+			Value: response.profile?.nim ?? "-",
 		},
 		{
-			Field:"Class",
-			Value: response.profile?.class ??"-",
+			Field: "Class",
+			Value: response.profile?.class ?? "-",
 		},
 		{
-			Field:"Semester",
-			Value: response.profile?.semester ??"-",
+			Field: "Semester",
+			Value: response.profile?.semester ?? "-",
 		},
 		{
-			Field:"Gender",
-			Value: response.profile?.gender ??"-",
+			Field: "Gender",
+			Value: response.profile?.gender ?? "-",
 		},
 		{
-			Field:"Age",
-			Value: response.profile?.age ??"-",
+			Field: "Age",
+			Value: response.profile?.age ?? "-",
 		},
 		{
-			Field:"Questionnaire",
-			Value: response.questionnaire?.title ??"-",
+			Field: "Questionnaire",
+			Value: response.questionnaire?.title ?? "-",
 		},
 		{
-			Field:"Total Score",
+			Field: "Total Score",
 			Value: response.totalScore,
 		},
 		{
-			Field:"Submitted At",
-			Value: format(new Date(response.createdAt),"dd/MM/yyyy HH:mm:ss"),
+			Field: "Submitted At",
+			Value: format(new Date(response.createdAt), "dd/MM/yyyy HH:mm:ss"),
 		},
 	];
 
@@ -105,9 +108,10 @@ async function exportResponseDetailToExcel(response: ResponseDetail) {
 		(a, b) => (a.orderNumber ?? 0) - (b.orderNumber ?? 0),
 	);
 
-	const answersData = sortedDetails.map((d, index) => ({"#": d.orderNumber ?? index + 1,
-		Question: d.questionText ??"-",
-		Answer: d.answerText ??"-",
+	const answersData = sortedDetails.map((d, index) => ({
+		"#": d.orderNumber ?? index + 1,
+		Question: d.questionText ?? "-",
+		Answer: d.answerText ?? "-",
 		Score: d.score,
 	}));
 
@@ -115,16 +119,16 @@ async function exportResponseDetailToExcel(response: ResponseDetail) {
 
 	const profileSheet = XLSX.utils.json_to_sheet(profileData);
 	profileSheet["!cols"] = [{ wch: 15 }, { wch: 40 }];
-	XLSX.utils.book_append_sheet(workbook, profileSheet,"Profile");
+	XLSX.utils.book_append_sheet(workbook, profileSheet, "Profile");
 
 	const answersSheet = XLSX.utils.json_to_sheet(answersData);
 	answersSheet["!cols"] = [{ wch: 5 }, { wch: 50 }, { wch: 40 }, { wch: 8 }];
-	XLSX.utils.book_append_sheet(workbook, answersSheet,"Answers");
+	XLSX.utils.book_append_sheet(workbook, answersSheet, "Answers");
 
-	const safeName = (response.profile?.name ??"unknown")
-		.replace(/[^a-z0-9]/gi,"_")
+	const safeName = (response.profile?.name ?? "unknown")
+		.replace(/[^a-z0-9]/gi, "_")
 		.toLowerCase();
-	const filename = `response_${safeName}_${format(new Date(),"yyyyMMdd_HHmmss")}.xlsx`;
+	const filename = `response_${safeName}_${format(new Date(), "yyyyMMdd_HHmmss")}.xlsx`;
 	XLSX.writeFile(workbook, filename);
 }
 
@@ -137,19 +141,21 @@ async function exportAllResponseDetailsToExcel(responses: FullResponseData) {
 	// Sheet 1: Summary - All respondents with their total scores
 	const summaryData = responses.map((r, index) => ({
 		No: index + 1,
-		Name: r.profile?.name ??"-",
-		Email: r.profile?.email ??"-",
-		NIM: r.profile?.nim ??"-",
-		Class: r.profile?.class ??"-",
-		Semester: r.profile?.semester ??"-",
+		Name: r.profile?.name ?? "-",
+		Email: r.profile?.email ?? "-",
+		NIM: r.profile?.nim ?? "-",
+		Class: r.profile?.class ?? "-",
+		Semester: r.profile?.semester ?? "-",
 		Gender:
-			r.profile?.gender ==="L"
-				?"Laki-laki"
-				: r.profile?.gender ==="P"
-					?"Perempuan"
-					:"-",
-		Age: r.profile?.age ??"-",
-		Questionnaire: r.questionnaireTitle ??"-","Total Score": r.totalScore,"Submitted At": format(new Date(r.createdAt),"dd/MM/yyyy HH:mm:ss"),
+			r.profile?.gender === "L"
+				? "Laki-laki"
+				: r.profile?.gender === "P"
+					? "Perempuan"
+					: "-",
+		Age: r.profile?.age ?? "-",
+		Questionnaire: r.questionnaireTitle ?? "-",
+		"Total Score": r.totalScore,
+		"Submitted At": format(new Date(r.createdAt), "dd/MM/yyyy HH:mm:ss"),
 	}));
 
 	const summarySheet = XLSX.utils.json_to_sheet(summaryData);
@@ -166,7 +172,7 @@ async function exportAllResponseDetailsToExcel(responses: FullResponseData) {
 		{ wch: 12 }, // Total Score
 		{ wch: 20 }, // Submitted At
 	];
-	XLSX.utils.book_append_sheet(workbook, summarySheet,"Summary");
+	XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
 
 	// Sheet 2: All Response Details - Flattened data with all answers
 	const allDetailsData: Record<string, unknown>[] = [];
@@ -178,14 +184,17 @@ async function exportAllResponseDetailsToExcel(responses: FullResponseData) {
 
 		for (const detail of sortedDetails) {
 			allDetailsData.push({
-				Name: response.profile?.name ??"-",
-				NIM: response.profile?.nim ??"-",
-				Class: response.profile?.class ??"-",
-				Questionnaire: response.questionnaireTitle ??"-","Question No": detail.orderNumber ??"-",
-				Question: detail.questionText ??"-",
-				Answer: detail.answerText ??"-",
-				Score: detail.score,"Submitted At": format(
-					new Date(response.createdAt),"dd/MM/yyyy HH:mm:ss",
+				Name: response.profile?.name ?? "-",
+				NIM: response.profile?.nim ?? "-",
+				Class: response.profile?.class ?? "-",
+				Questionnaire: response.questionnaireTitle ?? "-",
+				"Question No": detail.orderNumber ?? "-",
+				Question: detail.questionText ?? "-",
+				Answer: detail.answerText ?? "-",
+				Score: detail.score,
+				"Submitted At": format(
+					new Date(response.createdAt),
+					"dd/MM/yyyy HH:mm:ss",
 				),
 			});
 		}
@@ -203,7 +212,7 @@ async function exportAllResponseDetailsToExcel(responses: FullResponseData) {
 		{ wch: 8 }, // Score
 		{ wch: 20 }, // Submitted At
 	];
-	XLSX.utils.book_append_sheet(workbook, detailsSheet,"All Answers");
+	XLSX.utils.book_append_sheet(workbook, detailsSheet, "All Answers");
 
 	// Sheet 3: Pivot-style - Each respondent as row, each question as column
 	if (responses.length > 0 && responses[0].details.length > 0) {
@@ -215,10 +224,10 @@ async function exportAllResponseDetailsToExcel(responses: FullResponseData) {
 
 		const pivotData = responses.map((r) => {
 			const row: Record<string, unknown> = {
-				Name: r.profile?.name ??"-",
-				NIM: r.profile?.nim ??"-",
-				Class: r.profile?.class ??"-",
-				Questionnaire: r.questionnaireTitle ??"-",
+				Name: r.profile?.name ?? "-",
+				NIM: r.profile?.nim ?? "-",
+				Class: r.profile?.class ?? "-",
+				Questionnaire: r.questionnaireTitle ?? "-",
 			};
 
 			// Add each question's answer as a column
@@ -227,13 +236,14 @@ async function exportAllResponseDetailsToExcel(responses: FullResponseData) {
 			for (const q of sortedQuestions) {
 				const detail = detailsMap.get(q.orderNumber);
 				const questionLabel = `Q${q.orderNumber ?? 0}`;
-				row[questionLabel] = detail?.answerText ??"-";
+				row[questionLabel] = detail?.answerText ?? "-";
 				row[`${questionLabel} Score`] = detail?.score ?? 0;
 			}
 
 			row["Total Score"] = r.totalScore;
 			row["Submitted At"] = format(
-				new Date(r.createdAt),"dd/MM/yyyy HH:mm:ss",
+				new Date(r.createdAt),
+				"dd/MM/yyyy HH:mm:ss",
 			);
 
 			return row;
@@ -259,10 +269,12 @@ async function exportAllResponseDetailsToExcel(responses: FullResponseData) {
 		baseColWidths.push({ wch: 20 }); // Submitted At
 
 		pivotSheet["!cols"] = baseColWidths;
-		XLSX.utils.book_append_sheet(workbook, pivotSheet,"Pivot View");
+		XLSX.utils.book_append_sheet(workbook, pivotSheet, "Pivot View");
 
 		// Sheet 4: Question Legend
-		const legendData = sortedQuestions.map((q) => ({"Question No": `Q${q.orderNumber ?? 0}`,"Question Text": q.questionText ??"-",
+		const legendData = sortedQuestions.map((q) => ({
+			"Question No": `Q${q.orderNumber ?? 0}`,
+			"Question Text": q.questionText ?? "-",
 		}));
 
 		const legendSheet = XLSX.utils.json_to_sheet(legendData);
@@ -270,10 +282,10 @@ async function exportAllResponseDetailsToExcel(responses: FullResponseData) {
 			{ wch: 12 }, // Question No
 			{ wch: 80 }, // Question Text
 		];
-		XLSX.utils.book_append_sheet(workbook, legendSheet,"Question Legend");
+		XLSX.utils.book_append_sheet(workbook, legendSheet, "Question Legend");
 	}
 
-	const filename = `all_responses_details_${format(new Date(),"yyyyMMdd_HHmmss")}.xlsx`;
+	const filename = `all_responses_details_${format(new Date(), "yyyyMMdd_HHmmss")}.xlsx`;
 	XLSX.writeFile(workbook, filename);
 }
 

@@ -1,5 +1,5 @@
-import type React from"react";
-import { useEffect, useImperativeHandle, useRef } from"react";
+import type React from "react";
+import { useEffect, useImperativeHandle, useRef } from "react";
 
 export interface RealSenseHandle {
 	startRecording: (options: {
@@ -30,11 +30,11 @@ export function RealSenseCanvas({ onReady, ref }: RealSenseCanvasProps) {
 
 	useImperativeHandle(ref, () => ({
 		startRecording: (options) => {
-			const payload = JSON.stringify({ action:"START", ...options });
+			const payload = JSON.stringify({ action: "START", ...options });
 			sendMessage(payload);
 		},
 		stopRecording: () => {
-			const payload = JSON.stringify({ action:"STOP" });
+			const payload = JSON.stringify({ action: "STOP" });
 			sendMessage(payload);
 		},
 	}));
@@ -47,7 +47,7 @@ export function RealSenseCanvas({ onReady, ref }: RealSenseCanvasProps) {
 		if (!ctx) return;
 
 		wsRef.current = new WebSocket(
-			import.meta.env.VITE_REALSENSE_WS_URL ??"ws://localhost:8080",
+			import.meta.env.VITE_REALSENSE_WS_URL ?? "ws://localhost:8080",
 		);
 		const img = new Image();
 

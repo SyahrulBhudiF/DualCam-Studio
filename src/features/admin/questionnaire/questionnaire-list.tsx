@@ -1,5 +1,5 @@
-import { useForm } from"@tanstack/react-form";
-import { useMutation, useQueryClient } from"@tanstack/react-query";
+import { useForm } from "@tanstack/react-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
 	flexRender,
 	getCoreRowModel,
@@ -8,36 +8,36 @@ import {
 	getSortedRowModel,
 	type SortingState,
 	useReactTable,
-} from"@tanstack/react-table";
-import { Plus, Trash } from"lucide-react";
-import { useMemo, useState } from"react";
-import { toast } from"sonner";
+} from "@tanstack/react-table";
+import { Plus, Trash } from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
 	createQuestionnaire,
 	deleteQuestionnaires,
 	updateQuestionnaire,
-} from"@/apis/admin/questionnaires";
+} from "@/apis/admin/questionnaires";
 import {
 	DataTableBulkActions,
 	DataTablePagination,
 	DataTableToolbar,
-} from"@/components/data-table";
-import { Main } from"@/components/layout/main";
-import { Button } from"@/components/ui/button";
+} from "@/components/data-table";
+import { Main } from "@/components/layout/main";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-} from"@/components/ui/dialog";
-import { Input } from"@/components/ui/input";
-import { Label } from"@/components/ui/label";
-import { Switch } from"@/components/ui/switch";
-import { Textarea } from"@/components/ui/textarea";
-import { createQuestionnaireSchema } from"@/libs/schemas/questionnaire";
-import { getQuestionnaireColumns } from"./components/columns";
-import type { Questionnaire } from"./questionnaires.types";
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { createQuestionnaireSchema } from "@/libs/schemas/questionnaire";
+import { getQuestionnaireColumns } from "./components/columns";
+import type { Questionnaire } from "./questionnaires.types";
 
 export function QuestionnaireList({
 	data,
@@ -56,7 +56,7 @@ export function QuestionnaireList({
 	const createMutation = useMutation({
 		mutationFn: createQuestionnaire,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["admin","questionnaires"] });
+			queryClient.invalidateQueries({ queryKey: ["admin", "questionnaires"] });
 			setIsCreateOpen(false);
 
 			form.reset();
@@ -70,7 +70,7 @@ export function QuestionnaireList({
 	const deleteMutation = useMutation({
 		mutationFn: deleteQuestionnaires,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["admin","questionnaires"] });
+			queryClient.invalidateQueries({ queryKey: ["admin", "questionnaires"] });
 			setRowSelection({});
 			toast.success("Questionnaire deleted successfully");
 		},
@@ -82,7 +82,7 @@ export function QuestionnaireList({
 	const updateMutation = useMutation({
 		mutationFn: updateQuestionnaire,
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["admin","questionnaires"] });
+			queryClient.invalidateQueries({ queryKey: ["admin", "questionnaires"] });
 
 			form.reset();
 			toast.success("Questionnaire updated successfully");
@@ -122,8 +122,8 @@ export function QuestionnaireList({
 
 	const form = useForm({
 		defaultValues: {
-			title:"",
-			description:"",
+			title: "",
+			description: "",
 			isActive: false,
 		},
 		validators: {
@@ -189,7 +189,7 @@ export function QuestionnaireList({
 										/>
 										{field.state.meta.errors ? (
 											<p className="text-destructive text-sm">
-												{field.state.meta.errors.join(",")}
+												{field.state.meta.errors.join(", ")}
 											</p>
 										) : null}
 									</div>
@@ -225,7 +225,7 @@ export function QuestionnaireList({
 								className="w-full cursor-pointer"
 								disabled={createMutation.isPending}
 							>
-								{createMutation.isPending ?"Creating…" :"Create"}
+								{createMutation.isPending ? "Creating…" : "Create"}
 							</Button>
 						</div>
 					</DialogContent>
@@ -233,7 +233,7 @@ export function QuestionnaireList({
 			</div>
 
 			<DataTableToolbar table={table} searchKey="title" />
-			<div className="border overflow-auto">
+			<div className="rounded-md border overflow-auto">
 				<table className="w-full caption-bottom text-sm">
 					<thead className="[&_tr]:border-b">
 						{table.getHeaderGroups().map((headerGroup) => (
@@ -262,7 +262,7 @@ export function QuestionnaireList({
 							table.getRowModel().rows.map((row) => (
 								<tr
 									key={row.id}
-									data-state={row.getIsSelected() &&"selected"}
+									data-state={row.getIsSelected() && "selected"}
 									className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
 								>
 									{row.getVisibleCells().map((cell) => (
