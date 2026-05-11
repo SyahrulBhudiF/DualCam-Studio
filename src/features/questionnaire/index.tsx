@@ -5,10 +5,10 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { submitQuestionnaire } from "@/apis/questionnaire";
 import { CameraControlPanel } from "@/components/CameraControlPanel";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Label } from "@/components/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { useCameraSetup } from "@/libs/hooks/use-camera-setup";
 import { useUserStore } from "@/libs/store/UserStore";
 

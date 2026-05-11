@@ -1,15 +1,15 @@
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
 	getAnswersByQuestionId,
 	getQuestionById,
 } from "@/apis/admin/questionnaires";
-import { QuestionDetail } from "@/features/admin/questionnaire/question-detail";
+import { QuestionDetail } from "@/features/admin/questionnaire/QuestionDetail";
 
 export const Route = createFileRoute(
 	"/admin/questionnaires/$questionnaireId/$questionId/",
 )({
-	loader: async ({ context, params }) => {
+	loader: ({ context, params }) => {
 		const { queryClient } = context;
 		const { questionId } = params;
 
@@ -23,7 +23,7 @@ export const Route = createFileRoute(
 			queryFn: () => getAnswersByQuestionId({ data: questionId }),
 		});
 
-		await Promise.all([
+		return Promise.all([
 			queryClient.ensureQueryData(questionOptions),
 			queryClient.ensureQueryData(answersOptions),
 		]);
@@ -32,23 +32,7 @@ export const Route = createFileRoute(
 });
 
 function QuestionDetailRouteComponent() {
-	const params = Route.useParams();
+	const [question, answers] = Route.useLoaderData();
 
-	const questionQuery = useSuspenseQuery(
-		queryOptions({
-			queryKey: ["admin", "question", params.questionId],
-			queryFn: () => getQuestionById({ data: params.questionId }),
-		}),
-	);
-
-	const answersQuery = useSuspenseQuery(
-		queryOptions({
-			queryKey: ["admin", "answers", params.questionId],
-			queryFn: () => getAnswersByQuestionId({ data: params.questionId }),
-		}),
-	);
-
-	return (
-		<QuestionDetail question={questionQuery.data} answers={answersQuery.data} />
-	);
+	return <QuestionDetail question={question} answers={answers} />;
 }

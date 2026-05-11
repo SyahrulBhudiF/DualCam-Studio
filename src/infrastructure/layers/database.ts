@@ -27,7 +27,7 @@ const PgClientConfig = Config.all({
 
 const envProvider = ConfigProvider.fromEnv();
 
-export const PgClientLive = Layer.unwrap(
+const PgClientLive = Layer.unwrap(
 	Effect.gen(function* () {
 		const config = yield* PgClientConfig.parse(envProvider);
 		return PgClient.layer({

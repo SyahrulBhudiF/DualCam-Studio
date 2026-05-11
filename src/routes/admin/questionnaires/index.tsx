@@ -1,7 +1,7 @@
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { getQuestionnaires } from "@/apis/admin/questionnaires";
-import { QuestionnaireList } from "@/features/admin/questionnaire/questionnaire-list";
+import { QuestionnaireList } from "@/features/admin/questionnaire/QuestionnaireList";
 
 const questionnairesQueryOptions = queryOptions({
 	queryKey: ["admin", "questionnaires"],
@@ -9,13 +9,12 @@ const questionnairesQueryOptions = queryOptions({
 });
 
 export const Route = createFileRoute("/admin/questionnaires/")({
-	loader: ({ context }) => {
-		context.queryClient.prefetchQuery(questionnairesQueryOptions);
-	},
+	loader: ({ context }) =>
+		context.queryClient.ensureQueryData(questionnairesQueryOptions),
 	component: QuestionnairesRouteComponent,
 });
 
 function QuestionnairesRouteComponent() {
-	const query = useQuery(questionnairesQueryOptions);
-	return <QuestionnaireList data={query.data} isLoading={query.isLoading} />;
+	const questionnaires = Route.useLoaderData();
+	return <QuestionnaireList data={questionnaires} isLoading={false} />;
 }

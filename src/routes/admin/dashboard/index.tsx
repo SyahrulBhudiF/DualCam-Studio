@@ -1,54 +1,20 @@
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-	getAnalyticsDetails,
-	getDashboardBreakdown,
-	getDashboardSummary,
-} from "@/apis/dashboard";
+import { getDashboardData } from "@/apis/dashboard";
 import { Dashboard } from "@/features/dashboard";
 
-const summaryOptions = queryOptions({
-	queryKey: ["dashboard", "summary"],
-	queryFn: () => getDashboardSummary(),
-});
-
-const breakdownOptions = queryOptions({
-	queryKey: ["dashboard", "breakdown"],
-	queryFn: () => getDashboardBreakdown(),
-});
-
-const analyticsOptions = queryOptions({
-	queryKey: ["dashboard", "analytics"],
-	queryFn: () => getAnalyticsDetails(),
+const dashboardOptions = queryOptions({
+	queryKey: ["dashboard"],
+	queryFn: () => getDashboardData(),
 });
 
 export const Route = createFileRoute("/admin/dashboard/")({
-	loader: async ({ context }) => {
-		const { queryClient } = context;
-
-		await Promise.all([
-			queryClient.ensureQueryData(summaryOptions),
-			queryClient.ensureQueryData(breakdownOptions),
-			queryClient.ensureQueryData(analyticsOptions),
-		]);
-	},
+	loader: ({ context }) => context.queryClient.ensureQueryData(dashboardOptions),
 	component: DashboardRouteComponent,
 });
 
 function DashboardRouteComponent() {
-	const summary = useQuery(summaryOptions);
-	const breakdown = useQuery(breakdownOptions);
-	const analytics = useQuery(analyticsOptions);
+	const data = Route.useLoaderData();
 
-	const isLoading =
-		summary.isLoading || breakdown.isLoading || analytics.isLoading;
-
-	return (
-		<Dashboard
-			summary={summary.data}
-			breakdown={breakdown.data}
-			analytics={analytics.data}
-			isLoading={isLoading}
-		/>
-	);
+	return <Dashboard {...data} />;
 }

@@ -1,10 +1,10 @@
 import { Eye, EyeOff } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+import { Button } from "./ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
+import { Input } from "./ui/Input";
+import { Label } from "./ui/Label";
 
 export function Auth({
 	actionText,
@@ -32,6 +32,9 @@ export function Auth({
 	onSubmit: () => void;
 }) {
 	const [showPassword, setShowPassword] = useState(false);
+	const handleSubmitAction = () => {
+		onSubmit();
+	};
 
 	return (
 		<div className="fixed inset-0 bg-background flex items-center justify-center p-8">
@@ -40,14 +43,7 @@ export function Auth({
 					<CardTitle className="text-2xl text-center">{actionText}</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<form
-						className="space-y-4"
-						onSubmit={(event) => {
-							event.preventDefault();
-							event.stopPropagation();
-							onSubmit();
-						}}
-					>
+					<form action={handleSubmitAction} className="space-y-4">
 						<div className="space-y-2">
 							<Label htmlFor="email">Email</Label>
 							<Input
@@ -59,9 +55,9 @@ export function Auth({
 								onBlur={emailField.onBlur}
 								onChange={(event) => emailField.onChange(event.target.value)}
 							/>
-						{emailField.errors.length > 0 ? (
-								<p className="text-destructive text-sm">
-									{emailField.errors.join(", ")}
+							{emailField.errors.length > 0 ? (
+								<p className="text-destructive text-sm" role="alert">
+									{emailField.errors[0]}
 								</p>
 							) : null}
 						</div>
@@ -96,8 +92,8 @@ export function Auth({
 								</Button>
 							</div>
 							{passwordField.errors.length > 0 ? (
-								<p className="text-destructive text-sm">
-									{passwordField.errors.join(", ")}
+								<p className="text-destructive text-sm" role="alert">
+									{passwordField.errors[0]}
 								</p>
 							) : null}
 						</div>

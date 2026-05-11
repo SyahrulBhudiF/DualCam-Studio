@@ -11,7 +11,7 @@ import type * as React from "react";
 import { fetchUser } from "@/apis/user";
 import { DefaultCatchBoundary } from "@/components/DefaultCatchBoundary";
 import { NotFound } from "@/components/NotFound";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/Sonner";
 import { DirectionProvider } from "@/libs/context/direction-provider";
 import { ThemeProvider } from "@/libs/context/theme-provider";
 import appCss from "@/styles/app.css?url";
