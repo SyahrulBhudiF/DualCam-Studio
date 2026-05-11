@@ -1,9 +1,9 @@
-export { DataTableBulkActions } from "./bulk-actions";
-export { DataTableColumnHeader } from "./column-header";
+export { DataTableBulkActions } from "./BulkActions";
+export { DataTableColumnHeader } from "./ColumnHeader";
 
 ;
 
-export { DataTablePagination } from "./pagination";
-export { DataTableToolbar } from "./toolbar";
+export { DataTablePagination } from "./Pagination";
+export { DataTableToolbar } from "./Toolbar";
 
 ;

@@ -1,37 +1,13 @@
-import { Main } from "@/components/layout/main";
-import { Button } from "@/components/ui/button";
-import { exportDashboardToExcel } from "./components/dashboard-export";
-import { DashboardTabs } from "./components/dashboard-tabs";
-import type { DashboardProps } from "./components/types";
+import { Main } from "@/components/layout/Main";
+import { DashboardPageHeader } from "./components/DashboardPageHeader";
+import { DashboardTabs } from "./components/DashboardTabs";
+import type { DashboardData } from "./Dashboard.types";
 
-export function Dashboard({
-	summary,
-	breakdown,
-	analytics,
-	isLoading = false,
-}: DashboardProps) {
+export function Dashboard(data: DashboardData) {
 	return (
 		<Main>
-			<div className="mb-2 flex items-center justify-between gap-y-2">
-				<h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-				<div className="flex items-center gap-x-2">
-					<Button
-						onClick={() =>
-							exportDashboardToExcel({ summary, breakdown, analytics })
-						}
-						disabled={isLoading}
-					>
-						Export Excel
-					</Button>
-				</div>
-			</div>
-
-			<DashboardTabs
-				summary={summary}
-				breakdown={breakdown}
-				analytics={analytics}
-				isLoading={isLoading}
-			/>
+			<DashboardPageHeader {...data} />
+			<DashboardTabs {...data} />
 		</Main>
 	);
 }

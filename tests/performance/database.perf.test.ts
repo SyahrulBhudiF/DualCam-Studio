@@ -43,28 +43,10 @@ const ServicesLive = Layer.mergeAll(
 describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 	// Use it.layer to share the layer across all tests in this describe block
 	it.layer(ServicesLive)("Dashboard Service Performance", (it) => {
-		it.effect("getSummary should complete under 1000ms", () =>
+		it.effect("getDashboardData should complete under 1500ms", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService.asEffect();
-				yield* timed("Dashboard.getSummary", service.getSummary(), 1000);
-			}),
-		);
-
-		it.effect("getBreakdown should complete under 1000ms", () =>
-			Effect.gen(function* () {
-				const service = yield* DashboardService.asEffect();
-				yield* timed("Dashboard.getBreakdown", service.getBreakdown(), 1000);
-			}),
-		);
-
-		it.effect("getAnalyticsDetails should complete under 1000ms", () =>
-			Effect.gen(function* () {
-				const service = yield* DashboardService.asEffect();
-				yield* timed(
-					"Dashboard.getAnalyticsDetails",
-					service.getAnalyticsDetails(),
-					1000,
-				);
+				yield* timed("Dashboard.getDashboardData", service.getDashboardData(), 1500);
 			}),
 		);
 	});
@@ -126,7 +108,7 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 
 				const start = performance.now();
 				const results = yield* Effect.all(
-					Arr.replicate(service.getSummary(), concurrency),
+					Arr.replicate(service.getDashboardData(), concurrency),
 					{ concurrency: "unbounded" },
 				);
 				const totalMs = performance.now() - start;
@@ -201,11 +183,9 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 						});
 
 					// Run all operations
-					yield* measure("Dashboard.getSummary", dashboard.getSummary());
-					yield* measure("Dashboard.getBreakdown", dashboard.getBreakdown());
 					yield* measure(
-						"Dashboard.getAnalyticsDetails",
-						dashboard.getAnalyticsDetails(),
+						"Dashboard.getDashboardData",
+						dashboard.getDashboardData(),
 					);
 					yield* measure("Questionnaire.getAll", questionnaire.getAll());
 					yield* measure("Response.getAll", response.getAll());

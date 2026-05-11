@@ -1,5 +1,12 @@
-import { avg, count, countDistinct, eq, sql, sum } from "drizzle-orm";
+import { and, avg, count, countDistinct, desc, eq, ne, sql, sum } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
+import type {
+	DashboardAnalytics,
+	DashboardBreakdown,
+	DashboardData,
+	DashboardRecentResponse,
+	DashboardSummary,
+} from "@/features/dashboard/Dashboard.types";
 import {
 	answers,
 	profiles,
@@ -11,62 +18,26 @@ import {
 import { DatabaseError } from "../errors";
 import { DB } from "../layers/database";
 
-interface DashboardSummary {
-	totalQuestionnaires: number;
-	activeQuestionnaires: number;
-	totalResponses: number;
-	averageScore: number;
-	totalClasses: number;
+const DASHBOARD_QUERY_CONCURRENCY = 4;
+const RECENT_RESPONSE_LIMIT = 20;
+
+function toNumber(value: unknown) {
+	return Number(value) || 0;
 }
 
-interface QuestionnaireStats {
-	id: string;
-	title: string;
-	totalResponses: number;
-	averageScore: number;
+function average(total: unknown, count: number) {
+	return count > 0 ? toNumber(total) / count : 0;
 }
 
-interface ClassStats {
-	className: string;
-	totalResponses: number;
-	averageScore: number;
+function toDateString(date: Date | string) {
+	return date instanceof Date ? date.toISOString().split("T")[0] : String(date);
 }
 
-interface QuestionStats {
-	id: string;
-	text: string;
-	order: number | null;
-	averageScore: number;
-}
-
-interface AnswerStats {
-	id: string;
-	text: string;
-	questionId: string | null;
-	totalResponses: number;
-	averageScore: number;
-}
-
-interface TimelineEntry {
-	date: string;
-	totalResponses: number;
-	averageScore: number;
-}
-
-interface DashboardBreakdown {
-	questionnaires: QuestionnaireStats[];
-	classes: ClassStats[];
-}
-
-interface AnalyticsDetails {
-	questions: QuestionStats[];
-	answers: AnswerStats[];
-	timeline: TimelineEntry[];
-	video: {
-		withVideo: number;
-		total: number;
-	};
-}
+const hasVideoPath = and(
+	sql`${responses.videoPath} is not null`,
+	ne(responses.videoPath, "null"),
+	ne(responses.videoPath, ""),
+);
 
 export class DashboardService extends Context.Service<DashboardService>()(
 	"DashboardService",
@@ -82,52 +53,35 @@ export class DashboardService extends Context.Service<DashboardService>()(
 					[{ count: totalClasses }],
 				] = yield* Effect.all(
 					[
-						// Count total questionnaires
-						db
-							.select({ count: count() })
-							.from(questionnaires),
-						// Count active questionnaires
+						db.select({ count: count() }).from(questionnaires),
 						db
 							.select({ count: count() })
 							.from(questionnaires)
 							.where(eq(questionnaires.isActive, true)),
-						// Get response count and average score using SQL aggregation
 						db
 							.select({
 								totalResponses: count(),
 								avgScore: avg(responses.totalScore),
 							})
 							.from(responses),
-						// Count unique classes using SQL
-						db
-							.select({ count: countDistinct(profiles.class) })
-							.from(profiles),
+						db.select({ count: countDistinct(profiles.class) }).from(profiles),
 					],
-					{ concurrency: "unbounded" },
-				).pipe(
-					Effect.mapError(
-						(e) =>
-							new DatabaseError({
-								message: "Failed to fetch dashboard summary",
-								cause: e,
-							}),
-					),
+					{ concurrency: DASHBOARD_QUERY_CONCURRENCY },
 				);
 
 				return {
 					totalQuestionnaires,
 					activeQuestionnaires,
 					totalResponses,
-					averageScore: Number(avgScore) || 0,
+					averageScore: toNumber(avgScore),
 					totalClasses,
-				};
+				} satisfies DashboardSummary;
 			});
 
 			const getBreakdown = Effect.fn("DashboardService.getBreakdown")(
 				function* () {
 					const [questionnaireRows, classRows] = yield* Effect.all(
 						[
-							// Questionnaire stats using SQL GROUP BY
 							db
 								.select({
 									id: questionnaires.id,
@@ -141,7 +95,6 @@ export class DashboardService extends Context.Service<DashboardService>()(
 									eq(questionnaires.id, responses.questionnaireId),
 								)
 								.groupBy(questionnaires.id, questionnaires.title),
-							// Class stats using SQL GROUP BY with JOIN
 							db
 								.select({
 									className: profiles.class,
@@ -152,164 +105,177 @@ export class DashboardService extends Context.Service<DashboardService>()(
 								.innerJoin(profiles, eq(responses.userId, profiles.id))
 								.groupBy(profiles.class),
 						],
-						{ concurrency: "unbounded" },
-					).pipe(
-						Effect.mapError(
-							(e) =>
-								new DatabaseError({
-									message: "Failed to fetch dashboard breakdown",
-									cause: e,
-								}),
-						),
+						{ concurrency: DASHBOARD_QUERY_CONCURRENCY },
 					);
 
-					const questionnaireStats = questionnaireRows.map((r) => ({
-						id: r.id,
-						title: r.title,
-						totalResponses: r.totalResponses,
-						averageScore:
-							r.totalResponses > 0
-								? Number(r.totalScore) / r.totalResponses
-								: 0,
-					}));
-
-					const classStats = classRows.reduce<
-						{
-							className: string;
-							totalResponses: number;
-							averageScore: number;
-						}[]
-					>((acc, r) => {
-						if (r.className === null) return acc;
-
-						acc.push({
-							className: r.className,
-							totalResponses: r.totalResponses,
-							averageScore:
-								r.totalResponses > 0
-									? Number(r.totalScore) / r.totalResponses
-									: 0,
-						});
-						return acc;
-					}, []);
-
 					return {
-						questionnaires: questionnaireStats,
-						classes: classStats,
-					};
+						questionnaires: questionnaireRows.map((r) => ({
+							id: r.id,
+							title: r.title,
+							totalResponses: r.totalResponses,
+							averageScore: average(r.totalScore, r.totalResponses),
+						})),
+						classes: classRows.flatMap((r) =>
+							r.className === null
+								? []
+								: [
+										{
+											className: r.className,
+											totalResponses: r.totalResponses,
+											averageScore: average(r.totalScore, r.totalResponses),
+										},
+									],
+						),
+					} satisfies DashboardBreakdown;
 				},
 			);
 
-			const getAnalyticsDetails = Effect.fn(
-				"DashboardService.getAnalyticsDetails",
-			)(function* () {
-				const [questionRows, answerRows, timelineRows, [{ total, withVideo }]] =
-					yield* Effect.all(
-						[
-							// Question stats using SQL GROUP BY
-							db
-								.select({
-									id: questions.id,
-									text: questions.questionText,
-									order: questions.orderNumber,
-									totalResponses: count(responseDetails.id),
-									totalScore: sum(responseDetails.score),
-								})
-								.from(questions)
-								.leftJoin(
-									responseDetails,
-									eq(questions.id, responseDetails.questionId),
-								)
-								.groupBy(
-									questions.id,
-									questions.questionText,
-									questions.orderNumber,
-								),
-							// Answer stats using SQL GROUP BY
-							db
-								.select({
-									id: answers.id,
-									text: answers.answerText,
-									questionId: answers.questionId,
-									totalResponses: count(responseDetails.id),
-									totalScore: sum(responseDetails.score),
-								})
-								.from(answers)
-								.leftJoin(
-									responseDetails,
-									eq(answers.id, responseDetails.answerId),
-								)
-								.groupBy(answers.id, answers.answerText, answers.questionId),
-							// Timeline using SQL GROUP BY with date truncation
-							db
-								.select({
-									date: sql<Date | string>`DATE(${responses.createdAt})`.as(
-										"date",
+			const getAnalytics = Effect.fn("DashboardService.getAnalytics")(
+				function* () {
+					const [questionRows, answerRows, timelineRows, [{ total, withVideo }]] =
+						yield* Effect.all(
+							[
+								db
+									.select({
+										id: questions.id,
+										text: questions.questionText,
+										order: questions.orderNumber,
+										totalResponses: count(responseDetails.id),
+										totalScore: sum(responseDetails.score),
+									})
+									.from(questions)
+									.leftJoin(
+										responseDetails,
+										eq(questions.id, responseDetails.questionId),
+									)
+									.groupBy(
+										questions.id,
+										questions.questionText,
+										questions.orderNumber,
 									),
-									totalResponses: count(),
-									totalScore: sum(responses.totalScore),
-								})
-								.from(responses)
-								.groupBy(sql`DATE(${responses.createdAt})`)
-								.orderBy(sql`DATE(${responses.createdAt})`),
-							// Video stats using SQL
-							db
-								.select({
-									total: count(),
-									withVideo: count(responses.videoPath),
-								})
-								.from(responses),
-						],
-						{ concurrency: "unbounded" },
+								db
+									.select({
+										id: answers.id,
+										text: answers.answerText,
+										questionId: answers.questionId,
+										totalResponses: count(responseDetails.id),
+										totalScore: sum(responseDetails.score),
+									})
+									.from(answers)
+									.leftJoin(
+										responseDetails,
+										eq(answers.id, responseDetails.answerId),
+									)
+									.groupBy(answers.id, answers.answerText, answers.questionId),
+								db
+									.select({
+										date: sql<Date | string>`DATE(${responses.createdAt})`.as(
+											"date",
+										),
+										totalResponses: count(),
+										totalScore: sum(responses.totalScore),
+									})
+									.from(responses)
+									.groupBy(sql`DATE(${responses.createdAt})`)
+									.orderBy(sql`DATE(${responses.createdAt})`),
+								db
+									.select({
+										total: count(),
+										withVideo: count(sql`case when ${hasVideoPath} then 1 end`),
+									})
+									.from(responses),
+							],
+							{ concurrency: DASHBOARD_QUERY_CONCURRENCY },
+						);
+
+					return {
+						questions: questionRows.map((r) => ({
+							id: r.id,
+							text: r.text,
+							order: r.order,
+							averageScore: average(r.totalScore, r.totalResponses),
+						})),
+						answers: answerRows.map((r) => ({
+							id: r.id,
+							text: r.text,
+							questionId: r.questionId,
+							totalResponses: r.totalResponses,
+							averageScore: average(r.totalScore, r.totalResponses),
+						})),
+						timeline: timelineRows.map((r) => ({
+							date: toDateString(r.date),
+							totalResponses: r.totalResponses,
+							averageScore: average(r.totalScore, r.totalResponses),
+						})),
+						video: { withVideo, total },
+					} satisfies DashboardAnalytics;
+				},
+			);
+
+			const getRecentResponses = Effect.fn(
+				"DashboardService.getRecentResponses",
+			)(function* () {
+				const rows = yield* db
+					.select({
+						response: responses,
+						profile: profiles,
+						questionnaire: questionnaires,
+					})
+					.from(responses)
+					.leftJoin(profiles, eq(responses.userId, profiles.id))
+					.leftJoin(questionnaires, eq(responses.questionnaireId, questionnaires.id))
+					.orderBy(desc(responses.createdAt))
+					.limit(RECENT_RESPONSE_LIMIT);
+
+				return rows.map(
+					(row) =>
+						({
+							id: row.response.id,
+							totalScore: row.response.totalScore,
+							videoPath: row.response.videoPath,
+							createdAt: row.response.createdAt.toISOString(),
+							questionnaireId: row.response.questionnaireId,
+							questionnaireTitle: row.questionnaire?.title ?? null,
+							profile: row.profile
+								? {
+										id: row.profile.id,
+										name: row.profile.name,
+										class: row.profile.class,
+										email: row.profile.email,
+										nim: row.profile.nim,
+										semester: row.profile.semester,
+										gender: row.profile.gender,
+										age: row.profile.age,
+									}
+								: null,
+						}) satisfies DashboardRecentResponse,
+				);
+			});
+
+			const getDashboardData = Effect.fn("DashboardService.getDashboardData")(
+				function* () {
+					return yield* Effect.all(
+						{
+							summary: getSummary(),
+							breakdown: getBreakdown(),
+							analytics: getAnalytics(),
+							recentResponses: getRecentResponses(),
+						},
+						{ concurrency: DASHBOARD_QUERY_CONCURRENCY },
 					).pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message: "Failed to fetch analytics details",
+									message: "Failed to fetch dashboard data",
 									cause: e,
 								}),
 						),
-					);
-
-				const questionStats = questionRows.map((r) => ({
-					id: r.id,
-					text: r.text,
-					order: r.order,
-					averageScore:
-						r.totalResponses > 0 ? Number(r.totalScore) / r.totalResponses : 0,
-				}));
-
-				const answerStats = answerRows.map((r) => ({
-					id: r.id,
-					text: r.text,
-					questionId: r.questionId,
-					totalResponses: r.totalResponses,
-					averageScore:
-						r.totalResponses > 0 ? Number(r.totalScore) / r.totalResponses : 0,
-				}));
-
-				const timeline = timelineRows.map((r) => ({
-					date:
-						r.date instanceof Date
-							? r.date.toISOString().split("T")[0]
-							: String(r.date),
-					totalResponses: r.totalResponses,
-					averageScore:
-						r.totalResponses > 0 ? Number(r.totalScore) / r.totalResponses : 0,
-				}));
-
-				return {
-					questions: questionStats,
-					answers: answerStats,
-					timeline,
-					video: { withVideo, total },
-				};
-			});
+					) satisfies Effect.Effect<DashboardData, DatabaseError>;
+				},
+			);
 
 			return {
-				getSummary,
-				getBreakdown,
-				getAnalyticsDetails,
+				getDashboardData,
 			};
 		}),
 	},
