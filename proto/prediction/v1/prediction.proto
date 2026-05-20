@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package prediction.v1;
+
+service PredictionService {
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+  rpc PredictQuiz(PredictQuizRequest) returns (PredictQuizResponse);
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  string status = 1;
+  string version = 2;
+}
+
+message PredictQuizRequest {
+  string response_id = 1;
+  string participant_id = 2;
+  repeated VideoRef videos = 3;
+}
+
+message VideoRef {
+  string question_id = 1;
+  string kind = 2;
+  string path = 3;
+  string format = 4;
+  string mime_type = 5;
+  int64 size_bytes = 6;
+  string source = 7;
+  string created_at = 8;
+}
+
+message PredictQuizResponse {
+  string response_id = 1;
+  string model_version = 2;
+  string exp_name = 3;
+  double threshold = 4;
+  string aggregation = 5;
+  repeated PredictionResult results = 6;
+}
+
+message PredictionResult {
+  string question_id = 1;
+  string video_kind = 2;
+  string label = 3;
+  double probability_anxiety_tinggi = 4;
+  int64 frame_count = 5;
+  double duration_seconds = 6;
+  string status = 7;
+  string error_message = 8;
+}

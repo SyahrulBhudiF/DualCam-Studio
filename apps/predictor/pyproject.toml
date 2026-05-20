@@ -29,6 +29,7 @@ dev = [
 line-length = 100
 target-version = "py311"
 src = ["src", "tests"]
+exclude = ["src/predictor/generated"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
@@ -36,4 +37,5 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 [tool.pyright]
 pythonVersion = "3.11"
 include = ["src", "tests"]
+exclude = ["src/predictor/generated"]
 typeCheckingMode = "strict"
