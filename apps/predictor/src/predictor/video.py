@@ -1,7 +1,7 @@
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 import cv2  # type: ignore[reportMissingTypeStubs]
 import dlib as dlib_raw  # type: ignore[reportMissingTypeStubs]
@@ -52,6 +52,10 @@ class RoiConfig:
     target_size: dict[str, tuple[int, int]] = field(default_factory=lambda: dict(TARGET_SIZE))
     padding_x: int = 6
     padding_y: int = 8
+
+
+class RoiExtractor(Protocol):
+    def extract(self, frame: Array) -> dict[str, Array]: ...
 
 
 class DlibRoiExtractor:
@@ -119,7 +123,7 @@ def iter_frames(cap: Any) -> Iterator[Array]:
 
 def extract_video_rois(
     path: Path,
-    extractor: DlibRoiExtractor,
+    extractor: RoiExtractor,
     max_frames: int | None = None,
 ) -> tuple[list[dict[str, Array]], VideoInfo]:
     frames, info = read_video(path, max_frames=max_frames)
