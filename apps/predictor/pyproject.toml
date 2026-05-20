@@ -22,6 +22,8 @@ dependencies = [
     "tomli-w>=1.2.0",
     "torch>=2.9.0",
     "tqdm>=4.67.0",
+    "opencv-python-headless>=4.13.0.92",
+    "dlib>=20.0.1",
 ]
 
 [build-system]
