@@ -39,14 +39,6 @@ class PredictorSettings(BaseSettings):
         return self.tabr_root
 
     @property
-    def experiment_dir(self) -> Path:
-        return self.tabr_root / "experiments" / self.exp_name
-
-    @property
-    def model_dir(self) -> Path:
-        return self.experiment_dir / f"seed_{self.evaluation_seed}"
-
-    @property
     def labels(self) -> dict[int, str]:
         return {0: "anxiety_rendah", 1: "anxiety_tinggi"}
 
@@ -71,7 +63,6 @@ class PredictorSettings(BaseSettings):
             "threshold": self.threshold,
             "aggregation": self.aggregation,
             "device": self.device,
-            "model_dir": self.model_dir.as_posix(),
         }
 
 
