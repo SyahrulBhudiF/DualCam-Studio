@@ -17,6 +17,10 @@ class RoiExtractor(Protocol):
     def extract_rois(self, frame: Array) -> dict[str, Array]: ...
 
 
+class VideoRoiExtractor(Protocol):
+    def extract(self, frame: Array) -> dict[str, Array]: ...
+
+
 @dataclass(frozen=True)
 class VideoRef:
     response_id: str
@@ -102,3 +106,19 @@ def extract_video(
 ) -> PipelineResult:
     roi_frames = [roi.extract_rois(frame) for frame in frames]
     return extract_from_roi_frames(ref, roi_frames, cfg)
+
+
+def extract_video_file(
+    ref: VideoRef,
+    roi: VideoRoiExtractor,
+    cfg: PipelineConfig | None = None,
+    max_frames: int | None = None,
+) -> PipelineResult:
+    from predictor.video import extract_video_rois
+
+    roi_frames, info = extract_video_rois(ref.path, roi, max_frames=max_frames)
+    result = extract_from_roi_frames(ref, roi_frames, cfg)
+    result.meta["fps"] = info.fps
+    result.meta["duration_seconds"] = info.duration_seconds
+    result.meta["source_frame_count"] = info.frame_count
+    return result
