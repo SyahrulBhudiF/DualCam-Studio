@@ -3,7 +3,9 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { createFileRoute } from "@tanstack/react-router";
 
-const UPLOAD_ROOT = path.resolve(process.cwd(), "video_uploads");
+const UPLOAD_ROOT = path.resolve(
+	process.env.UPLOAD_ROOT ?? "/home/ryuko/skripsi/QUIS/video_uploads",
+);
 
 export const Route = createFileRoute("/api/video/$")({
 	server: {

@@ -35,3 +35,9 @@ export const RateLimitConfig = Config.all({
 		Config.withDefault(15 * 60 * 1000), // 15 minutes
 	),
 });
+
+export const StorageConfig = Config.all({
+	uploadRoot: Config.string("UPLOAD_ROOT").pipe(
+		Config.withDefault("/home/ryuko/skripsi/QUIS/video_uploads"),
+	),
+});
