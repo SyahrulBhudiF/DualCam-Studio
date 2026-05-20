@@ -1,13 +1,13 @@
 from predictor.config import PredictorSettings, get_settings
 
 
-def test_default_upload_root_points_to_workspace_storage() -> None:
+def test_upload_root() -> None:
     settings = get_settings()
 
     assert settings.upload_root.as_posix() == "/home/ryuko/skripsi/QUIS/video_uploads"
 
 
-def test_default_experiment_config() -> None:
+def test_exp_config() -> None:
     settings = PredictorSettings()
 
     assert settings.tabr_root.as_posix() == "/home/ryuko/skripsi/Skripsi/Convat-1st"
