@@ -19,6 +19,7 @@ from predictor.generated.prediction.v1 import (  # pyright: ignore[reportMissing
 )
 from predictor.model import Bundle, load_bundle
 from predictor.predict import PredictError, failed_video, resolve_video, validate_request
+from predictor.runtime import PredictionRuntime, RuntimeConfig, make_ref
 
 Svc = prediction_pb2.DESCRIPTOR.services_by_name["PredictionService"]
 add_pred = cast(
@@ -33,9 +34,19 @@ health_aio = cast(Any, health).aio
 
 
 class PredictionService(prediction_pb2_grpc.PredictionServiceServicer):
-    def __init__(self, settings: PredictorSettings, bundle: Bundle) -> None:
+    def __init__(
+        self,
+        settings: PredictorSettings,
+        bundle: Bundle,
+        runtime: PredictionRuntime | None = None,
+    ) -> None:
         self.settings = settings
         self.bundle = bundle
+        self.runtime = runtime or PredictionRuntime(
+            bundle,
+            bundle.feat_cols,
+            RuntimeConfig(threshold=settings.threshold, aggregation=settings.aggregation),
+        )
 
     async def HealthCheck(
         self,
@@ -60,17 +71,25 @@ class PredictionService(prediction_pb2_grpc.PredictionServiceServicer):
                 break
             try:
                 video = resolve_video(self.settings.upload_root, ref)
-                # Real video decoding + feature extraction lands after ROI parity is complete.
+                pred_ref = make_ref(
+                    request.response_id,
+                    request.participant_id,
+                    video.question_id,
+                    video.kind,
+                    video.path,
+                    video.source,
+                )
+                output = await self.runtime.predict_video(pred_ref)
                 results.append(
                     prediction_pb2.PredictionResult(
                         question_id=video.question_id,
                         video_kind=video.kind,
-                        label="",
-                        probability_anxiety_tinggi=0.0,
-                        frame_count=0,
-                        duration_seconds=0.0,
-                        status="pending_feature_pipeline",
-                        error_message="video ref validated; inference not wired yet",
+                        label=output.prediction.label,
+                        probability_anxiety_tinggi=output.prediction.probability_anxiety_tinggi,
+                        frame_count=int(output.pipeline.meta.get("frame_count", 0)),
+                        duration_seconds=float(output.pipeline.meta.get("duration_seconds", 0.0)),
+                        status="ok",
+                        error_message="",
                     )
                 )
             except Exception as err:  # preserve partial failures per video
