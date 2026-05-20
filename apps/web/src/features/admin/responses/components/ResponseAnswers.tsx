@@ -25,18 +25,21 @@ import {
 } from "@/components/ui/Table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import type { ResponseDetailItem, VideoData } from "../responses.types";
+import type { VideoManifest } from "../video-manifest";
 import { SingleVideoPlayer } from "./SingleVideoPlayer";
 
 type ResponseAnswersProps = {
 	details: ResponseDetailItem[];
 	totalScore: number;
 	videoData?: VideoData;
+	videoManifest?: VideoManifest;
 };
 
 export function ResponseAnswers({
 	details,
 	totalScore,
 	videoData,
+	videoManifest,
 }: ResponseAnswersProps) {
 	const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(
 		null,
@@ -60,6 +63,9 @@ export function ResponseAnswers({
 
 	const selectedVideo = selectedQuestionId
 		? getVideoForQuestion(selectedQuestionId)
+		: null;
+	const selectedManifestItem = selectedQuestionId
+		? videoManifest?.items.find((item) => item.questionId === selectedQuestionId)
 		: null;
 	const selectedDetail = selectedQuestionId
 		? details.find((d) => d.questionId === selectedQuestionId)
@@ -184,6 +190,18 @@ export function ResponseAnswers({
 								Answer: {selectedDetail.answerText} (Score:{" "}
 								{selectedDetail.score})
 							</div>
+						</div>
+					)}
+					{selectedManifestItem && selectedManifestItem.videos.length > 0 && (
+						<div className="mb-4 rounded-lg border p-3 text-xs text-muted-foreground">
+							<div className="mb-2 font-medium text-foreground">Video Manifest</div>
+							<ul className="space-y-1">
+								{selectedManifestItem.videos.map((video) => (
+									<li key={`${video.kind}:${video.path}`}>
+										<span className="font-medium">{video.kind}</span>: {video.path}
+									</li>
+								))}
+							</ul>
 						</div>
 					)}
 					{selectedVideo && (

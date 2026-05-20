@@ -43,6 +43,7 @@ export type SegmentedVideoPath = {
 	questionNumber: number;
 	main: string | null;
 	secondary: string | null;
+	paths: string[];
 };
 
 export type VideoData = {
