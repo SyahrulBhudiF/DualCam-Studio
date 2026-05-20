@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -12,10 +13,11 @@ PORT = 8080
 WIDTH = 640
 HEIGHT = 480
 FPS = 60
-BASE_UPLOAD_DIR = "video_uploads"
+BASE_UPLOAD_DIR = Path(
+    os.environ.get("UPLOAD_ROOT", "/home/ryuko/skripsi/QUIS/video_uploads")
+).resolve()
 
-if not os.path.exists(BASE_UPLOAD_DIR):
-    os.makedirs(BASE_UPLOAD_DIR)
+BASE_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 is_recording = False
 video_writer = None
@@ -34,20 +36,30 @@ async def handle_commands(websocket):
                     folder_name = data.get("folderName")
                     mode = data.get("mode", "FULL")
 
-                    target_dir = os.path.join(BASE_UPLOAD_DIR, folder_name)
+                    if os.path.isabs(folder_name) or ".." in Path(folder_name).parts:
+                        print("REC REJECT: unsafe folderName")
+                        continue
 
                     if mode == "SEGMENT":
                         file_name = data.get("fileName")
                     else:
                         file_name = "recording_realsense.avi"
 
-                    full_path = os.path.join(target_dir, file_name)
+                    if not file_name or os.path.isabs(file_name) or ".." in Path(file_name).parts:
+                        print("REC REJECT: unsafe fileName")
+                        continue
 
-                    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+                    full_path = (BASE_UPLOAD_DIR / folder_name / file_name).resolve()
+
+                    if not full_path.is_relative_to(BASE_UPLOAD_DIR):
+                        print("REC REJECT: path escapes upload root")
+                        continue
+
+                    full_path.parent.mkdir(parents=True, exist_ok=True)
 
                     fourcc = cv2.VideoWriter_fourcc(*"MJPG")
                     video_writer = cv2.VideoWriter(
-                        full_path, fourcc, FPS, (WIDTH, HEIGHT)
+                        str(full_path), fourcc, FPS, (WIDTH, HEIGHT)
                     )
                     is_recording = True
                     print(f"REC START: {full_path}")
