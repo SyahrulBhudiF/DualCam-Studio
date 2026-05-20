@@ -102,11 +102,13 @@ export function SegmentedPage() {
 				uploadPath = uploadRes.path;
 			}
 
+			const secFileName = `${subFolder}/answer_${currentIndex + 1}_${currentQ.id}_sec.avi`;
+
 			store.addAnswer(currentQ.id, {
 				questionId: currentQ.id,
 				answerId: value.answerId,
 				videoMainPath: uploadPath,
-				videoSecPath: `/video_uploads/${store.folderName}/${subFolder}/${user?.name ?? "Anon"}_${currentIndex + 1}_${currentQ.id}_sec.avi`,
+				videoSecPath: `/video_uploads/${store.folderName}/${secFileName}`,
 			});
 
 			form.reset();
