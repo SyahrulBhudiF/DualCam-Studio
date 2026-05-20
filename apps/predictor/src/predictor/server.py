@@ -18,6 +18,7 @@ from predictor.generated.prediction.v1 import (  # pyright: ignore[reportMissing
     prediction_pb2_grpc,
 )
 from predictor.model import Bundle, load_bundle
+from predictor.predict import PredictError, failed_video, resolve_video, validate_request
 
 Svc = prediction_pb2.DESCRIPTOR.services_by_name["PredictionService"]
 add_pred = cast(
@@ -32,8 +33,9 @@ health_aio = cast(Any, health).aio
 
 
 class PredictionService(prediction_pb2_grpc.PredictionServiceServicer):
-    def __init__(self, settings: PredictorSettings) -> None:
+    def __init__(self, settings: PredictorSettings, bundle: Bundle) -> None:
         self.settings = settings
+        self.bundle = bundle
 
     async def HealthCheck(
         self,
@@ -47,7 +49,53 @@ class PredictionService(prediction_pb2_grpc.PredictionServiceServicer):
         request: prediction_pb2.PredictQuizRequest,
         context: grpc.aio.ServicerContext[Any, Any],
     ) -> prediction_pb2.PredictQuizResponse:
-        await context.abort(grpc.StatusCode.UNIMPLEMENTED, "PredictQuiz is not implemented yet")
+        try:
+            validate_request(request.response_id, request.participant_id, len(request.videos))
+        except PredictError as err:
+            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(err))
+
+        results: list[Any] = []
+        for ref in request.videos:
+            if context.cancelled():
+                break
+            try:
+                video = resolve_video(self.settings.upload_root, ref)
+                # Real video decoding + feature extraction lands after ROI parity is complete.
+                results.append(
+                    prediction_pb2.PredictionResult(
+                        question_id=video.question_id,
+                        video_kind=video.kind,
+                        label="",
+                        probability_anxiety_tinggi=0.0,
+                        frame_count=0,
+                        duration_seconds=0.0,
+                        status="pending_feature_pipeline",
+                        error_message="video ref validated; inference not wired yet",
+                    )
+                )
+            except Exception as err:  # preserve partial failures per video
+                failed = failed_video(ref, str(err))
+                results.append(
+                    prediction_pb2.PredictionResult(
+                        question_id=failed.question_id,
+                        video_kind=failed.kind,
+                        label="",
+                        probability_anxiety_tinggi=0.0,
+                        frame_count=0,
+                        duration_seconds=0.0,
+                        status="failed",
+                        error_message=failed.message,
+                    )
+                )
+
+        return prediction_pb2.PredictQuizResponse(
+            response_id=request.response_id,
+            model_version=f"tabr:{self.settings.exp_name}:{self.settings.evaluation_seed}",
+            exp_name=self.settings.exp_name,
+            threshold=self.settings.threshold,
+            aggregation=self.settings.aggregation,
+            results=results,
+        )
 
 
 async def serve(settings: PredictorSettings) -> None:
@@ -55,7 +103,7 @@ async def serve(settings: PredictorSettings) -> None:
     bundle = load_bundle(settings)
 
     server = grpc.aio.server()
-    add_pred(PredictionService(settings), server)
+    add_pred(PredictionService(settings, bundle), server)
 
     health_svc = health_aio.HealthServicer()
     add_health(health_svc, server)
