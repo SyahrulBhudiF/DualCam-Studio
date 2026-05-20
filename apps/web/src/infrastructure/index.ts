@@ -7,6 +7,7 @@ export {
 	AuthService,
 	DashboardService,
 	FileUploadService,
+	PredictionService,
 	ProfileService,
 	QuestionnaireService,
 	QuestionService,
