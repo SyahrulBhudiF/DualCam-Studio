@@ -1,4 +1,5 @@
 projects:
+  root: .
   web: apps/web
   predictor: apps/predictor
 
