@@ -1,0 +1,36 @@
+tasks:
+  dev:
+    deps:
+      - predictor:dev
+      - web:dev
+    options:
+      cache: false
+      persistent: true
+
+  build:
+    deps:
+      - web:build
+    options:
+      cache: false
+
+  check:
+    deps:
+      - web:format
+      - web:lint
+      - web:build
+      - predictor:test
+    options:
+      cache: false
+
+  db-migrate:
+    deps:
+      - web:db-migrate
+    options:
+      cache: false
+
+  db-studio:
+    deps:
+      - web:db-studio
+    options:
+      cache: false
+      persistent: true

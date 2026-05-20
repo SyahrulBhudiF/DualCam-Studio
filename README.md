@@ -16,8 +16,10 @@ video_uploads   shared local video storage
 Run from repo root:
 
 ```bash
+moon run root:dev
 moon run web:dev
 moon run predictor:dev
+moon run root:build --log warn
 moon run web:build --log warn
 moon run predictor:test
 ```
@@ -42,19 +44,13 @@ cd apps/web && bunx react-doctor@latest
 
 ## Local flow
 
-1. Start predictor:
+1. Start web + predictor:
 
 ```bash
-moon run predictor:dev
+moon run root:dev
 ```
 
-2. Start web:
-
-```bash
-moon run web:dev
-```
-
-3. Submit questionnaire:
+2. Submit questionnaire:
 
 ```txt
 unchecked prediction checkbox -> /success
