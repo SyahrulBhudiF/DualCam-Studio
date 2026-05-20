@@ -17,6 +17,7 @@ from predictor.generated.prediction.v1 import (  # pyright: ignore[reportMissing
     prediction_pb2,
     prediction_pb2_grpc,
 )
+from predictor.model import Bundle, load_bundle
 
 Svc = prediction_pb2.DESCRIPTOR.services_by_name["PredictionService"]
 add_pred = cast(
@@ -51,7 +52,7 @@ class PredictionService(prediction_pb2_grpc.PredictionServiceServicer):
 
 async def serve(settings: PredictorSettings) -> None:
     settings.validate_runtime_paths()
-    resolve_artifacts(settings).validate()
+    bundle = load_bundle(settings)
 
     server = grpc.aio.server()
     add_pred(PredictionService(settings), server)
@@ -65,6 +66,7 @@ async def serve(settings: PredictorSettings) -> None:
     server.add_insecure_port(settings.bind_address)
 
     print_config(settings)
+    print_bundle(bundle)
     await server.start()
     await set_health(health_svc, health_pb2.HealthCheckResponse.SERVING)
     print(f"Predictor gRPC server listening on {settings.bind_address}")
@@ -89,6 +91,12 @@ def print_config(settings: PredictorSettings) -> None:
         print(f"{key}: {value}")
     print("QUIS predictor artifacts")
     for key, value in resolve_artifacts(settings).as_map().items():
+        print(f"{key}: {value}")
+
+
+def print_bundle(bundle: Bundle) -> None:
+    print("QUIS predictor model")
+    for key, value in bundle.summary().items():
         print(f"{key}: {value}")
 
 
