@@ -9,9 +9,9 @@ import {
 	ResponseService,
 	runEffect,
 } from "@/infrastructure";
-import { SubmissionSchema } from "@/infrastructure/schemas/questionnaire";
+import { SubmissionSchema } from "@/infrastructure/schemas";
 import { verifyCsrfOrigin } from "@/utils/csrf";
-import { inputValidator } from "../infrastructure/schemas/validator";
+import { inputValidator } from "@/infrastructure/schemas";
 
 export const getActiveQuestionnaire = createServerFn({ method: "GET" }).handler(
 	async () => {

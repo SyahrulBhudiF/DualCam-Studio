@@ -15,9 +15,9 @@ import {
 	UpdateQuestionnaireSchema,
 	UpdateQuestionSchema,
 	UUID,
-} from "@/infrastructure/schemas/questionnaire";
+	inputValidator,
+} from "@/infrastructure/schemas";
 import { requireAuth } from "@/utils/session";
-import { inputValidator } from "../../infrastructure/schemas/validator";
 
 // Questionnaire APIs
 export const getQuestionnaires = createServerFn({ method: "GET" }).handler(

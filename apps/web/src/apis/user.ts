@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestIP } from "@tanstack/react-start/server";
 import { Effect, Exit, Result } from "effect";
 import { AuthService, RateLimitService, runEffectExit } from "@/infrastructure";
-import { LoginSchema, SignupSchema } from "@/infrastructure/schemas/auth";
+import { LoginSchema, SignupSchema, inputValidator } from "@/infrastructure/schemas";
 import { verifyCsrfOrigin } from "@/utils/csrf";
 import {
 	clearSessionCookie,
@@ -11,7 +11,6 @@ import {
 	getSessionToken,
 	setSessionCookie,
 } from "@/utils/session";
-import { inputValidator } from "../infrastructure/schemas/validator";
 
 export const fetchUser = createServerFn({ method: "GET" }).handler(async () => {
 	const exit = await runEffectExit(

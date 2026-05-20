@@ -10,9 +10,9 @@ import {
 	BulkDeleteSchema,
 	ResponseFilterSchema,
 	UUID,
-} from "@/infrastructure/schemas/questionnaire";
+	inputValidator,
+} from "@/infrastructure/schemas";
 import { requireAuth } from "@/utils/session";
-import { inputValidator } from "../../infrastructure/schemas/validator";
 
 export const getResponses = createServerFn({ method: "GET" }).handler(
 	async () => {
