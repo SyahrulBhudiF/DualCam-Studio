@@ -1,0 +1,31 @@
+seed = 4
+batch_size = 128
+patience = 6
+n_epochs = inf
+context_size = 9
+
+[data]
+seed = 72
+cache = true
+path = ":data/convat_apex_anxiety_qwalk_q12_q3_q4"
+num_policy = "__null__"
+cat_policy = "__null__"
+y_policy = "__null__"
+
+[model]
+num_embeddings = "__null__"
+d_main = 256
+context_dropout = 0.3300171112462098
+d_multiplier = 2.0
+encoder_n_blocks = 0
+predictor_n_blocks = 2
+mixer_normalization = "auto"
+dropout0 = 0.39874850527074945
+dropout1 = 0.1230638389520723
+normalization = "LayerNorm"
+activation = "ReLU"
+
+[optimizer]
+type = "AdamW"
+lr = 0.0006440261278654949
+weight_decay = 2.8526253082603845e-05

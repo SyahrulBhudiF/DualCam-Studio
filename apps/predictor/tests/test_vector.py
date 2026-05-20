@@ -6,7 +6,13 @@ import numpy as np
 
 from predictor.core.vector import Vektor, compute_vectors
 
-SRC = Path("/home/ryuko/skripsi/Skripsi/Convat-1st/features_extraction/vektor.py")
+SRC = (
+    Path(__file__).resolve().parent.parent
+    / "vendor"
+    / "convat"
+    / "features_extraction"
+    / "vektor.py"
+)
 
 
 def load_old() -> Any:

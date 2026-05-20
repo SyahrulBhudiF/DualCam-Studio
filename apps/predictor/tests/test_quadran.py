@@ -7,7 +7,7 @@ import numpy as np
 
 from predictor.core.quadran import Quadran, compute_quadrants_from_vectors
 
-SRC_ROOT = Path("/home/ryuko/skripsi/Skripsi/Convat-1st")
+SRC_ROOT = Path(__file__).resolve().parent.parent / "vendor" / "convat"
 SRC = SRC_ROOT / "features_extraction" / "quadran.py"
 
 
