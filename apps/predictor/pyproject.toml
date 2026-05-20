@@ -8,9 +8,12 @@ dependencies = [
     "grpcio>=1.76.0",
     "grpcio-health-checking>=1.76.0",
     "grpcio-reflection>=1.76.0",
+    "delu>=0.0.26",
     "grpcio-tools>=1.76.0",
     "pydantic>=2.12.0",
+    "numpy>=2.3.0",
     "pydantic-settings>=2.12.0",
+    "torch>=2.9.0",
 ]
 
 [build-system]
