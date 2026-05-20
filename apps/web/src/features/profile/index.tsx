@@ -2,6 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import {
 	Card,
 	CardContent,
@@ -46,6 +47,7 @@ function useProfileState() {
 			age: "",
 			gender: "",
 			mode: "segmented",
+			predictionOptIn: false,
 		},
 		validators: {
 			onSubmit: ({ value }) => {
@@ -85,6 +87,7 @@ function useProfileState() {
 			});
 
 			questionnaireStore.reset();
+			questionnaireStore.setPredictionOptIn(value.predictionOptIn);
 			setShowInstructions(true);
 		},
 	});
@@ -188,6 +191,37 @@ function ProfileFormFields({ form }: { form: ProfileForm }) {
 				/>
 				<GenderField form={form} />
 			</div>
+			<form.Field name="predictionOptIn">
+				{(field) => {
+					const checked = field.state.value;
+
+					return (
+						<button
+							type="button"
+							className="flex w-full cursor-pointer items-start gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted/60 data-[checked=true]:border-primary data-[checked=true]:bg-primary/5"
+							data-checked={checked}
+							onClick={() => field.handleChange(!checked)}
+						>
+							<Checkbox
+								id="prediction-opt-in"
+								checked={checked}
+								onCheckedChange={(nextChecked) =>
+									field.handleChange(nextChecked === true)
+								}
+								onClick={(event) => event.stopPropagation()}
+							/>
+							<div className="space-y-1 leading-none">
+								<Label htmlFor="prediction-opt-in" className="cursor-pointer">
+									Analisis video setelah submit
+								</Label>
+								<p className="text-sm text-muted-foreground">
+									Jika dicentang, kamu akan diarahkan ke halaman hasil prediksi.
+								</p>
+							</div>
+						</button>
+					);
+				}}
+			</form.Field>
 			<Button
 				type="button"
 				className="w-full cursor-pointer"

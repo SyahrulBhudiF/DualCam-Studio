@@ -1,7 +1,8 @@
 import { PgClient } from "@effect/sql-pg";
 import * as PgDrizzle from "drizzle-orm/effect-postgres";
-import { Config, ConfigProvider, Context, Effect, Layer } from "effect";
+import { Config, Context, Effect, Layer, Redacted } from "effect";
 import { types } from "pg";
+import { envProvider } from "../config/provider";
 import * as schema from "../db/schema";
 
 const PgTypeOid = {
@@ -21,11 +22,9 @@ const PgTypeOid = {
 const DRIZZLE_RAW_TYPE_IDS = new Set<number>(Object.values(PgTypeOid));
 
 const PgClientConfig = Config.all({
-	url: Config.redacted("DATABASE_URL"),
+	url: Config.string("DATABASE_URL").pipe(Config.map(Redacted.make)),
 	maxConnections: Config.succeed(10),
 });
-
-const envProvider = ConfigProvider.fromEnv();
 
 const PgClientLive = Layer.unwrap(
 	Effect.gen(function* () {

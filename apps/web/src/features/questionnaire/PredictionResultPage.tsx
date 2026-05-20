@@ -48,6 +48,12 @@ export function PredictionResultPage({ responseId, token }: ResultPageProps) {
 		queryKey: ["public", "prediction", responseId, token],
 		queryFn: () => getPublicPredictionResult({ data: { responseId, token } }),
 		enabled: token.length > 0,
+		refetchInterval: (query) =>
+			(query.state.data ?? []).some(
+				(row) => row.status === "pending" || row.status === "running",
+			)
+				? 3000
+				: false,
 		retry: false,
 	});
 
@@ -57,20 +63,21 @@ export function PredictionResultPage({ responseId, token }: ResultPageProps) {
 			queryClient.invalidateQueries({
 				queryKey: ["public", "prediction", responseId, token],
 			});
-			toast.success("Analisis selesai");
+			toast.success("Analisis dimulai");
 		},
 		onError: () => {
 			queryClient.invalidateQueries({
 				queryKey: ["public", "prediction", responseId, token],
 			});
-			toast.error("Analisis gagal. Coba lagi nanti.");
+			toast.message("Analisis sedang diproses. Memuat ulang status…");
 		},
 	});
 
-	const rows = resultQuery.data ?? [];
+	const rows = (resultQuery.data ?? []).filter(isVisiblePredictionRow);
 	const summary = useMemo(() => summarizeRows(rows), [rows]);
 	const canRun =
-		rows.length === 0 || rows.some((row) => row.status === "failed");
+		!summary.isRunning &&
+		(rows.length === 0 || rows.some((row) => row.status === "failed"));
 	const isBusy =
 		resultQuery.isLoading || runMutation.isPending || summary.isRunning;
 
@@ -223,9 +230,9 @@ function PredictionSummary({ summary }: { summary: PredictionSummaryData }) {
 				</div>
 			</div>
 			<div className="rounded-lg border bg-background p-4">
-				<div className="text-sm text-muted-foreground">Probabilitas Tinggi</div>
+				<div className="text-sm text-muted-foreground">Confidence</div>
 				<div className="mt-2 text-2xl font-bold">
-					{formatProbability(summary.probability)}
+					{formatConfidence(summary.probability, summary.label)}
 				</div>
 			</div>
 		</div>
@@ -241,7 +248,7 @@ function PredictionTable({ rows }: { rows: PredictionRow[] }) {
 						<TableHead>Video</TableHead>
 						<TableHead>Status</TableHead>
 						<TableHead>Label</TableHead>
-						<TableHead className="text-right">Prob.</TableHead>
+						<TableHead className="text-right">Confidence</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -263,13 +270,21 @@ function PredictionTable({ rows }: { rows: PredictionRow[] }) {
 							</TableCell>
 							<TableCell>{formatLabel(row.label)}</TableCell>
 							<TableCell className="text-right">
-								{formatProbability(row.probabilityAnxietyTinggi)}
+								{formatConfidence(row.probabilityAnxietyTinggi, row.label)}
 							</TableCell>
 						</TableRow>
 					))}
 				</TableBody>
 			</Table>
 		</div>
+	);
+}
+
+function isVisiblePredictionRow(row: PredictionRow) {
+	return !(
+		row.videoKind === "secondary" &&
+		row.status === "failed" &&
+		row.errorMessage?.startsWith("video file not found:")
 	);
 }
 
@@ -321,7 +336,13 @@ function formatLabel(label: string | null) {
 	return label.replaceAll("_", " ");
 }
 
-function formatProbability(value: number | null) {
-	if (value == null) return "-";
-	return `${(value * 100).toFixed(1)}%`;
+function formatConfidence(
+	probabilityHigh: number | null,
+	label: string | null,
+) {
+	if (probabilityHigh == null || !label) return "-";
+	const confidence = label.includes("tinggi")
+		? probabilityHigh
+		: 1 - probabilityHigh;
+	return `${(confidence * 100).toFixed(1)}%`;
 }

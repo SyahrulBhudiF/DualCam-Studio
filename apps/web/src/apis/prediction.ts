@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { Effect } from "effect";
+import { type Effect as EffectType, Effect } from "effect";
 import {
+	FileUploadService,
 	PredictionResultService,
 	ResponseService,
 	ResultAccessService,
@@ -17,6 +18,10 @@ import {
 } from "@/infrastructure/schemas";
 import { verifyCsrfOrigin } from "@/utils/csrf";
 import { requireAuth } from "@/utils/session";
+
+type FileUploadServiceApi = EffectType.Success<
+	ReturnType<typeof FileUploadService.asEffect>
+>;
 
 export const getPredictionResults = createServerFn({ method: "GET" })
 	.inputValidator(inputValidator(PredictionByResponseSchema))
@@ -83,6 +88,7 @@ function runPredictionForResponse(
 	options: { force: boolean },
 ) {
 	return Effect.gen(function* () {
+		const fileUploadService = yield* FileUploadService.asEffect();
 		const responseService = yield* ResponseService.asEffect();
 		const predictionService = yield* PredictionResultService.asEffect();
 		const existingResults =
@@ -93,14 +99,15 @@ function runPredictionForResponse(
 			existingResults.length > 0 &&
 			existingResults.every((row) => row.status === "completed")
 		) {
-			return { prediction: null, results: existingResults };
+			return { accepted: false, prediction: null, results: existingResults };
 		}
 
 		const response = yield* responseService.getById(responseId);
-		const videos = buildPredictionVideos(response);
+		const videos = yield* buildPredictionVideos(response, fileUploadService);
 
 		if (videos.length === 0) {
 			return {
+				accepted: false,
 				prediction: null,
 				results: existingResults,
 			};
@@ -119,63 +126,79 @@ function runPredictionForResponse(
 			videos,
 		};
 
-		const prediction = yield* predictionService.predictQuiz(request);
+		void runEffect(
+			predictionService
+				.predictQuiz(request)
+				.pipe(
+					Effect.catchCause((cause) =>
+						Effect.logError("Prediction background job failed", cause),
+					),
+				),
+		);
+
 		const results = yield* predictionService.getByResponseId(response.id);
 
-		return { prediction, results };
+		return { accepted: true, prediction: null, results };
 	});
 }
 
 function buildPredictionVideos(
 	response: ResponseForPrediction,
-): Array<PredictionVideoRef & { responseDetailId?: string | null }> {
-	const videos: Array<
-		PredictionVideoRef & { responseDetailId?: string | null }
-	> = [];
+	fileUploadService: FileUploadServiceApi,
+) {
+	return Effect.gen(function* () {
+		const videos: Array<
+			PredictionVideoRef & { responseDetailId?: string | null }
+		> = [];
 
-	for (const detail of response.details) {
-		addVideoPair(videos, {
-			pair: parseVideoPair(detail.videoSegmentPath),
-			questionId: detail.questionId,
-			responseDetailId: detail.id,
+		for (const detail of response.details) {
+			yield* addVideoPair(videos, fileUploadService, {
+				pair: parseVideoPair(detail.videoSegmentPath),
+				questionId: detail.questionId,
+				responseDetailId: detail.id,
+			});
+		}
+
+		if (videos.length > 0) return videos;
+
+		yield* addVideoPair(videos, fileUploadService, {
+			pair: parseVideoPair(response.videoPath),
+			questionId: "full",
+			responseDetailId: null,
 		});
-	}
 
-	if (videos.length > 0) return videos;
-
-	addVideoPair(videos, {
-		pair: parseVideoPair(response.videoPath),
-		questionId: "full",
-		responseDetailId: null,
+		return videos;
 	});
-
-	return videos;
 }
 
 function addVideoPair(
 	videos: Array<PredictionVideoRef & { responseDetailId?: string | null }>,
+	fileUploadService: FileUploadServiceApi,
 	input: {
 		pair: PredictionVideoPair | null;
 		questionId: string;
 		responseDetailId?: string | null;
 	},
 ) {
-	addVideo(videos, {
-		kind: "main",
-		path: input.pair?.main,
-		questionId: input.questionId,
-		responseDetailId: input.responseDetailId,
-	});
-	addVideo(videos, {
-		kind: "secondary",
-		path: input.pair?.secondary,
-		questionId: input.questionId,
-		responseDetailId: input.responseDetailId,
+	return Effect.gen(function* () {
+		yield* addVideo(videos, fileUploadService, {
+			kind: "main",
+			path: input.pair?.main,
+			questionId: input.questionId,
+			responseDetailId: input.responseDetailId,
+		});
+		yield* addVideo(videos, fileUploadService, {
+			kind: "secondary",
+			path: input.pair?.secondary,
+			questionId: input.questionId,
+			responseDetailId: input.responseDetailId,
+		});
 	});
 }
 
 function addVideo(
 	videos: Array<PredictionVideoRef & { responseDetailId?: string | null }>,
+	fileUploadService: FileUploadServiceApi,
 	input: {
 		kind: string;
 		path: unknown;
@@ -183,17 +206,22 @@ function addVideo(
 		responseDetailId?: string | null;
 	},
 ) {
-	if (typeof input.path !== "string") return;
-	const videoPath = normalizeVideoPath(input.path);
-	if (!videoPath) return;
+	return Effect.gen(function* () {
+		if (typeof input.path !== "string") return;
+		const videoPath = normalizeVideoPath(input.path);
+		if (!videoPath) return;
 
-	videos.push({
-		format: videoPath.split(".").at(-1)?.toLowerCase(),
-		kind: input.kind,
-		path: videoPath,
-		questionId: input.questionId,
-		responseDetailId: input.responseDetailId,
-		source: "web",
+		const exists = yield* fileUploadService.existsUploadPath(videoPath);
+		if (!exists) return;
+
+		videos.push({
+			format: videoPath.split(".").at(-1)?.toLowerCase(),
+			kind: input.kind,
+			path: videoPath,
+			questionId: input.questionId,
+			responseDetailId: input.responseDetailId,
+			source: "web",
+		});
 	});
 }
 

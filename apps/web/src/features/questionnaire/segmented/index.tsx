@@ -10,7 +10,6 @@ import {
 import { CameraControlPanel } from "@/components/CameraControlPanel";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Checkbox } from "@/components/ui/Checkbox";
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { useCameraSetup } from "@/libs/hooks/use-camera-setup";
@@ -70,9 +69,11 @@ export function SegmentedPage() {
 		onSuccess: (result) => {
 			queryClient.invalidateQueries({ queryKey: ["admin", "responses"] });
 			queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+
+			const predictionOptIn = useQuestionnaireStore.getState().predictionOptIn;
 			store.reset();
 
-			if (useQuestionnaireStore.getState().predictionOptIn) {
+			if (predictionOptIn) {
 				navigate({
 					to: "/prediction/$responseId",
 					params: { responseId: result.responseId },
@@ -90,6 +91,8 @@ export function SegmentedPage() {
 			answerId: "",
 		},
 		onSubmit: async ({ value }) => {
+			if (!value.answerId) return;
+
 			setIsProcessing(true);
 			const currentQ = questions[currentIndex];
 
@@ -204,33 +207,11 @@ export function SegmentedPage() {
 			</div>
 
 			<div className="max-w-3xl mx-auto mb-8 space-y-4">
-				{isLastQuestion && (
-					<Card>
-						<CardContent className="flex items-start gap-3 pt-6">
-							<Checkbox
-								id="prediction-opt-in"
-								checked={store.predictionOptIn}
-								onCheckedChange={(checked) =>
-									store.setPredictionOptIn(checked === true)
-								}
-							/>
-							<div className="space-y-1 leading-none">
-								<Label htmlFor="prediction-opt-in">
-									Analisis video setelah submit
-								</Label>
-								<p className="text-sm text-muted-foreground">
-									Jika dicentang, kamu akan diarahkan ke halaman hasil prediksi.
-								</p>
-							</div>
-						</CardContent>
-					</Card>
-				)}
-
-				<div
+				<form
 					onSubmit={(e) => {
 						e.preventDefault();
 						e.stopPropagation();
-						form.handleSubmit();
+						void form.handleSubmit();
 					}}
 				>
 					{currentQ && (
@@ -278,7 +259,7 @@ export function SegmentedPage() {
 							</Button>
 						)}
 					</form.Subscribe>
-				</div>
+				</form>
 			</div>
 
 			<CameraControlPanel

@@ -62,6 +62,8 @@ export function QuestionnairePage() {
 			queryClient.invalidateQueries({ queryKey: ["admin", "responses"] });
 			queryClient.invalidateQueries({ queryKey: ["dashboard"] });
 
+			const predictionOptIn = useQuestionnaireStore.getState().predictionOptIn;
+
 			if (predictionOptIn) {
 				navigate({
 					to: "/prediction/$responseId",
@@ -210,11 +212,11 @@ export function QuestionnairePage() {
 					</CardContent>
 				</Card>
 
-				<div
+				<form
 					onSubmit={(e) => {
 						e.preventDefault();
 						e.stopPropagation();
-						form.handleSubmit();
+						void form.handleSubmit();
 					}}
 				>
 					{questions?.map((q, index) => (
@@ -271,7 +273,7 @@ export function QuestionnairePage() {
 							</Button>
 						)}
 					</form.Subscribe>
-				</div>
+				</form>
 			</div>
 
 			<CameraControlPanel
