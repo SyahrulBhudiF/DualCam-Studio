@@ -34,7 +34,13 @@ yarn.lock
 __pycache__/
 
 # runtime uploads
-video_uploads
+video_uploads/**
+!video_uploads/
+!video_uploads/.gitkeep
+!video_uploads/full/
+!video_uploads/full/.gitkeep
+!video_uploads/segmented/
+!video_uploads/segmented/.gitkeep
 
 # Local agent planning artifacts
 docs/plans/
