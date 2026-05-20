@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { useMemo } from "react";
 import { Main } from "@/components/layout/Main";
 import { Button } from "@/components/ui/Button";
+import { PredictionResultsCard } from "./components/PredictionResultsCard";
 import { ProfileCard } from "./components/ProfileCard";
 import { ResponseAnswers } from "./components/ResponseAnswers";
 import { ExportResponseDetailButton } from "./components/ResponseExport";
@@ -226,6 +227,8 @@ export function ResponseDetail({ response }: ResponseDetailProps) {
 					/>
 				)}
 			</div>
+
+			<PredictionResultsCard responseId={response.id} />
 
 			<ResponseAnswers
 				details={response.details}
