@@ -19,3 +19,33 @@ tasks:
 
   lint:
     command: bun run lint
+
+  lint-fix:
+    command: bun run lint:fix
+
+  format:
+    command: bun run format
+
+  format-fix:
+    command: bun run format:fix
+
+  db-generate:
+    command: bun run db:generate
+    options:
+      cache: false
+
+  db-migrate:
+    command: bun run db:migrate
+    options:
+      cache: false
+
+  db-studio:
+    command: bun run db:studio
+    options:
+      cache: false
+      persistent: true
+
+  db-check-destructive:
+    command: rg -n "DROP|DELETE|TRUNCATE" drizzle
+    options:
+      cache: false
