@@ -1,8 +1,8 @@
 {
 	"version": "8",
 	"dialect": "postgres",
-	"id": "69f9eab8-e798-41a8-a190-c72b69c3a974",
-	"prevIds": ["3ff2ea6e-1efa-4d47-baf9-245052f64ce4"],
+	"id": "df7a21bd-4ee2-4612-8944-ac61a1dd11bd",
+	"prevIds": ["69f9eab8-e798-41a8-a190-c72b69c3a974"],
 	"ddl": [
 		{
 			"isRlsEnabled": false,
@@ -43,6 +43,12 @@
 		{
 			"isRlsEnabled": false,
 			"name": "response_details",
+			"entityType": "tables",
+			"schema": "public"
+		},
+		{
+			"isRlsEnabled": false,
+			"name": "response_result_access",
 			"entityType": "tables",
 			"schema": "public"
 		},
@@ -777,6 +783,71 @@
 			"name": "id",
 			"entityType": "columns",
 			"schema": "public",
+			"table": "response_result_access"
+		},
+		{
+			"type": "uuid",
+			"typeSchema": null,
+			"notNull": true,
+			"dimensions": 0,
+			"default": null,
+			"generated": null,
+			"identity": null,
+			"name": "response_id",
+			"entityType": "columns",
+			"schema": "public",
+			"table": "response_result_access"
+		},
+		{
+			"type": "text",
+			"typeSchema": null,
+			"notNull": true,
+			"dimensions": 0,
+			"default": null,
+			"generated": null,
+			"identity": null,
+			"name": "token_hash",
+			"entityType": "columns",
+			"schema": "public",
+			"table": "response_result_access"
+		},
+		{
+			"type": "timestamp",
+			"typeSchema": null,
+			"notNull": false,
+			"dimensions": 0,
+			"default": null,
+			"generated": null,
+			"identity": null,
+			"name": "expires_at",
+			"entityType": "columns",
+			"schema": "public",
+			"table": "response_result_access"
+		},
+		{
+			"type": "timestamp",
+			"typeSchema": null,
+			"notNull": true,
+			"dimensions": 0,
+			"default": "now()",
+			"generated": null,
+			"identity": null,
+			"name": "created_at",
+			"entityType": "columns",
+			"schema": "public",
+			"table": "response_result_access"
+		},
+		{
+			"type": "uuid",
+			"typeSchema": null,
+			"notNull": true,
+			"dimensions": 0,
+			"default": "gen_random_uuid()",
+			"generated": null,
+			"identity": null,
+			"name": "id",
+			"entityType": "columns",
+			"schema": "public",
 			"table": "responses"
 		},
 		{
@@ -1167,6 +1238,27 @@
 			"nameExplicit": true,
 			"columns": [
 				{
+					"value": "response_id",
+					"isExpression": false,
+					"asc": true,
+					"nullsFirst": false,
+					"opclass": null
+				}
+			],
+			"isUnique": false,
+			"where": null,
+			"with": "",
+			"method": "btree",
+			"concurrently": false,
+			"name": "idx_response_result_access_response_id",
+			"entityType": "indexes",
+			"schema": "public",
+			"table": "response_result_access"
+		},
+		{
+			"nameExplicit": true,
+			"columns": [
+				{
 					"value": "user_id",
 					"isExpression": false,
 					"asc": true,
@@ -1319,6 +1411,19 @@
 		},
 		{
 			"nameExplicit": false,
+			"columns": ["response_id"],
+			"schemaTo": "public",
+			"tableTo": "responses",
+			"columnsTo": ["id"],
+			"onUpdate": "NO ACTION",
+			"onDelete": "CASCADE",
+			"name": "response_result_access_response_id_responses_id_fkey",
+			"entityType": "fks",
+			"schema": "public",
+			"table": "response_result_access"
+		},
+		{
+			"nameExplicit": false,
 			"columns": ["user_id"],
 			"schemaTo": "public",
 			"tableTo": "profiles",
@@ -1415,6 +1520,14 @@
 		{
 			"columns": ["id"],
 			"nameExplicit": false,
+			"name": "response_result_access_pkey",
+			"schema": "public",
+			"table": "response_result_access",
+			"entityType": "pks"
+		},
+		{
+			"columns": ["id"],
+			"nameExplicit": false,
 			"name": "responses_pkey",
 			"schema": "public",
 			"table": "responses",
@@ -1443,6 +1556,15 @@
 			"name": "profiles_email_unique",
 			"schema": "public",
 			"table": "profiles",
+			"entityType": "uniques"
+		},
+		{
+			"nameExplicit": false,
+			"columns": ["token_hash"],
+			"nullsNotDistinct": false,
+			"name": "response_result_access_token_hash_key",
+			"schema": "public",
+			"table": "response_result_access",
 			"entityType": "uniques"
 		},
 		{

@@ -9,6 +9,11 @@ export const PredictionByResponseSchema = Schema.Struct({
 	responseId: Schema.String,
 });
 
+export const PublicPredictionByResponseSchema = Schema.Struct({
+	responseId: Schema.String,
+	token: Schema.String,
+});
+
 export type ResponseForPrediction = {
 	id: string;
 	userId: string;
@@ -65,14 +70,21 @@ export const PredictQuizResponseSchema = Schema.Struct({
 export type PredictionByResponse = Schema.Schema.Type<
 	typeof PredictionByResponseSchema
 >;
-export type PredictionHealth = Schema.Schema.Type<typeof PredictionHealthSchema>;
+export type PublicPredictionByResponse = Schema.Schema.Type<
+	typeof PublicPredictionByResponseSchema
+>;
+export type PredictionHealth = Schema.Schema.Type<
+	typeof PredictionHealthSchema
+>;
 export type PredictionVideoRef = Schema.Schema.Type<
 	typeof PredictionVideoRefSchema
 >;
 export type PredictQuizRequest = Schema.Schema.Type<
 	typeof PredictQuizRequestSchema
 >;
-export type PredictionResult = Schema.Schema.Type<typeof PredictionResultSchema>;
+export type PredictionResult = Schema.Schema.Type<
+	typeof PredictionResultSchema
+>;
 export type PredictQuizResponse = Schema.Schema.Type<
 	typeof PredictQuizResponseSchema
 >;

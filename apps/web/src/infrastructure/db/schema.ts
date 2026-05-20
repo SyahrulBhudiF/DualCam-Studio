@@ -108,6 +108,23 @@ export const responseDetails = pgTable(
 	],
 );
 
+export const responseResultAccess = pgTable(
+	"response_result_access",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		responseId: uuid("response_id")
+			.references(() => responses.id, { onDelete: "cascade" })
+			.notNull(),
+		tokenHash: text("token_hash").notNull().unique(),
+		predictionOptIn: boolean("prediction_opt_in").default(false).notNull(),
+		expiresAt: timestamp("expires_at"),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+	},
+	(table) => [
+		index("idx_response_result_access_response_id").on(table.responseId),
+	],
+);
+
 export const predictionResults = pgTable(
 	"prediction_results",
 	{

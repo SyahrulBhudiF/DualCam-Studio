@@ -53,10 +53,13 @@ function SignupComp() {
 	});
 
 	const serverValidation = getFormError(signupMutation.error);
-	const fieldErrors = clientValidation?.fieldErrors ?? serverValidation?.fieldErrors ?? {};
+	const fieldErrors =
+		clientValidation?.fieldErrors ?? serverValidation?.fieldErrors ?? {};
 	const validationError =
 		clientValidation?.formErrors[0] ?? serverValidation?.formErrors[0] ?? null;
-	const handlerError = signupMutation.data?.error ? signupMutation.data.message : null;
+	const handlerError = signupMutation.data?.error
+		? signupMutation.data.message
+		: null;
 	const displayError = validationError || handlerError;
 
 	return (

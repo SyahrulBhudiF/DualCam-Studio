@@ -67,10 +67,13 @@ export function Login() {
 	});
 
 	const serverValidation = getFormError(loginMutation.error);
-	const fieldErrors = clientValidation?.fieldErrors ?? serverValidation?.fieldErrors ?? {};
+	const fieldErrors =
+		clientValidation?.fieldErrors ?? serverValidation?.fieldErrors ?? {};
 	const validationError =
 		clientValidation?.formErrors[0] ?? serverValidation?.formErrors[0] ?? null;
-	const handlerError = loginMutation.data?.error ? loginMutation.data.message : null;
+	const handlerError = loginMutation.data?.error
+		? loginMutation.data.message
+		: null;
 	const displayError = validationError || handlerError;
 
 	return (

@@ -1,13 +1,6 @@
 import type { SQL } from "drizzle-orm";
 import { and, desc, eq, gte, ilike, inArray, lte } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import type {
-	NewResponse,
-	NewResponseDetail,
-	Profile,
-	Questionnaire,
-	Response,
-} from "../db";
 import {
 	answers,
 	profiles,
@@ -15,19 +8,22 @@ import {
 	questions,
 	responseDetails,
 	responses,
-} from "../db";
-import { DatabaseError, ResponseNotFoundError } from "../errors";
+} from "../db/schema";
+import type {
+	NewResponse,
+	NewResponseDetail,
+	Profile,
+	Questionnaire,
+	Response,
+} from "../db/types";
+import { DatabaseError } from "../errors/database";
+import { ResponseNotFoundError } from "../errors/not-found";
 import { DB } from "../layers/database";
 
 type VideoSegmentPath = {
 	main: string | null;
 	secondary: string | null;
 } | null;
-
-interface ResponseWithProfile extends Response {
-	profile: Profile | null;
-	questionnaire: Questionnaire | null;
-}
 
 interface ResponseDetail {
 	id: string;
@@ -40,10 +36,6 @@ interface ResponseDetail {
 	orderNumber: number | null;
 	answerText: string | null;
 	maxScore: number;
-}
-
-interface ResponseFull extends ResponseWithProfile {
-	details: ResponseDetail[];
 }
 
 interface ResponseFilter {

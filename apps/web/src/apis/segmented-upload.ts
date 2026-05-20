@@ -5,12 +5,10 @@ import {
 	FileUploadService,
 	ProfileService,
 	ResponseService,
+	ResultAccessService,
 	runEffect,
 } from "@/infrastructure";
-import {
-	FinalSubmitSchema,
-	UploadChunkSchema,
-} from "@/infrastructure/schemas";
+import { FinalSubmitSchema, UploadChunkSchema } from "@/infrastructure/schemas";
 import { verifyCsrfOrigin } from "@/utils/csrf";
 import { inputValidator } from "@/infrastructure/schemas";
 
@@ -41,6 +39,7 @@ export const submitSegmentedResponse = createServerFn({ method: "POST" })
 				const answerService = yield* AnswerService.asEffect();
 				const profileService = yield* ProfileService.asEffect();
 				const responseService = yield* ResponseService.asEffect();
+				const resultAccessService = yield* ResultAccessService.asEffect();
 
 				// Upsert profile with all fields
 				const profile = yield* profileService.upsertByEmail(data.userEmail, {
@@ -85,7 +84,16 @@ export const submitSegmentedResponse = createServerFn({ method: "POST" })
 					details,
 				);
 
-				return { success: true, responseId: response.id };
+				const resultAccess = yield* resultAccessService.createForResponse(
+					response.id,
+					{ predictionOptIn: data.predictionOptIn ?? false },
+				);
+
+				return {
+					resultToken: resultAccess.token,
+					responseId: response.id,
+					success: true,
+				};
 			}),
 		);
 	});

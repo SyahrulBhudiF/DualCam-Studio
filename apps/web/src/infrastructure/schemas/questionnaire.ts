@@ -71,11 +71,10 @@ export const SubmissionSchema = Schema.Struct({
 	userClass: Schema.String,
 	answers: Schema.Record(Schema.String, UUID),
 	folderName: Schema.String,
+	predictionOptIn: Schema.optional(Schema.Boolean),
 	videoBase64Main: Schema.optional(Schema.String),
 	videoBase64Secondary: Schema.optional(Schema.String),
 });
-
-type SubmissionPayload = Schema.Schema.Type<typeof SubmissionSchema>;
 
 // ============================================
 // Segmented Upload Schemas
@@ -104,6 +103,7 @@ export const FinalSubmitSchema = Schema.Struct({
 	userGender: Schema.optional(Schema.String),
 	userAge: Schema.optional(Schema.Number),
 	folderName: Schema.String,
+	predictionOptIn: Schema.optional(Schema.Boolean),
 	answers: Schema.Array(AnswerSubmissionSchema),
 });
 

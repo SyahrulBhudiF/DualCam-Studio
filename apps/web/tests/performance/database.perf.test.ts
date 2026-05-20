@@ -46,7 +46,11 @@ describe.skipIf(shouldSkip)("Performance Tests - Real Database", () => {
 		it.effect("getDashboardData should complete under 1500ms", () =>
 			Effect.gen(function* () {
 				const service = yield* DashboardService.asEffect();
-				yield* timed("Dashboard.getDashboardData", service.getDashboardData(), 1500);
+				yield* timed(
+					"Dashboard.getDashboardData",
+					service.getDashboardData(),
+					1500,
+				);
 			}),
 		);
 	});

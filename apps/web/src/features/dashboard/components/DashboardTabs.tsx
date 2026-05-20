@@ -11,7 +11,9 @@ const DashboardAnalytics = lazy(() =>
 	})),
 );
 const DashboardResponses = lazy(() =>
-	import("./DashboardResponses").then((m) => ({ default: m.DashboardResponses })),
+	import("./DashboardResponses").then((m) => ({
+		default: m.DashboardResponses,
+	})),
 );
 
 function DashboardOverviewFallback() {

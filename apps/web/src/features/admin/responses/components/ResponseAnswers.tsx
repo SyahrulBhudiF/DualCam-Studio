@@ -65,7 +65,9 @@ export function ResponseAnswers({
 		? getVideoForQuestion(selectedQuestionId)
 		: null;
 	const selectedManifestItem = selectedQuestionId
-		? videoManifest?.items.find((item) => item.questionId === selectedQuestionId)
+		? videoManifest?.items.find(
+				(item) => item.questionId === selectedQuestionId,
+			)
 		: null;
 	const selectedDetail = selectedQuestionId
 		? details.find((d) => d.questionId === selectedQuestionId)
@@ -194,11 +196,14 @@ export function ResponseAnswers({
 					)}
 					{selectedManifestItem && selectedManifestItem.videos.length > 0 && (
 						<div className="mb-4 rounded-lg border p-3 text-xs text-muted-foreground">
-							<div className="mb-2 font-medium text-foreground">Video Manifest</div>
+							<div className="mb-2 font-medium text-foreground">
+								Video Manifest
+							</div>
 							<ul className="space-y-1">
 								{selectedManifestItem.videos.map((video) => (
 									<li key={`${video.kind}:${video.path}`}>
-										<span className="font-medium">{video.kind}</span>: {video.path}
+										<span className="font-medium">{video.kind}</span>:{" "}
+										{video.path}
 									</li>
 								))}
 							</ul>

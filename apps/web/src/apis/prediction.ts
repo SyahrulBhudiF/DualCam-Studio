@@ -3,6 +3,7 @@ import { Effect } from "effect";
 import {
 	PredictionResultService,
 	ResponseService,
+	ResultAccessService,
 	runEffect,
 } from "@/infrastructure";
 import {
@@ -10,16 +11,19 @@ import {
 	type PredictionVideoPair,
 	type PredictionVideoRef,
 	type PredictQuizRequest,
+	PublicPredictionByResponseSchema,
 	type ResponseForPrediction,
 	inputValidator,
 } from "@/infrastructure/schemas";
 import { verifyCsrfOrigin } from "@/utils/csrf";
+import { requireAuth } from "@/utils/session";
 
 export const getPredictionResults = createServerFn({ method: "GET" })
 	.inputValidator(inputValidator(PredictionByResponseSchema))
 	.handler(async ({ data }) => {
 		return runEffect(
 			Effect.gen(function* () {
+				yield* requireAuth;
 				const service = yield* PredictionResultService.asEffect();
 				return yield* service.getByResponseId(data.responseId);
 			}),
@@ -32,41 +36,102 @@ export const runPrediction = createServerFn({ method: "POST" })
 		return runEffect(
 			Effect.gen(function* () {
 				yield* verifyCsrfOrigin;
-
-				const responseService = yield* ResponseService.asEffect();
-				const predictionService = yield* PredictionResultService.asEffect();
-				const response = yield* responseService.getById(data.responseId);
-				const videos = buildPredictionVideos(response);
-
-				if (videos.length === 0) {
-					return {
-						prediction: null,
-						results: yield* predictionService.getByResponseId(data.responseId),
-					};
-				}
-
-				const request: PredictQuizRequest = {
-					participantId: response.userId,
-					responseId: response.id,
-					videos,
-				};
-
-				yield* predictionService.createPending({
-					responseId: response.id,
-					videos,
+				yield* requireAuth;
+				return yield* runPredictionForResponse(data.responseId, {
+					force: true,
 				});
-				const prediction = yield* predictionService.predictQuiz(request);
-				const results = yield* predictionService.getByResponseId(response.id);
-
-				return { prediction, results };
 			}),
 		);
 	});
 
+export const getPublicPredictionResult = createServerFn({ method: "GET" })
+	.inputValidator(inputValidator(PublicPredictionByResponseSchema))
+	.handler(async ({ data }) => {
+		return runEffect(
+			Effect.gen(function* () {
+				const resultAccessService = yield* ResultAccessService.asEffect();
+				const predictionService = yield* PredictionResultService.asEffect();
+				yield* resultAccessService.verifyPredictionOptIn(
+					data.responseId,
+					data.token,
+				);
+				return yield* predictionService.getByResponseId(data.responseId);
+			}),
+		);
+	});
+
+export const runPublicPrediction = createServerFn({ method: "POST" })
+	.inputValidator(inputValidator(PublicPredictionByResponseSchema))
+	.handler(async ({ data }) => {
+		return runEffect(
+			Effect.gen(function* () {
+				yield* verifyCsrfOrigin;
+				const resultAccessService = yield* ResultAccessService.asEffect();
+				yield* resultAccessService.verifyPredictionOptIn(
+					data.responseId,
+					data.token,
+				);
+				return yield* runPredictionForResponse(data.responseId, {
+					force: false,
+				});
+			}),
+		);
+	});
+
+function runPredictionForResponse(
+	responseId: string,
+	options: { force: boolean },
+) {
+	return Effect.gen(function* () {
+		const responseService = yield* ResponseService.asEffect();
+		const predictionService = yield* PredictionResultService.asEffect();
+		const existingResults =
+			yield* predictionService.getByResponseId(responseId);
+
+		if (
+			!options.force &&
+			existingResults.length > 0 &&
+			existingResults.every((row) => row.status === "completed")
+		) {
+			return { prediction: null, results: existingResults };
+		}
+
+		const response = yield* responseService.getById(responseId);
+		const videos = buildPredictionVideos(response);
+
+		if (videos.length === 0) {
+			return {
+				prediction: null,
+				results: existingResults,
+			};
+		}
+
+		if (options.force || existingResults.length === 0) {
+			yield* predictionService.createPending({
+				responseId: response.id,
+				videos,
+			});
+		}
+
+		const request: PredictQuizRequest = {
+			participantId: response.userId,
+			responseId: response.id,
+			videos,
+		};
+
+		const prediction = yield* predictionService.predictQuiz(request);
+		const results = yield* predictionService.getByResponseId(response.id);
+
+		return { prediction, results };
+	});
+}
+
 function buildPredictionVideos(
 	response: ResponseForPrediction,
 ): Array<PredictionVideoRef & { responseDetailId?: string | null }> {
-	const videos: Array<PredictionVideoRef & { responseDetailId?: string | null }> = [];
+	const videos: Array<
+		PredictionVideoRef & { responseDetailId?: string | null }
+	> = [];
 
 	for (const detail of response.details) {
 		addVideoPair(videos, {
@@ -139,7 +204,8 @@ function parseVideoPair(value: unknown): PredictionVideoPair | null {
 
 	try {
 		const parsed = JSON.parse(value) as unknown;
-		if (parsed && typeof parsed === "object") return parsed as PredictionVideoPair;
+		if (parsed && typeof parsed === "object")
+			return parsed as PredictionVideoPair;
 	} catch {
 		return { main: value };
 	}

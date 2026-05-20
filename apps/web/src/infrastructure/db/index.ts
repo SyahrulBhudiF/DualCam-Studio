@@ -6,6 +6,7 @@ export {
 	questions,
 	rateLimits,
 	responseDetails,
+	responseResultAccess,
 	responses,
 	sessions,
 	users,
@@ -20,6 +21,7 @@ export type {
 	NewQuestionnaire,
 	NewResponse,
 	NewResponseDetail,
+	NewResponseResultAccess,
 	NewSession,
 	NewUser,
 	PredictionResult,
@@ -27,6 +29,7 @@ export type {
 	Question,
 	Questionnaire,
 	Response,
+	ResponseResultAccess,
 	Session,
 	User,
 } from "./types";

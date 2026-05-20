@@ -2,6 +2,7 @@ export { LoginSchema, SignupSchema } from "./auth";
 export {
 	PredictionByResponseSchema,
 	PredictionHealthSchema,
+	PublicPredictionByResponseSchema,
 	PredictionResultSchema,
 	PredictionVideoRefSchema,
 	PredictQuizRequestSchema,
@@ -10,6 +11,7 @@ export {
 export type {
 	PredictionByResponse,
 	PredictionHealth,
+	PublicPredictionByResponse,
 	PredictionResult,
 	PredictionVideoPair,
 	PredictionVideoRef,

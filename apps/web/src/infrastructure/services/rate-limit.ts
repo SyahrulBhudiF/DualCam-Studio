@@ -1,8 +1,8 @@
 import { eq, lt, sql } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
 import { RateLimitConfig } from "../config";
-import { rateLimits } from "../db";
-import { DatabaseError } from "../errors";
+import { rateLimits } from "../db/schema";
+import { DatabaseError } from "../errors/database";
 import { RateLimitError } from "../errors/auth";
 import { DB } from "../layers/database";
 

@@ -3,9 +3,9 @@ import { and, eq, gt, lt } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
 import { generateToken } from "@/utils/crypto";
 import { AuthConfig } from "../config";
-import type { NewSession, NewUser, Session, User } from "../db";
-import { sessions, users } from "../db";
-import { DatabaseError } from "../errors";
+import { sessions, users } from "../db/schema";
+import type { NewSession, NewUser, Session, User } from "../db/types";
+import { DatabaseError } from "../errors/database";
 import {
 	InvalidCredentialsError,
 	SessionExpiredError,

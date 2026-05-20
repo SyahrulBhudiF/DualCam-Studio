@@ -34,5 +34,7 @@ export const Route = createFileRoute("/admin/questionnaires/$questionnaireId/")(
 function QuestionnaireDetailRouteComponent() {
 	const [questionnaire, questions] = Route.useLoaderData();
 
-	return <QuestionnaireDetail questionnaire={questionnaire} questions={questions} />;
+	return (
+		<QuestionnaireDetail questionnaire={questionnaire} questions={questions} />
+	);
 }

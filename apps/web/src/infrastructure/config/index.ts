@@ -14,7 +14,9 @@ const SessionConfigDescriptor = Config.all({
 	cookieName: Config.string("SESSION_COOKIE_NAME").pipe(
 		Config.withDefault("session_token"),
 	),
-	durationDays: Config.number("SESSION_DURATION_DAYS").pipe(Config.withDefault(7)),
+	durationDays: Config.number("SESSION_DURATION_DAYS").pipe(
+		Config.withDefault(7),
+	),
 	secure: Config.string("NODE_ENV").pipe(
 		Config.map((env) => env === "production"),
 		Config.withDefault(false),

@@ -11,4 +11,5 @@ export {
 	QuestionService,
 	RateLimitService,
 	ResponseService,
+	ResultAccessService,
 } from "./services";
