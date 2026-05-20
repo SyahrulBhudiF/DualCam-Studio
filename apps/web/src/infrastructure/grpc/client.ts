@@ -6,15 +6,18 @@ import { PredictionConfig } from "../config";
 import {
 	PredictionRequestError,
 	PredictionUnavailableError,
-} from "../errors";
+} from "../errors/prediction";
 
-export type GrpcCallback<T> = (error: grpc.ServiceError | null, response: T) => void;
+export type GrpcCallback<T> = (
+	error: grpc.ServiceError | null,
+	response: T,
+) => void;
 
 export interface GrpcClient {
-	call<T>(method: string, body: unknown): Effect.Effect<
-		T,
-		PredictionRequestError | PredictionUnavailableError
-	>;
+	call<T>(
+		method: string,
+		body: unknown,
+	): Effect.Effect<T, PredictionRequestError | PredictionUnavailableError>;
 }
 
 type RawGrpcClient = Record<
@@ -27,27 +30,33 @@ type RawGrpcClient = Record<
 	) => void
 >;
 
-export class GrpcClientLayer extends Context.Service<GrpcClientLayer, GrpcClient>()(
-	"GrpcClientLayer",
-	{
-		make: Effect.gen(function* () {
-			const config = yield* PredictionConfig;
-			const client = makeRawClient(`${config.host}:${config.port}`);
+export class GrpcClientLayer extends Context.Service<
+	GrpcClientLayer,
+	GrpcClient
+>()("GrpcClientLayer", {
+	make: Effect.gen(function* () {
+		const config = yield* PredictionConfig;
+		const client = makeRawClient(`${config.host}:${config.port}`);
 
-			const call = <T>(method: string, body: unknown) =>
-				callGrpc<T>(client, method, body, config.timeoutMs).pipe(
-					Effect.retry(Schedule.recurs(2)),
-				);
+		const call = <T>(method: string, body: unknown) =>
+			callGrpc<T>(client, method, body, config.timeoutMs).pipe(
+				Effect.retry(Schedule.recurs(2)),
+			);
 
-			return { call };
-		}),
-	},
-) {}
+		return { call };
+	}),
+}) {}
 
-export const GrpcClientLive = Layer.effect(GrpcClientLayer, GrpcClientLayer.make);
+export const GrpcClientLive = Layer.effect(
+	GrpcClientLayer,
+	GrpcClientLayer.make,
+);
 
 function makeRawClient(address: string): RawGrpcClient {
-	const protoPath = resolve(process.cwd(), "../../proto/prediction/v1/prediction.proto");
+	const protoPath = resolve(
+		process.cwd(),
+		"../../proto/prediction/v1/prediction.proto",
+	);
 	const definition = protoLoader.loadSync(protoPath, {
 		defaults: true,
 		enums: String,
@@ -56,7 +65,9 @@ function makeRawClient(address: string): RawGrpcClient {
 		oneofs: true,
 	});
 	const loaded = grpc.loadPackageDefinition(definition) as unknown as {
-		prediction: { v1: { PredictionService: new (...args: unknown[]) => RawGrpcClient } };
+		prediction: {
+			v1: { PredictionService: new (...args: unknown[]) => RawGrpcClient };
+		};
 	};
 	return new loaded.prediction.v1.PredictionService(
 		address,
@@ -70,47 +81,48 @@ function callGrpc<T>(
 	body: unknown,
 	timeoutMs: number,
 ): Effect.Effect<T, PredictionRequestError | PredictionUnavailableError> {
-	return Effect.callback<T, PredictionRequestError | PredictionUnavailableError>(
-		(resume) => {
-			const fn = client[method];
-			if (!fn) {
+	return Effect.callback<
+		T,
+		PredictionRequestError | PredictionUnavailableError
+	>((resume) => {
+		const fn = client[method];
+		if (!fn) {
+			resume(
+				Effect.fail(
+					new PredictionRequestError({
+						message: `gRPC method not found: ${method}`,
+					}),
+				),
+			);
+			return;
+		}
+
+		fn(body, new grpc.Metadata(), callOptions(timeoutMs), (error, response) => {
+			if (!error) {
+				resume(Effect.succeed(response as T));
+				return;
+			}
+			if (isTransient(error.code)) {
 				resume(
 					Effect.fail(
-						new PredictionRequestError({
-							message: `gRPC method not found: ${method}`,
+						new PredictionUnavailableError({
+							message: `gRPC unavailable: ${error.message}`,
+							cause: error,
 						}),
 					),
 				);
 				return;
 			}
-
-			fn(body, new grpc.Metadata(), callOptions(timeoutMs), (error, response) => {
-				if (!error) {
-					resume(Effect.succeed(response as T));
-					return;
-				}
-				if (isTransient(error.code)) {
-					resume(
-						Effect.fail(
-							new PredictionUnavailableError({
-								message: `gRPC unavailable: ${error.message}`,
-								cause: error,
-							}),
-						),
-					);
-					return;
-				}
-				resume(
-					Effect.fail(
-						new PredictionRequestError({
-							message: `gRPC request failed: ${error.message}`,
-							cause: error,
-						}),
-					),
-				);
-			});
-		},
-	);
+			resume(
+				Effect.fail(
+					new PredictionRequestError({
+						message: `gRPC request failed: ${error.message}`,
+						cause: error,
+					}),
+				),
+			);
+		});
+	});
 }
 
 function callOptions(timeoutMs: number): grpc.CallOptions {

@@ -5,7 +5,8 @@ import { DB } from "@/infrastructure/layers/database";
 import { DashboardService } from "@/infrastructure/services/dashboard";
 
 const toEffect = <T>(data: T, methods?: Record<string, unknown>) => {
-	const obj = Effect.succeed(data) as Effect.Effect<T> & Record<string, unknown>;
+	const obj = Effect.succeed(data) as Effect.Effect<T> &
+		Record<string, unknown>;
 	if (methods) Object.assign(obj, methods);
 	return obj;
 };
@@ -16,16 +17,38 @@ const queryResults = [
 	[{ totalResponses: 3, avgScore: "12.5" }],
 	[{ count: 2 }],
 	[
-		{ id: "qn1", title: "Questionnaire 1", totalResponses: 2, totalScore: "30" },
-		{ id: "qn2", title: "Questionnaire 2", totalResponses: 0, totalScore: null },
+		{
+			id: "qn1",
+			title: "Questionnaire 1",
+			totalResponses: 2,
+			totalScore: "30",
+		},
+		{
+			id: "qn2",
+			title: "Questionnaire 2",
+			totalResponses: 0,
+			totalScore: null,
+		},
 	],
 	[
 		{ className: "Class A", totalResponses: 2, totalScore: "25" },
 		{ className: null, totalResponses: 1, totalScore: "10" },
 	],
 	[
-		{ id: "q1", text: "Question 1", order: 1, totalResponses: 2, totalScore: "7" },
-		{ id: "q2", text: "Question 2", order: 2, totalResponses: 0, totalScore: null },
+		{
+			id: "q1",
+			text: "Question 1",
+			order: 1,
+			totalResponses: 2,
+			totalScore: "7",
+		},
+		{
+			id: "q2",
+			text: "Question 2",
+			order: 2,
+			totalResponses: 0,
+			totalScore: null,
+		},
 	],
 	[
 		{
@@ -89,7 +112,9 @@ function createMockDb() {
 
 function createTestLayer() {
 	const db = createMockDb();
-	return DashboardService.layer.pipe(Layer.provide(Layer.succeed(DB, db as never)));
+	return DashboardService.layer.pipe(
+		Layer.provide(Layer.succeed(DB, db as never)),
+	);
 }
 
 describe("DashboardService", () => {
@@ -121,7 +146,9 @@ describe("DashboardService", () => {
 			]);
 			expect(result.analytics.video).toEqual({ total: 3, withVideo: 1 });
 			expect(result.recentResponses).toHaveLength(1);
-			expect(result.recentResponses[0]?.createdAt).toBe("2024-06-15T10:00:00.000Z");
+			expect(result.recentResponses[0]?.createdAt).toBe(
+				"2024-06-15T10:00:00.000Z",
+			);
 		}).pipe(Effect.provide(createTestLayer())),
 	);
 });

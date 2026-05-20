@@ -1,4 +1,14 @@
-import { and, avg, count, countDistinct, desc, eq, ne, sql, sum } from "drizzle-orm";
+import {
+	and,
+	avg,
+	count,
+	countDistinct,
+	desc,
+	eq,
+	ne,
+	sql,
+	sum,
+} from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
 import type {
 	DashboardAnalytics,
@@ -14,8 +24,8 @@ import {
 	questions,
 	responseDetails,
 	responses,
-} from "../db";
-import { DatabaseError } from "../errors";
+} from "../db/schema";
+import { DatabaseError } from "../errors/database";
 import { DB } from "../layers/database";
 
 const DASHBOARD_QUERY_CONCURRENCY = 4;
@@ -132,61 +142,65 @@ export class DashboardService extends Context.Service<DashboardService>()(
 
 			const getAnalytics = Effect.fn("DashboardService.getAnalytics")(
 				function* () {
-					const [questionRows, answerRows, timelineRows, [{ total, withVideo }]] =
-						yield* Effect.all(
-							[
-								db
-									.select({
-										id: questions.id,
-										text: questions.questionText,
-										order: questions.orderNumber,
-										totalResponses: count(responseDetails.id),
-										totalScore: sum(responseDetails.score),
-									})
-									.from(questions)
-									.leftJoin(
-										responseDetails,
-										eq(questions.id, responseDetails.questionId),
-									)
-									.groupBy(
-										questions.id,
-										questions.questionText,
-										questions.orderNumber,
+					const [
+						questionRows,
+						answerRows,
+						timelineRows,
+						[{ total, withVideo }],
+					] = yield* Effect.all(
+						[
+							db
+								.select({
+									id: questions.id,
+									text: questions.questionText,
+									order: questions.orderNumber,
+									totalResponses: count(responseDetails.id),
+									totalScore: sum(responseDetails.score),
+								})
+								.from(questions)
+								.leftJoin(
+									responseDetails,
+									eq(questions.id, responseDetails.questionId),
+								)
+								.groupBy(
+									questions.id,
+									questions.questionText,
+									questions.orderNumber,
+								),
+							db
+								.select({
+									id: answers.id,
+									text: answers.answerText,
+									questionId: answers.questionId,
+									totalResponses: count(responseDetails.id),
+									totalScore: sum(responseDetails.score),
+								})
+								.from(answers)
+								.leftJoin(
+									responseDetails,
+									eq(answers.id, responseDetails.answerId),
+								)
+								.groupBy(answers.id, answers.answerText, answers.questionId),
+							db
+								.select({
+									date: sql<Date | string>`DATE(${responses.createdAt})`.as(
+										"date",
 									),
-								db
-									.select({
-										id: answers.id,
-										text: answers.answerText,
-										questionId: answers.questionId,
-										totalResponses: count(responseDetails.id),
-										totalScore: sum(responseDetails.score),
-									})
-									.from(answers)
-									.leftJoin(
-										responseDetails,
-										eq(answers.id, responseDetails.answerId),
-									)
-									.groupBy(answers.id, answers.answerText, answers.questionId),
-								db
-									.select({
-										date: sql<Date | string>`DATE(${responses.createdAt})`.as(
-											"date",
-										),
-										totalResponses: count(),
-										totalScore: sum(responses.totalScore),
-									})
-									.from(responses)
-									.groupBy(sql`DATE(${responses.createdAt})`)
-									.orderBy(sql`DATE(${responses.createdAt})`),
-								db
-									.select({
-										total: count(),
-										withVideo: count(sql`case when ${hasVideoPath} then 1 end`),
-									})
-									.from(responses),
-							],
-							{ concurrency: DASHBOARD_QUERY_CONCURRENCY },
-						);
+									totalResponses: count(),
+									totalScore: sum(responses.totalScore),
+								})
+								.from(responses)
+								.groupBy(sql`DATE(${responses.createdAt})`)
+								.orderBy(sql`DATE(${responses.createdAt})`),
+							db
+								.select({
+									total: count(),
+									withVideo: count(sql`case when ${hasVideoPath} then 1 end`),
+								})
+								.from(responses),
+						],
+						{ concurrency: DASHBOARD_QUERY_CONCURRENCY },
+					);
 
 					return {
 						questions: questionRows.map((r) => ({
@@ -223,7 +237,10 @@ export class DashboardService extends Context.Service<DashboardService>()(
 					})
 					.from(responses)
 					.leftJoin(profiles, eq(responses.userId, profiles.id))
-					.leftJoin(questionnaires, eq(responses.questionnaireId, questionnaires.id))
+					.leftJoin(
+						questionnaires,
+						eq(responses.questionnaireId, questionnaires.id),
+					)
 					.orderBy(desc(responses.createdAt))
 					.limit(RECENT_RESPONSE_LIMIT);
 

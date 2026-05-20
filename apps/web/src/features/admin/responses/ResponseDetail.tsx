@@ -175,7 +175,10 @@ function parseVideoData(
 }
 
 export function ResponseDetail({ response }: ResponseDetailProps) {
-	const videoManifest = useMemo(() => createVideoManifest(response), [response]);
+	const videoManifest = useMemo(
+		() => createVideoManifest(response),
+		[response],
+	);
 	const videoData = useMemo(
 		() =>
 			parseVideoData(

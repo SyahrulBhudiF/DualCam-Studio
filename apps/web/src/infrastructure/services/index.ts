@@ -10,6 +10,7 @@ import { QuestionService } from "./question";
 import { QuestionnaireService } from "./questionnaire";
 import { RateLimitService } from "./rate-limit";
 import { ResponseService } from "./response";
+import { ResultAccessService } from "./result-access";
 
 export { AnswerService } from "./answer";
 export { AuthService } from "./auth";
@@ -21,6 +22,7 @@ export { QuestionService } from "./question";
 export { QuestionnaireService } from "./questionnaire";
 export { RateLimitService } from "./rate-limit";
 export { ResponseService } from "./response";
+export { ResultAccessService } from "./result-access";
 
 export const AllServicesLive = Layer.mergeAll(
 	QuestionnaireService.layer,
@@ -28,6 +30,7 @@ export const AllServicesLive = Layer.mergeAll(
 	AnswerService.layer,
 	ProfileService.layer,
 	ResponseService.layer,
+	ResultAccessService.layer,
 	DashboardService.layer,
 	FileUploadService.layer.pipe(Layer.provide(NodeFileSystem.layer)),
 	PredictionResultService.layer,

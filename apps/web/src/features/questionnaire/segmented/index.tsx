@@ -10,6 +10,7 @@ import {
 import { CameraControlPanel } from "@/components/CameraControlPanel";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { useCameraSetup } from "@/libs/hooks/use-camera-setup";
@@ -66,10 +67,20 @@ export function SegmentedPage() {
 
 	const submitMutation = useMutation({
 		mutationFn: submitSegmentedResponse,
-		onSuccess: () => {
+		onSuccess: (result) => {
 			queryClient.invalidateQueries({ queryKey: ["admin", "responses"] });
 			queryClient.invalidateQueries({ queryKey: ["dashboard"] });
 			store.reset();
+
+			if (useQuestionnaireStore.getState().predictionOptIn) {
+				navigate({
+					to: "/prediction/$responseId",
+					params: { responseId: result.responseId },
+					search: { token: result.resultToken },
+				});
+				return;
+			}
+
 			navigate({ to: "/success" });
 		},
 	});
@@ -128,6 +139,7 @@ export function SegmentedPage() {
 					questionnaireId: questionnaire.id,
 					folderName: store.folderName,
 					answers: Object.values(useQuestionnaireStore.getState().answers),
+					predictionOptIn: useQuestionnaireStore.getState().predictionOptIn,
 				};
 				await submitMutation.mutateAsync({ data: finalData });
 			}
@@ -167,6 +179,7 @@ export function SegmentedPage() {
 	]);
 
 	const currentQ = questions?.[currentIndex];
+	const isLastQuestion = currentIndex === questions.length - 1;
 
 	return (
 		<div className="min-h-screen bg-muted/40 p-4 pb-48">
@@ -178,7 +191,9 @@ export function SegmentedPage() {
 					<div className="animate-spin">
 						<Loader2 className="size-10" />
 					</div>
-					<div className="text-muted-foreground font-medium">Initializing Cameras…</div>
+					<div className="text-muted-foreground font-medium">
+						Initializing Cameras…
+					</div>
 				</div>
 			)}
 
@@ -188,7 +203,29 @@ export function SegmentedPage() {
 				</h1>
 			</div>
 
-			<div className="max-w-3xl mx-auto mb-8">
+			<div className="max-w-3xl mx-auto mb-8 space-y-4">
+				{isLastQuestion && (
+					<Card>
+						<CardContent className="flex items-start gap-3 pt-6">
+							<Checkbox
+								id="prediction-opt-in"
+								checked={store.predictionOptIn}
+								onCheckedChange={(checked) =>
+									store.setPredictionOptIn(checked === true)
+								}
+							/>
+							<div className="space-y-1 leading-none">
+								<Label htmlFor="prediction-opt-in">
+									Analisis video setelah submit
+								</Label>
+								<p className="text-sm text-muted-foreground">
+									Jika dicentang, kamu akan diarahkan ke halaman hasil prediksi.
+								</p>
+							</div>
+						</CardContent>
+					</Card>
+				)}
+
 				<div
 					onSubmit={(e) => {
 						e.preventDefault();
@@ -235,7 +272,7 @@ export function SegmentedPage() {
 							>
 								{isSubmitting || isProcessing
 									? "Saving & Uploading…"
-									: currentIndex === questions.length - 1
+									: isLastQuestion
 										? "Finish"
 										: "Next Question"}
 							</Button>

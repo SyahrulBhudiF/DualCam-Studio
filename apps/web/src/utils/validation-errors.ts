@@ -27,11 +27,17 @@ const FIELD_LABELS: Record<string, string> = {
 
 function getFieldLabel(path: PropertyKey[]) {
 	const key = String(path.at(-1) ?? "field");
-	return FIELD_LABELS[key] ?? key.replaceAll(/[-_]/g, " ").replace(/^\w/, (char) => char.toUpperCase());
+	return (
+		FIELD_LABELS[key] ??
+		key.replaceAll(/[-_]/g, " ").replace(/^\w/, (char) => char.toUpperCase())
+	);
 }
 
 function isEmptyValueIssue(issue: z.core.$ZodIssue) {
-	return issue.code === "invalid_type" || issue.message.toLowerCase().includes("required");
+	return (
+		issue.code === "invalid_type" ||
+		issue.message.toLowerCase().includes("required")
+	);
 }
 
 function formatIssue(issue: z.core.$ZodIssue) {
@@ -43,7 +49,9 @@ function formatIssue(issue: z.core.$ZodIssue) {
 
 	switch (issue.code) {
 		case "invalid_format":
-			return label === "Email" ? "Enter a valid email address." : `Enter a valid ${label.toLowerCase()}.`;
+			return label === "Email"
+				? "Enter a valid email address."
+				: `Enter a valid ${label.toLowerCase()}.`;
 		case "too_small":
 			if (label === "Password") {
 				return "Password must be at least 8 characters.";
@@ -56,12 +64,18 @@ function formatIssue(issue: z.core.$ZodIssue) {
 	}
 }
 
-function addFieldError(fieldErrors: Record<string, string[]>, path: PropertyKey[], message: string) {
+function addFieldError(
+	fieldErrors: Record<string, string[]>,
+	path: PropertyKey[],
+	message: string,
+) {
 	const key = String(path[0] ?? "form");
 	fieldErrors[key] = [...(fieldErrors[key] ?? []), message];
 }
 
-export function normalizeZodError(error: z.ZodError): NormalizedValidationError {
+export function normalizeZodError(
+	error: z.ZodError,
+): NormalizedValidationError {
 	const fieldErrors: Record<string, string[]> = {};
 	const formErrors: string[] = [];
 
@@ -122,4 +136,3 @@ export function getFormError(error: unknown): NormalizedValidationError | null {
 		fieldErrors: {},
 	};
 }
-

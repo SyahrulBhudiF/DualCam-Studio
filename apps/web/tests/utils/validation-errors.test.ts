@@ -9,7 +9,10 @@ const loginSchema = z.object({
 
 describe("validation error formatting", () => {
 	it("formats zod field errors for users", () => {
-		const error = loginSchema.safeParse({ email: "bad", password: "123" }).error;
+		const error = loginSchema.safeParse({
+			email: "bad",
+			password: "123",
+		}).error;
 
 		const normalized = getFormError(error);
 
@@ -20,7 +23,10 @@ describe("validation error formatting", () => {
 	});
 
 	it("formats serialized zod errors from server function validators", () => {
-		const error = loginSchema.safeParse({ email: "bad", password: "123" }).error;
+		const error = loginSchema.safeParse({
+			email: "bad",
+			password: "123",
+		}).error;
 		const serializedError = new Error(JSON.stringify(error?.issues));
 
 		expect(getFormError(serializedError)?.fieldErrors.email?.[0]).toBe(

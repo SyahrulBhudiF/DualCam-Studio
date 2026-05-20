@@ -9,7 +9,8 @@ const dashboardOptions = queryOptions({
 });
 
 export const Route = createFileRoute("/admin/dashboard/")({
-	loader: ({ context }) => context.queryClient.ensureQueryData(dashboardOptions),
+	loader: ({ context }) =>
+		context.queryClient.ensureQueryData(dashboardOptions),
 	component: DashboardRouteComponent,
 });
 

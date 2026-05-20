@@ -1,9 +1,10 @@
 import { PgClient } from "@effect/sql-pg";
 import { eq, inArray } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import type { NewQuestionnaire, Questionnaire } from "../db";
-import { answers, questionnaires, questions } from "../db";
-import { DatabaseError, QuestionnaireNotFoundError } from "../errors";
+import { answers, questionnaires, questions } from "../db/schema";
+import type { NewQuestionnaire, Questionnaire } from "../db/types";
+import { DatabaseError } from "../errors/database";
+import { QuestionnaireNotFoundError } from "../errors/not-found";
 import { DB } from "../layers/database";
 
 export class QuestionnaireService extends Context.Service<QuestionnaireService>()(

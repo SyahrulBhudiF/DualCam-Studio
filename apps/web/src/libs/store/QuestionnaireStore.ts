@@ -10,7 +10,9 @@ interface AnswerData {
 interface QuestionnaireState {
 	folderName: string;
 	answers: Record<string, AnswerData>;
+	predictionOptIn: boolean;
 	setFolderName: (name: string) => void;
+	setPredictionOptIn: (enabled: boolean) => void;
 	addAnswer: (qId: string, data: AnswerData) => void;
 	reset: () => void;
 }
@@ -18,10 +20,12 @@ interface QuestionnaireState {
 export const useQuestionnaireStore = create<QuestionnaireState>((set) => ({
 	folderName: "",
 	answers: {},
+	predictionOptIn: false,
 	setFolderName: (name) => set({ folderName: name }),
+	setPredictionOptIn: (enabled) => set({ predictionOptIn: enabled }),
 	addAnswer: (qId, data) =>
 		set((state) => ({
 			answers: { ...state.answers, [qId]: data },
 		})),
-	reset: () => set({ folderName: "", answers: {} }),
+	reset: () => set({ answers: {}, folderName: "", predictionOptIn: false }),
 }));

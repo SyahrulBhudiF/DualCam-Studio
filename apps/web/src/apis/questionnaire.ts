@@ -7,6 +7,7 @@ import {
 	ProfileService,
 	QuestionnaireService,
 	ResponseService,
+	ResultAccessService,
 	runEffect,
 } from "@/infrastructure";
 import { SubmissionSchema } from "@/infrastructure/schemas";
@@ -53,6 +54,7 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
 				const answerService = yield* AnswerService.asEffect();
 				const profileService = yield* ProfileService.asEffect();
 				const responseService = yield* ResponseService.asEffect();
+				const resultAccessService = yield* ResultAccessService.asEffect();
 
 				const folderName = data.folderName;
 				const uploadRoot = yield* fileUploadService.getUploadRoot();
@@ -128,7 +130,16 @@ export const submitQuestionnaire = createServerFn({ method: "POST" })
 					details,
 				);
 
-				return { success: true, responseId: response.id };
+				const resultAccess = yield* resultAccessService.createForResponse(
+					response.id,
+					{ predictionOptIn: data.predictionOptIn ?? false },
+				);
+
+				return {
+					resultToken: resultAccess.token,
+					responseId: response.id,
+					success: true,
+				};
 			}),
 		);
 	});

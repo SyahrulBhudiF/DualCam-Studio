@@ -1,8 +1,9 @@
 import { eq, inArray } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import type { Answer, NewAnswer } from "../db";
-import { answers } from "../db";
-import { AnswerNotFoundError, DatabaseError } from "../errors";
+import { answers } from "../db/schema";
+import type { Answer, NewAnswer } from "../db/types";
+import { DatabaseError } from "../errors/database";
+import { AnswerNotFoundError } from "../errors/not-found";
 import { DB } from "../layers/database";
 
 export class AnswerService extends Context.Service<AnswerService>()(

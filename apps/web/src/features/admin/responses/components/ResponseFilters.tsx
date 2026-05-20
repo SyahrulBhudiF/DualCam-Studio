@@ -123,7 +123,10 @@ export function ResponseFilters({
 				<span className="text-sm font-medium">Filters:</span>
 			</div>
 
-			<Select value={questionnaireId} onValueChange={(value) => setFilter("questionnaireId", value)}>
+			<Select
+				value={questionnaireId}
+				onValueChange={(value) => setFilter("questionnaireId", value)}
+			>
 				<SelectTrigger className="w-[200px]">
 					<SelectValue placeholder="All Questionnaires" />
 				</SelectTrigger>
@@ -151,7 +154,10 @@ export function ResponseFilters({
 				</SelectContent>
 			</Select>
 
-			<Select value={className} onValueChange={(value) => setFilter("className", value)}>
+			<Select
+				value={className}
+				onValueChange={(value) => setFilter("className", value)}
+			>
 				<SelectTrigger className="w-[150px]">
 					<SelectValue placeholder="All Classes" />
 				</SelectTrigger>

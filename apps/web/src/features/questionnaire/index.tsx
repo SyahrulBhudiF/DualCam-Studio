@@ -2,14 +2,16 @@ import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLoaderData, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { submitQuestionnaire } from "@/apis/questionnaire";
 import { CameraControlPanel } from "@/components/CameraControlPanel";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { useCameraSetup } from "@/libs/hooks/use-camera-setup";
+import { useQuestionnaireStore } from "@/libs/store/QuestionnaireStore";
 import { useUserStore } from "@/libs/store/UserStore";
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
@@ -28,8 +30,15 @@ export function QuestionnairePage() {
 	const user = useUserStore((s) => s.user);
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const predictionOptIn = useQuestionnaireStore((s) => s.predictionOptIn);
+	const setPredictionOptIn = useQuestionnaireStore((s) => s.setPredictionOptIn);
 
-	const [currentFolderName, setCurrentFolderName] = useState<string>("");
+	const currentFolderName = useMemo(() => {
+		if (!user?.name) return "";
+		const timestamp = Date.now();
+		const safeName = user.name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+		return `full/${safeName}_${timestamp}`;
+	}, [user?.name]);
 
 	const {
 		videoDevices,
@@ -49,9 +58,19 @@ export function QuestionnairePage() {
 
 	const mutation = useMutation({
 		mutationFn: submitQuestionnaire,
-		onSuccess: () => {
+		onSuccess: (result) => {
 			queryClient.invalidateQueries({ queryKey: ["admin", "responses"] });
 			queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+
+			if (predictionOptIn) {
+				navigate({
+					to: "/prediction/$responseId",
+					params: { responseId: result.responseId },
+					search: { token: result.resultToken },
+				});
+				return;
+			}
+
 			navigate({ to: "/success" });
 		},
 		onError: (error) => {
@@ -101,19 +120,11 @@ export function QuestionnairePage() {
 					videoBase64Secondary: base64Sec || " ",
 					folderName: currentFolderName,
 					answers: value.answers,
+					predictionOptIn,
 				},
 			});
 		},
 	});
-
-	useEffect(() => {
-		if (user?.name && !currentFolderName) {
-			const timestamp = Date.now();
-			const safeName = user.name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-
-			setCurrentFolderName(`full/${safeName}_${timestamp}`);
-		}
-	}, [user?.name, currentFolderName]);
 
 	const hasStartedRef = useRef(false);
 
@@ -139,7 +150,9 @@ export function QuestionnairePage() {
 				<div className="animate-spin">
 					<Loader2 className="size-10" />
 				</div>
-				<div className="text-muted-foreground font-medium">Initializing Cameras…</div>
+				<div className="text-muted-foreground font-medium">
+					Initializing Cameras…
+				</div>
 				<div className="fixed opacity-0 pointer-events-none">
 					<CameraControlPanel
 						videoDevices={videoDevices}
@@ -177,6 +190,26 @@ export function QuestionnairePage() {
 			</div>
 
 			<div className="max-w-3xl mx-auto space-y-6">
+				<Card>
+					<CardContent className="flex items-start gap-3 pt-6">
+						<Checkbox
+							id="prediction-opt-in"
+							checked={predictionOptIn}
+							onCheckedChange={(checked) =>
+								setPredictionOptIn(checked === true)
+							}
+						/>
+						<div className="space-y-1 leading-none">
+							<Label htmlFor="prediction-opt-in">
+								Analisis video setelah submit
+							</Label>
+							<p className="text-sm text-muted-foreground">
+								Jika dicentang, kamu akan diarahkan ke halaman hasil prediksi.
+							</p>
+						</div>
+					</CardContent>
+				</Card>
+
 				<div
 					onSubmit={(e) => {
 						e.preventDefault();

@@ -1,8 +1,9 @@
 import { eq, isNotNull } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import type { NewProfile, Profile } from "../db";
-import { profiles } from "../db";
-import { DatabaseError, ProfileNotFoundError } from "../errors";
+import { profiles } from "../db/schema";
+import type { NewProfile, Profile } from "../db/types";
+import { DatabaseError } from "../errors/database";
+import { ProfileNotFoundError } from "../errors/not-found";
 import { DB } from "../layers/database";
 
 export class ProfileService extends Context.Service<ProfileService>()(

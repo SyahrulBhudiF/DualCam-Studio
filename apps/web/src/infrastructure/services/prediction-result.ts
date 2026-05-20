@@ -1,9 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import type { NewPredictionResult, PredictionResult } from "../db";
-import { predictionResults } from "../db";
-import { DatabaseError } from "../errors";
-import { PredictionGrpc } from "../grpc";
+import { predictionResults } from "../db/schema";
+import type { NewPredictionResult, PredictionResult } from "../db/types";
+import { DatabaseError } from "../errors/database";
+import { PredictionGrpc } from "../grpc/prediction";
 import { GrpcClientLive } from "../grpc/client";
 import { DB } from "../layers/database";
 import type {
@@ -14,7 +14,9 @@ import type {
 
 export type CreatePredictionRowsInput = {
 	responseId: string;
-	videos: ReadonlyArray<PredictionVideoRef & { responseDetailId?: string | null }>;
+	videos: ReadonlyArray<
+		PredictionVideoRef & { responseDetailId?: string | null }
+	>;
 };
 
 export class PredictionResultService extends Context.Service<PredictionResultService>()(
@@ -42,72 +44,93 @@ export class PredictionResultService extends Context.Service<PredictionResultSer
 				return rows as PredictionResult[];
 			});
 
-			const createPending = Effect.fn(
-				"PredictionResultService.createPending",
-			)(function* (input: CreatePredictionRowsInput) {
-				if (input.videos.length === 0) return [];
-
-				const rows: NewPredictionResult[] = input.videos.map((video) => ({
-					responseId: input.responseId,
-					responseDetailId: video.responseDetailId ?? null,
-					questionId: video.questionId,
-					videoKind: video.kind,
-					videoPath: video.path,
-					videoFormat: video.format,
-					videoMimeType: video.mimeType,
-					status: "pending",
-				}));
-
-				const created = yield* db
-					.insert(predictionResults)
-					.values(rows)
-					.returning()
-					.pipe(
-						Effect.mapError(
-							(e) =>
-								new DatabaseError({
-									message: "Failed to create prediction results",
-									cause: e,
-								}),
-						),
-					);
-
-				return created as PredictionResult[];
-			});
-
-			const predictQuiz = Effect.fn(
-				"PredictionResultService.predictQuiz",
-			)(function* (request: PredictQuizRequest) {
-				yield* markRunning(request.responseId);
-				const response = yield* PredictionGrpc.predictQuiz(request).pipe(
-					Effect.provide(GrpcClientLive),
-					Effect.tapError((error) =>
-						markFailed(request.responseId, error.message),
-					),
-				);
-				yield* applyPredictQuizResponse(response);
-				return response;
-			});
-
-			const markRunning = Effect.fn(
-				"PredictionResultService.markRunning",
+			const deleteByResponseId = Effect.fn(
+				"PredictionResultService.deleteByResponseId",
 			)(function* (responseId: string) {
 				const rows = yield* db
-					.update(predictionResults)
-					.set({ status: "running", updatedAt: new Date() })
+					.delete(predictionResults)
 					.where(eq(predictionResults.responseId, responseId))
 					.returning()
 					.pipe(
 						Effect.mapError(
 							(e) =>
 								new DatabaseError({
-									message: "Failed to mark prediction results running",
+									message: "Failed to delete prediction results",
 									cause: e,
 								}),
 						),
 					);
 				return rows as PredictionResult[];
 			});
+
+			const createPending = Effect.fn("PredictionResultService.createPending")(
+				function* (input: CreatePredictionRowsInput) {
+					if (input.videos.length === 0) return [];
+
+					yield* deleteByResponseId(input.responseId);
+
+					const rows: NewPredictionResult[] = input.videos.map((video) => ({
+						responseId: input.responseId,
+						responseDetailId: video.responseDetailId ?? null,
+						questionId: video.questionId,
+						videoKind: video.kind,
+						videoPath: video.path,
+						videoFormat: video.format,
+						videoMimeType: video.mimeType,
+						status: "pending",
+					}));
+
+					const created = yield* db
+						.insert(predictionResults)
+						.values(rows)
+						.returning()
+						.pipe(
+							Effect.mapError(
+								(e) =>
+									new DatabaseError({
+										message: "Failed to create prediction results",
+										cause: e,
+									}),
+							),
+						);
+
+					return created as PredictionResult[];
+				},
+			);
+
+			const predictQuiz = Effect.fn("PredictionResultService.predictQuiz")(
+				function* (request: PredictQuizRequest) {
+					yield* markRunning(request.responseId);
+					const response = yield* PredictionGrpc.predictQuiz(request).pipe(
+						Effect.provide(GrpcClientLive),
+						Effect.tapError((error) =>
+							markFailed(request.responseId, error.message),
+						),
+					);
+					yield* applyPredictQuizResponse(response);
+					return response;
+				},
+			);
+
+			const markRunning = Effect.fn("PredictionResultService.markRunning")(
+				function* (responseId: string) {
+					const rows = yield* db
+						.update(predictionResults)
+						.set({ status: "running", updatedAt: new Date() })
+						.where(eq(predictionResults.responseId, responseId))
+						.returning()
+						.pipe(
+							Effect.mapError(
+								(e) =>
+									new DatabaseError({
+										message: "Failed to mark prediction results running",
+										cause: e,
+									}),
+							),
+						);
+					return rows as PredictionResult[];
+				},
+			);
 
 			const applyPredictQuizResponse = Effect.fn(
 				"PredictionResultService.applyPredictQuizResponse",
@@ -181,6 +204,7 @@ export class PredictionResultService extends Context.Service<PredictionResultSer
 			return {
 				applyPredictQuizResponse,
 				createPending,
+				deleteByResponseId,
 				getByResponseId,
 				markFailed,
 				markRunning,

@@ -13,8 +13,11 @@ import type {
 type PredictionGrpcError = PredictionRequestError | PredictionUnavailableError;
 
 export const PredictionGrpc = {
-	health: (): Effect.Effect<PredictionHealth, PredictionGrpcError, GrpcClientLayer> =>
-		GrpcClientLayer.Service.call<PredictionHealth>("HealthCheck", {}),
+	health: (): Effect.Effect<
+		PredictionHealth,
+		PredictionGrpcError,
+		GrpcClientLayer
+	> => GrpcClientLayer.Service.call<PredictionHealth>("HealthCheck", {}),
 
 	predictQuiz: (
 		request: PredictQuizRequest,
