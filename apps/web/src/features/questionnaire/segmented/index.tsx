@@ -88,7 +88,7 @@ export function SegmentedPage() {
 			const base64Main = blobMain.size > 0 ? await blobToBase64(blobMain) : "";
 
 			const subFolder = `q${currentIndex + 1}`;
-			const mainFileName = `/${subFolder}/${user?.name ?? "Anon"}_${currentIndex + 1}_${currentQ.id}_main.webm`;
+			const mainFileName = `${subFolder}/${user?.name ?? "Anon"}_${currentIndex + 1}_${currentQ.id}_main.webm`;
 
 			let uploadPath = "";
 			if (base64Main) {

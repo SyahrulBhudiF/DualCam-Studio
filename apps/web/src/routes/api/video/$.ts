@@ -17,15 +17,14 @@ export const Route = createFileRoute("/api/video/$")({
 					return new Response("Video path is required", { status: 400 });
 				}
 
-				// Prevent directory traversal attacks
-				const normalizedPath = path.normalize(videoPath);
-				const filePath = path.resolve(UPLOAD_ROOT, normalizedPath);
+				if (path.isAbsolute(videoPath)) {
+					return new Response("Forbidden", { status: 403 });
+				}
 
-				// Guard: resolved path must stay within upload root
-				if (
-					!filePath.startsWith(UPLOAD_ROOT + path.sep) &&
-					filePath !== UPLOAD_ROOT
-				) {
+				const filePath = path.resolve(UPLOAD_ROOT, videoPath);
+				const relativePath = path.relative(UPLOAD_ROOT, filePath);
+
+				if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
 					return new Response("Forbidden", { status: 403 });
 				}
 

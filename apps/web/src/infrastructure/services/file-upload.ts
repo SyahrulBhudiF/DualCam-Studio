@@ -11,6 +11,55 @@ export class FileUploadService extends Context.Service<FileUploadService>()(
 			const config = yield* StorageConfig;
 			const uploadRoot = path.resolve(config.uploadRoot);
 
+			const resolveUploadPath = Effect.fn(
+				"FileUploadService.resolveUploadPath",
+			)((...segments: Array<string>) =>
+				Effect.gen(function* () {
+					if (segments.some((segment) => path.isAbsolute(segment))) {
+						return yield* Effect.fail(
+							new FileError({
+								message: "Upload paths must be relative",
+							}),
+						);
+					}
+
+					const resolved = path.resolve(uploadRoot, ...segments);
+					const relative = path.relative(uploadRoot, resolved);
+
+					if (
+						relative === "" ||
+						relative.startsWith("..") ||
+						path.isAbsolute(relative)
+					) {
+						return yield* Effect.fail(
+							new FileError({
+								message: "Upload path escapes upload root",
+							}),
+						);
+					}
+
+					return resolved;
+				}),
+			);
+
+			const toPublicUploadPath = Effect.fn(
+				"FileUploadService.toPublicUploadPath",
+			)((filePath: string) =>
+				Effect.gen(function* () {
+					const relative = path.relative(uploadRoot, filePath);
+
+					if (relative.startsWith("..") || path.isAbsolute(relative)) {
+						return yield* Effect.fail(
+							new FileError({
+								message: "Upload path escapes upload root",
+							}),
+						);
+					}
+
+					return `/video_uploads/${relative.split(path.sep).join("/")}`;
+				}),
+			);
+
 			const ensureDirectory = Effect.fn("FileUploadService.ensureDirectory")(
 				function* (dirPath: string) {
 					const exists = yield* fs.exists(dirPath).pipe(
@@ -57,11 +106,14 @@ export class FileUploadService extends Context.Service<FileUploadService>()(
 					fileName: string;
 					fileBase64: string;
 				}) {
-					const userFolder = path.join(uploadRoot, data.folderName);
+					const userFolder = yield* resolveUploadPath(data.folderName);
 					yield* ensureDirectory(uploadRoot);
 					yield* ensureDirectory(userFolder);
 
-					const filePath = path.join(userFolder, data.fileName);
+					const filePath = yield* resolveUploadPath(
+						data.folderName,
+						data.fileName,
+					);
 					const fileDir = path.dirname(filePath);
 					yield* ensureDirectory(fileDir);
 
@@ -72,9 +124,11 @@ export class FileUploadService extends Context.Service<FileUploadService>()(
 
 					yield* saveFile(filePath, buffer);
 
+					const publicPath = yield* toPublicUploadPath(filePath);
+
 					return {
 						success: true,
-						path: `/video_uploads/${data.folderName}/${data.fileName}`,
+						path: publicPath,
 					};
 				},
 			);
@@ -86,6 +140,7 @@ export class FileUploadService extends Context.Service<FileUploadService>()(
 			return {
 				ensureDirectory,
 				saveFile,
+				resolveUploadPath,
 				uploadChunk,
 				getUploadRoot,
 			};
