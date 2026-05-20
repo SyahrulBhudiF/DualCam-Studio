@@ -1,0 +1,24 @@
+language: python
+stack: backend
+
+tasks:
+  sync:
+    command: uv sync
+
+  dev:
+    command: uv run python -m predictor.main
+    options:
+      cache: false
+      persistent: true
+
+  test:
+    command: uv run pytest
+
+  lint:
+    command: uv run ruff check .
+
+  type:
+    command: uv run pyright
+
+  proto:
+    command: uv run python -m grpc_tools.protoc -I ../../proto --python_out=src/predictor/generated --grpc_python_out=src/predictor/generated --pyi_out=src/predictor/generated ../../proto/prediction/v1/prediction.proto

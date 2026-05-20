@@ -1,0 +1,21 @@
+language: typescript
+stack: frontend
+
+tasks:
+  dev:
+    command: bun run dev
+    options:
+      cache: false
+      persistent: true
+
+  build:
+    command: bun run build
+
+  test:
+    command: bun run test
+
+  check:
+    command: bun run check
+
+  lint:
+    command: bun run lint
