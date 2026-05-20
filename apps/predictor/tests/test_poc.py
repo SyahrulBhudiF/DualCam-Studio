@@ -7,7 +7,9 @@ import numpy as np
 
 from predictor.core.poc import POC, compute_poc
 
-SRC = Path("/home/ryuko/skripsi/Skripsi/Convat-1st/features_extraction/poc.py")
+SRC = (
+    Path(__file__).resolve().parent.parent / "vendor" / "convat" / "features_extraction" / "poc.py"
+)
 
 
 def load_old() -> Any:

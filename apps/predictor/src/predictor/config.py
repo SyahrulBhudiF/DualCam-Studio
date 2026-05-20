@@ -5,6 +5,10 @@ from typing import Literal
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+APP_ROOT = Path(__file__).resolve().parents[2]
+VENDOR_ROOT = APP_ROOT / "vendor" / "tabular-dl-tabr-official"
+PROJECT_ROOT = APP_ROOT.parents[1]
+
 DeviceMode = Literal["auto", "cpu", "cuda"]
 AggregationMode = Literal["mean", "median", "max"]
 
@@ -14,9 +18,9 @@ class PredictorSettings(BaseSettings):
 
     host: str = "127.0.0.1"
     port: int = 50051
-    project_root: Path = Field(default=Path("/home/ryuko/skripsi/QUIS"))
-    upload_root: Path = Field(default=Path("/home/ryuko/skripsi/QUIS/video_uploads"))
-    tabr_root: Path = Field(default=Path("/home/ryuko/skripsi/Skripsi/Convat-1st"))
+    project_root: Path = Field(default=PROJECT_ROOT)
+    upload_root: Path = Field(default=PROJECT_ROOT / "video_uploads")
+    tabr_root: Path = Field(default=VENDOR_ROOT)
     exp_name: str = "convat_apex_anxiety_qwalk_q12_q3_q4"
     evaluation_seed: int = 4
     threshold: float = 0.235
@@ -33,10 +37,6 @@ class PredictorSettings(BaseSettings):
     @property
     def bind_address(self) -> str:
         return f"{self.host}:{self.port}"
-
-    @property
-    def experiment_root(self) -> Path:
-        return self.tabr_root
 
     @property
     def labels(self) -> dict[int, str]:

@@ -7,7 +7,7 @@ import numpy as np
 
 from predictor.core.spotting import ApexPhase, ApexSmoother, SpotConfig, detect_events
 
-SRC_ROOT = Path("/home/ryuko/skripsi/Skripsi/Convat-1st")
+SRC_ROOT = Path(__file__).resolve().parent.parent / "vendor" / "convat"
 
 
 def load_old() -> tuple[Any, Any]:

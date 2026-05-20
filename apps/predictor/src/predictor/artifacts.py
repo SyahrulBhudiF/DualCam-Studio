@@ -31,7 +31,7 @@ class Artifacts:
 
 
 def resolve_artifacts(settings: PredictorSettings) -> Artifacts:
-    tabr = settings.tabr_root / "third_party" / "tabular-dl-tabr-official"
+    tabr = settings.tabr_root
     exp = tabr / "exp" / "tabr" / settings.exp_name
     eval_dir = exp / "0-evaluation"
     seed_dir = eval_dir / str(settings.evaluation_seed)
