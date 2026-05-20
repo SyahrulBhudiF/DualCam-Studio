@@ -137,12 +137,21 @@ export class FileUploadService extends Context.Service<FileUploadService>()(
 				Effect.succeed(uploadRoot),
 			);
 
+			const existsUploadPath = Effect.fn("FileUploadService.existsUploadPath")(
+				(...segments: Array<string>) =>
+					resolveUploadPath(...segments).pipe(
+						Effect.flatMap((filePath) => fs.exists(filePath)),
+						Effect.catch(() => Effect.succeed(false)),
+					),
+			);
+
 			return {
 				ensureDirectory,
-				saveFile,
-				resolveUploadPath,
-				uploadChunk,
+				existsUploadPath,
 				getUploadRoot,
+				resolveUploadPath,
+				saveFile,
+				uploadChunk,
 			};
 		}),
 	},

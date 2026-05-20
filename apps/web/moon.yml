@@ -6,16 +6,23 @@ tasks:
     command: bun run dev
     options:
       cache: false
+      envFile: /.env
       persistent: true
 
   build:
     command: bun run build
+    options:
+      envFile: /.env
 
   test:
     command: bun run test
+    options:
+      envFile: /.env
 
   check:
     command: bun run check
+    options:
+      envFile: /.env
 
   lint:
     command: bun run lint
@@ -33,16 +40,19 @@ tasks:
     command: bun run db:generate
     options:
       cache: false
+      envFile: /.env
 
   db-migrate:
     command: bun run db:migrate
     options:
       cache: false
+      envFile: /.env
 
   db-studio:
     command: bun run db:studio
     options:
       cache: false
+      envFile: /.env
       persistent: true
 
   db-check-destructive:

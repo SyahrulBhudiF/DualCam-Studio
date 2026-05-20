@@ -97,31 +97,37 @@ function callGrpc<T>(
 			return;
 		}
 
-		fn(body, new grpc.Metadata(), callOptions(timeoutMs), (error, response) => {
-			if (!error) {
-				resume(Effect.succeed(response as T));
-				return;
-			}
-			if (isTransient(error.code)) {
+		fn.call(
+			client,
+			body,
+			new grpc.Metadata(),
+			callOptions(timeoutMs),
+			(error, response) => {
+				if (!error) {
+					resume(Effect.succeed(response as T));
+					return;
+				}
+				if (isTransient(error.code)) {
+					resume(
+						Effect.fail(
+							new PredictionUnavailableError({
+								message: `gRPC unavailable: ${error.message}`,
+								cause: error,
+							}),
+						),
+					);
+					return;
+				}
 				resume(
 					Effect.fail(
-						new PredictionUnavailableError({
-							message: `gRPC unavailable: ${error.message}`,
+						new PredictionRequestError({
+							message: `gRPC request failed: ${error.message}`,
 							cause: error,
 						}),
 					),
 				);
-				return;
-			}
-			resume(
-				Effect.fail(
-					new PredictionRequestError({
-						message: `gRPC request failed: ${error.message}`,
-						cause: error,
-					}),
-				),
-			);
-		});
+			},
+		);
 	});
 }
 

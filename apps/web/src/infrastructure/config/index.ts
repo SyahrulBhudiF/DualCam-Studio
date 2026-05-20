@@ -1,6 +1,5 @@
-import { Config, ConfigProvider } from "effect";
-
-const envProvider = ConfigProvider.fromEnv();
+import { Config } from "effect";
+import { envProvider } from "./provider";
 
 export const AuthConfig = Config.all({
 	saltRounds: Config.number("BCRYPT_SALT_ROUNDS").pipe(Config.withDefault(10)),
@@ -39,9 +38,7 @@ export const RateLimitConfig = Config.all({
 });
 
 export const StorageConfig = Config.all({
-	uploadRoot: Config.string("UPLOAD_ROOT").pipe(
-		Config.withDefault("video_uploads"),
-	),
+	uploadRoot: Config.string("UPLOAD_ROOT"),
 });
 
 export const PredictionConfig = Config.all({

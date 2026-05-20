@@ -1,4 +1,4 @@
-import type { Effect } from "effect";
+import { Effect } from "effect";
 import { GrpcClientLayer } from "./client";
 import type {
 	PredictionRequestError,
@@ -17,10 +17,19 @@ export const PredictionGrpc = {
 		PredictionHealth,
 		PredictionGrpcError,
 		GrpcClientLayer
-	> => GrpcClientLayer.Service.call<PredictionHealth>("HealthCheck", {}),
+	> =>
+		GrpcClientLayer.asEffect().pipe(
+			Effect.flatMap((client) =>
+				client.call<PredictionHealth>("healthCheck", {}),
+			),
+		),
 
 	predictQuiz: (
 		request: PredictQuizRequest,
 	): Effect.Effect<PredictQuizResponse, PredictionGrpcError, GrpcClientLayer> =>
-		GrpcClientLayer.Service.call<PredictQuizResponse>("PredictQuiz", request),
+		GrpcClientLayer.asEffect().pipe(
+			Effect.flatMap((client) =>
+				client.call<PredictQuizResponse>("predictQuiz", request),
+			),
+		),
 };

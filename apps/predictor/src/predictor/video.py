@@ -1,9 +1,16 @@
+import os
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
+os.environ.setdefault("OPENCV_FFMPEG_LOGLEVEL", "-8")
+os.environ.setdefault("OPENCV_LOG_LEVEL", "SILENT")
+
 import cv2  # type: ignore[reportMissingTypeStubs]
+
+if hasattr(cv2, "setLogLevel"):
+    cv2.setLogLevel(0)
 import dlib as dlib_raw  # type: ignore[reportMissingTypeStubs]
 import numpy as np
 

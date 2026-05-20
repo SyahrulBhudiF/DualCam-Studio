@@ -32,18 +32,27 @@ export function PredictionResultsCard({
 	const resultsQuery = useQuery({
 		queryFn: () => getPredictionResults({ data: { responseId } }),
 		queryKey: QUERY_KEY(responseId),
+		refetchInterval: (query) =>
+			(query.state.data ?? []).some(
+				(row) => row.status === "pending" || row.status === "running",
+			)
+				? 3000
+				: false,
 	});
 	const runMutation = useMutation({
 		mutationFn: () => runPrediction({ data: { responseId } }),
-		onSuccess: () => {
+		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: QUERY_KEY(responseId) });
 			queryClient.invalidateQueries({ queryKey: ["admin", "responses"] });
 		},
 	});
 
-	const rows = resultsQuery.data ?? [];
+	const rows = (resultsQuery.data ?? []).filter(isVisiblePredictionRow);
 	const hasRows = rows.length > 0;
-	const isBusy = resultsQuery.isLoading || runMutation.isPending;
+	const isRunning = rows.some(
+		(row) => row.status === "pending" || row.status === "running",
+	);
+	const isBusy = resultsQuery.isLoading || runMutation.isPending || isRunning;
 	const buttonLabel = hasRows ? "Run ulang prediksi" : "Jalankan prediksi";
 
 	return (
@@ -94,7 +103,7 @@ export function PredictionResultsCard({
 									<TableHead>Video</TableHead>
 									<TableHead>Status</TableHead>
 									<TableHead>Label</TableHead>
-									<TableHead>Probability</TableHead>
+									<TableHead>Confidence</TableHead>
 									<TableHead>Error</TableHead>
 								</TableRow>
 							</TableHeader>
@@ -112,7 +121,10 @@ export function PredictionResultsCard({
 										</TableCell>
 										<TableCell>{formatLabel(row.label)}</TableCell>
 										<TableCell>
-											{formatProbability(row.probabilityAnxietyTinggi)}
+											{formatConfidence(
+												row.probabilityAnxietyTinggi,
+												row.label,
+											)}
 										</TableCell>
 										<TableCell className="max-w-72 truncate text-muted-foreground">
 											{row.errorMessage ?? "-"}
@@ -133,6 +145,16 @@ export function PredictionResultsCard({
 	);
 }
 
+type PredictionRow = Awaited<ReturnType<typeof getPredictionResults>>[number];
+
+function isVisiblePredictionRow(row: PredictionRow) {
+	return !(
+		row.videoKind === "secondary" &&
+		row.status === "failed" &&
+		row.errorMessage?.startsWith("video file not found:")
+	);
+}
+
 function StatusBadge({ status }: { status: string }) {
 	const variant =
 		status === "completed"
@@ -148,9 +170,13 @@ function formatLabel(label: string | null) {
 	return label.replace(/_/g, " ");
 }
 
-function formatProbability(probability: number | string | null) {
-	if (probability === null) return "-";
-	const numeric = Number(probability);
+function formatConfidence(
+	probabilityHigh: number | string | null,
+	label: string | null,
+) {
+	if (probabilityHigh === null || !label) return "-";
+	const numeric = Number(probabilityHigh);
 	if (!Number.isFinite(numeric)) return "-";
-	return `${(numeric * 100).toFixed(2)}%`;
+	const confidence = label.includes("tinggi") ? numeric : 1 - numeric;
+	return `${(confidence * 100).toFixed(2)}%`;
 }
