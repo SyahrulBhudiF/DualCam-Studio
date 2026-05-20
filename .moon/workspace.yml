@@ -1,0 +1,7 @@
+projects:
+  web: apps/web
+  predictor: apps/predictor
+
+vcs:
+  defaultBranch: main
+  provider: other

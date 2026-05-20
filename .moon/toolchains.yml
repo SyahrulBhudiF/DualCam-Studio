@@ -1,0 +1,5 @@
+node:
+  packageManager: bun
+
+# Python is orchestrated through explicit uv commands in project tasks.
+# Do not rely on native Moon uv support.
