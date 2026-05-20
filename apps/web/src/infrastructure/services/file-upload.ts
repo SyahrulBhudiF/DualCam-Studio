@@ -1,5 +1,6 @@
 import * as path from "node:path";
 import { Context, Effect, FileSystem, Layer } from "effect";
+import { StorageConfig } from "../config";
 import { FileError } from "../errors/file";
 
 export class FileUploadService extends Context.Service<FileUploadService>()(
@@ -7,7 +8,8 @@ export class FileUploadService extends Context.Service<FileUploadService>()(
 	{
 		make: Effect.gen(function* () {
 			const fs = yield* FileSystem.FileSystem;
-			const uploadRoot = path.join(process.cwd(), "video_uploads");
+			const config = yield* StorageConfig;
+			const uploadRoot = path.resolve(config.uploadRoot);
 
 			const ensureDirectory = Effect.fn("FileUploadService.ensureDirectory")(
 				function* (dirPath: string) {
