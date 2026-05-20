@@ -4,6 +4,7 @@ import { AnswerService } from "./answer";
 import { AuthService } from "./auth";
 import { DashboardService } from "./dashboard";
 import { FileUploadService } from "./file-upload";
+import { PredictionService } from "./prediction";
 import { ProfileService } from "./profile";
 import { QuestionService } from "./question";
 import { QuestionnaireService } from "./questionnaire";
@@ -14,6 +15,7 @@ export { AnswerService } from "./answer";
 export { AuthService } from "./auth";
 export { DashboardService } from "./dashboard";
 export { FileUploadService } from "./file-upload";
+export { PredictionService } from "./prediction";
 export { ProfileService } from "./profile";
 export { QuestionService } from "./question";
 export { QuestionnaireService } from "./questionnaire";
@@ -28,6 +30,7 @@ export const AllServicesLive = Layer.mergeAll(
 	ResponseService.layer,
 	DashboardService.layer,
 	FileUploadService.layer.pipe(Layer.provide(NodeFileSystem.layer)),
+	PredictionService.layer,
 	AuthService.layer,
 	RateLimitService.layer,
 );

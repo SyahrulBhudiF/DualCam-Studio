@@ -38,6 +38,14 @@ export const RateLimitConfig = Config.all({
 
 export const StorageConfig = Config.all({
 	uploadRoot: Config.string("UPLOAD_ROOT").pipe(
-		Config.withDefault("/home/ryuko/skripsi/QUIS/video_uploads"),
+		Config.withDefault("video_uploads"),
+	),
+});
+
+export const PredictionConfig = Config.all({
+	host: Config.string("PREDICTOR_HOST").pipe(Config.withDefault("127.0.0.1")),
+	port: Config.number("PREDICTOR_PORT").pipe(Config.withDefault(50051)),
+	timeoutMs: Config.number("PREDICTOR_TIMEOUT_MS").pipe(
+		Config.withDefault(120_000),
 	),
 });

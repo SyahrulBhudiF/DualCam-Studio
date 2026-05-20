@@ -1,4 +1,9 @@
 export { DatabaseError } from "./database";
+export {
+	PredictionConfigError,
+	PredictionRequestError,
+	PredictionUnavailableError,
+} from "./prediction";
 
 export {
 	AnswerNotFoundError,
@@ -27,11 +32,19 @@ import type {
 	ResponseNotFoundError,
 	UserNotFoundError,
 } from "./not-found";
+import type {
+	PredictionConfigError,
+	PredictionRequestError,
+	PredictionUnavailableError,
+} from "./prediction";
 import type { ParseError, ValidationError } from "./validation";
 
 type AppError =
 	| DatabaseError
 	| FileError
+	| PredictionConfigError
+	| PredictionRequestError
+	| PredictionUnavailableError
 	| UnauthorizedError
 	| InvalidCredentialsError
 	| SessionExpiredError
