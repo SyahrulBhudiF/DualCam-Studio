@@ -13,26 +13,7 @@ import type {
 	SegmentedVideoPath,
 	VideoData,
 } from "./responses.types";
-
-/**
- * Convert a video path from storage format to API URL
- * e.g. "/video_uploads/folder/file.webm" -> "/api/video/folder/file.webm"
- * or "video_uploads/folder/file.webm" -> "/api/video/folder/file.webm"
- */
-function toVideoApiUrl(videoPath: string | null): string | null {
-	if (!videoPath || videoPath === "null") return null;
-
-	// Remove leading slash and "video_uploads/" prefix if present
-	let cleanPath = videoPath;
-	if (cleanPath.startsWith("/")) {
-		cleanPath = cleanPath.slice(1);
-	}
-	if (cleanPath.startsWith("video_uploads/")) {
-		cleanPath = cleanPath.slice("video_uploads/".length);
-	}
-
-	return `/api/video/${cleanPath}`;
-}
+import { createVideoManifest, toVideoApiUrl } from "./video-manifest";
 
 /**
  * Build fallback video paths for segmented mode when video_segment_path is null
@@ -132,6 +113,7 @@ function parseVideoData(
 					questionNumber: detail.orderNumber ?? index + 1,
 					main,
 					secondary,
+					paths: [main, secondary].filter((path) => path !== null),
 				};
 			});
 
@@ -160,6 +142,7 @@ function parseVideoData(
 					questionNumber,
 					main: paths.main,
 					secondary: paths.secondary,
+					paths: [paths.main, paths.secondary].filter((path) => path !== null),
 				};
 			});
 
@@ -192,6 +175,7 @@ function parseVideoData(
 }
 
 export function ResponseDetail({ response }: ResponseDetailProps) {
+	const videoManifest = useMemo(() => createVideoManifest(response), [response]);
 	const videoData = useMemo(
 		() =>
 			parseVideoData(
@@ -244,6 +228,7 @@ export function ResponseDetail({ response }: ResponseDetailProps) {
 				details={response.details}
 				totalScore={response.totalScore}
 				videoData={videoData}
+				videoManifest={videoManifest}
 			/>
 		</Main>
 	);
