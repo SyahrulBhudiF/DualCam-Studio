@@ -10,9 +10,9 @@ import {
 import {
 	FinalSubmitSchema,
 	UploadChunkSchema,
-} from "@/infrastructure/schemas/questionnaire";
+} from "@/infrastructure/schemas";
 import { verifyCsrfOrigin } from "@/utils/csrf";
-import { inputValidator } from "../infrastructure/schemas/validator";
+import { inputValidator } from "@/infrastructure/schemas";
 
 export const uploadVideoChunk = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(UploadChunkSchema))

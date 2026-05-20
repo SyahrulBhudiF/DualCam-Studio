@@ -1,5 +1,6 @@
 import {
 	boolean,
+	doublePrecision,
 	index,
 	integer,
 	jsonb,
@@ -104,6 +105,45 @@ export const responseDetails = pgTable(
 		index("idx_response_details_response_id").on(table.responseId),
 		index("idx_response_details_question_id").on(table.questionId),
 		index("idx_response_details_answer_id").on(table.answerId),
+	],
+);
+
+export const predictionResults = pgTable(
+	"prediction_results",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		responseId: uuid("response_id")
+			.references(() => responses.id, { onDelete: "cascade" })
+			.notNull(),
+		responseDetailId: uuid("response_detail_id").references(
+			() => responseDetails.id,
+			{ onDelete: "cascade" },
+		),
+		questionId: text("question_id").notNull(),
+		videoKind: text("video_kind").notNull(),
+		videoPath: text("video_path").notNull(),
+		videoFormat: text("video_format"),
+		videoMimeType: text("video_mime_type"),
+		modelExpName: text("model_exp_name"),
+		modelSeed: integer("model_seed"),
+		modelVersion: text("model_version"),
+		label: text("label"),
+		probabilityAnxietyTinggi: doublePrecision("probability_anxiety_tinggi"),
+		threshold: doublePrecision("threshold"),
+		aggregation: text("aggregation"),
+		frameCount: integer("frame_count"),
+		durationSeconds: doublePrecision("duration_seconds"),
+		status: text("status").default("pending").notNull(),
+		errorMessage: text("error_message"),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at").defaultNow().notNull(),
+	},
+	(table) => [
+		index("idx_prediction_results_response_id").on(table.responseId),
+		index("idx_prediction_results_response_detail_id").on(
+			table.responseDetailId,
+		),
+		index("idx_prediction_results_status").on(table.status),
 	],
 );
 

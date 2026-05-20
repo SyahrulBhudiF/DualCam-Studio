@@ -1,5 +1,3 @@
-// Config
-
 // Runtime
 export { runEffect, runEffectExit } from "./runtime";
 export {
@@ -7,7 +5,7 @@ export {
 	AuthService,
 	DashboardService,
 	FileUploadService,
-	PredictionService,
+	PredictionResultService,
 	ProfileService,
 	QuestionnaireService,
 	QuestionService,

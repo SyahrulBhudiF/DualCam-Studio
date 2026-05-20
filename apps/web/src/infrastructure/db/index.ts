@@ -1,5 +1,6 @@
 export {
 	answers,
+	predictionResults,
 	profiles,
 	questionnaires,
 	questions,
@@ -13,6 +14,7 @@ export {
 export type {
 	Answer,
 	NewAnswer,
+	NewPredictionResult,
 	NewProfile,
 	NewQuestion,
 	NewQuestionnaire,
@@ -20,6 +22,7 @@ export type {
 	NewResponseDetail,
 	NewSession,
 	NewUser,
+	PredictionResult,
 	Profile,
 	Question,
 	Questionnaire,
