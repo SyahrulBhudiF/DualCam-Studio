@@ -5,6 +5,11 @@ import { toast } from "sonner";
 import { getAllResponsesWithDetails } from "@/apis/admin/responses";
 import { Button } from "@/components/ui/Button";
 import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/Tooltip";
+import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
@@ -344,12 +349,17 @@ export function ExportResponsesButton({ responses }: ExportListProps) {
 export function ExportResponseDetailButton({ response }: ExportDetailProps) {
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button variant="outline" className="cursor-pointer">
-					<Download className="size-4 mr-2" />
-					Export
-				</Button>
-			</DropdownMenuTrigger>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<DropdownMenuTrigger asChild>
+						<Button variant="outline" className="cursor-pointer">
+							<Download className="size-4 mr-2" />
+							Export
+						</Button>
+					</DropdownMenuTrigger>
+				</TooltipTrigger>
+				<TooltipContent>Export this response</TooltipContent>
+			</Tooltip>
 			<DropdownMenuContent align="end">
 				<DropdownMenuItem
 					onClick={() => exportResponseDetailToExcel(response)}

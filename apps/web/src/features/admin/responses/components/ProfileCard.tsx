@@ -1,5 +1,5 @@
+import { format } from "date-fns";
 import { Calendar, GraduationCap, Hash, Mail, User, Users } from "lucide-react";
-import { ClientDate } from "@/components/ClientDate";
 import { Badge } from "@/components/ui/Badge";
 import {
 	Card,
@@ -49,7 +49,7 @@ export function ProfileCard({
 						<CardDescription>Respondent Profile</CardDescription>
 					</div>
 					<Badge variant="outline" className="text-xs w-fit shrink-0">
-						<ClientDate date={createdAt} formatString="dd MMM yyyy HH:mm" />
+						{format(new Date(createdAt), "dd MMM yyyy HH:mm")}
 					</Badge>
 				</div>
 			</CardHeader>

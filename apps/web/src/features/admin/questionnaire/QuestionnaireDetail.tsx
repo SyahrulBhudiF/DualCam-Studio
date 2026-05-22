@@ -1,11 +1,11 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { format } from "date-fns";
 import { ArrowLeft, Eye, Save, Video } from "lucide-react";
 import { toast } from "sonner";
 import { updateQuestionnaire } from "@/apis/admin/questionnaires";
 import { getResponsesByQuestionnaireId } from "@/apis/admin/responses";
-import { ClientDate } from "@/components/ClientDate";
 import { Main } from "@/components/layout/Main";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -256,10 +256,7 @@ export function QuestionnaireDetail({
 												)}
 											</TableCell>
 											<TableCell className="text-muted-foreground text-sm">
-												<ClientDate
-													date={response.createdAt}
-													formatString="dd MMM yyyy HH:mm"
-												/>
+												{format(new Date(response.createdAt), "dd MMM yyyy HH:mm")}
 											</TableCell>
 											<TableCell>
 												<Link

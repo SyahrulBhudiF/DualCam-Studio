@@ -41,11 +41,3 @@ export class ResponseNotFoundError extends Schema.TaggedErrorClass<ResponseNotFo
 	},
 ) {}
 
-export class UserNotFoundError extends Schema.TaggedErrorClass<UserNotFoundError>()(
-	"UserNotFoundError",
-	{
-		id: Schema.optional(Schema.String),
-		email: Schema.optional(Schema.String),
-		message: Schema.optional(Schema.String),
-	},
-) {}

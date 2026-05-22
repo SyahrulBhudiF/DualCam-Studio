@@ -1,4 +1,4 @@
-import { createContext, use, useEffect, useState } from "react";
+import { createContext, use, useState } from "react";
 import { getCookie, setCookie } from "@/libs/cookie";
 
 export type Collapsible = "offcanvas" | "icon" | "none";
@@ -32,19 +32,14 @@ type LayoutProviderProps = {
 };
 
 export function LayoutProvider({ children }: LayoutProviderProps) {
-	const [collapsible, _setCollapsible] =
-		useState<Collapsible>(DEFAULT_COLLAPSIBLE);
-	const [variant, _setVariant] = useState<Variant>(DEFAULT_VARIANT);
-
-	useEffect(() => {
-		_setCollapsible(
+	const [collapsible, _setCollapsible] = useState<Collapsible>(
+		() =>
 			(getCookie(LAYOUT_COLLAPSIBLE_COOKIE_NAME) as Collapsible) ||
-				DEFAULT_COLLAPSIBLE,
-		);
-		_setVariant(
-			(getCookie(LAYOUT_VARIANT_COOKIE_NAME) as Variant) || DEFAULT_VARIANT,
-		);
-	}, []);
+			DEFAULT_COLLAPSIBLE,
+	);
+	const [variant, _setVariant] = useState<Variant>(
+		() => (getCookie(LAYOUT_VARIANT_COOKIE_NAME) as Variant) || DEFAULT_VARIANT,
+	);
 
 	const setCollapsible = (newCollapsible: Collapsible) => {
 		_setCollapsible(newCollapsible);

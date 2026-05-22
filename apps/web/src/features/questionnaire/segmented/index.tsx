@@ -3,26 +3,16 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLoaderData, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-	submitSegmentedResponse,
-	uploadVideoChunk,
-} from "@/apis/segmented-upload";
+import { submitSegmentedResponse } from "@/apis/segmented-upload";
 import { CameraControlPanel } from "@/components/CameraControlPanel";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { useCameraSetup } from "@/libs/hooks/use-camera-setup";
+import { useUploadQueue } from "@/libs/hooks/use-upload-queue";
 import { useQuestionnaireStore } from "@/libs/store/QuestionnaireStore";
 import { useUserStore } from "@/libs/store/UserStore";
-
-const blobToBase64 = (blob: Blob): Promise<string> => {
-	return new Promise((resolve) => {
-		const reader = new FileReader();
-		reader.onloadend = () => resolve(reader.result as string);
-		reader.readAsDataURL(blob);
-	});
-};
 
 interface Answer {
 	id: string;
@@ -46,7 +36,6 @@ export function SegmentedPage() {
 		deviceIdMain,
 		setDeviceIdMain,
 		deviceIdSec,
-		setDeviceIdSec,
 		videoRefMain,
 		videoRefSec,
 		realSenseRef,
@@ -56,13 +45,7 @@ export function SegmentedPage() {
 		startRecording,
 		stopRecording,
 	} = useCameraSetup();
-
-	const uploadMutation = useMutation({
-		mutationFn: uploadVideoChunk,
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["video-uploads"] });
-		},
-	});
+	const uploadQueue = useUploadQueue({ maxJobs: questions.length });
 
 	const submitMutation = useMutation({
 		mutationFn: submitSegmentedResponse,
@@ -95,25 +78,17 @@ export function SegmentedPage() {
 
 			setIsProcessing(true);
 			const currentQ = questions[currentIndex];
-
-			realSenseRef.current?.stopRecording();
 			const { blobMain } = await stopRecording();
-
-			const base64Main = blobMain.size > 0 ? await blobToBase64(blobMain) : "";
-
 			const subFolder = `q${currentIndex + 1}`;
 			const mainFileName = `${subFolder}/${user?.name ?? "Anon"}_${currentIndex + 1}_${currentQ.id}_main.webm`;
 
-			let uploadPath = "";
-			if (base64Main) {
-				const uploadRes = await uploadMutation.mutateAsync({
-					data: {
-						folderName: store.folderName,
-						fileName: mainFileName,
-						fileBase64: base64Main,
-					},
+			if (blobMain.size > 0) {
+				await uploadQueue.enqueue({
+					questionId: currentQ.id,
+					folderName: store.folderName,
+					fileName: mainFileName,
+					blob: blobMain,
 				});
-				uploadPath = uploadRes.path;
 			}
 
 			const secFileName = `${subFolder}/answer_${currentIndex + 1}_${currentQ.id}_sec.avi`;
@@ -121,7 +96,7 @@ export function SegmentedPage() {
 			store.addAnswer(currentQ.id, {
 				questionId: currentQ.id,
 				answerId: value.answerId,
-				videoMainPath: uploadPath,
+				videoMainPath: "",
 				videoSecPath: `/video_uploads/${store.folderName}/${secFileName}`,
 			});
 
@@ -130,22 +105,37 @@ export function SegmentedPage() {
 			if (currentIndex < questions.length - 1) {
 				setCurrentIndex((prev) => prev + 1);
 				setIsProcessing(false);
-			} else {
-				const finalData = {
-					userEmail: user?.email || "anon@example.com",
-					userName: user?.name || "Anon",
-					userClass: user?.class || "-",
-					userGender: user?.gender || "-",
-					userAge: user?.age || 0,
-					userNim: user?.nim || "-",
-					userSemester: user?.semester || "-",
-					questionnaireId: questionnaire.id,
-					folderName: store.folderName,
-					answers: Object.values(useQuestionnaireStore.getState().answers),
-					predictionOptIn: useQuestionnaireStore.getState().predictionOptIn,
-				};
-				await submitMutation.mutateAsync({ data: finalData });
+				return;
 			}
+
+			const uploadState = await uploadQueue.waitForIdle();
+			if (Object.keys(uploadState.failed).length > 0) {
+				setIsProcessing(false);
+				return;
+			}
+
+			const answers = Object.values(
+				useQuestionnaireStore.getState().answers,
+			).map((answer) => ({
+				...answer,
+				videoMainPath:
+					uploadState.completed[answer.questionId] ?? answer.videoMainPath,
+			}));
+
+			const finalData = {
+				userEmail: user?.email || "anon@example.com",
+				userName: user?.name || "Anon",
+				userClass: user?.class || "-",
+				userGender: user?.gender || "-",
+				userAge: user?.age || 0,
+				userNim: user?.nim || "-",
+				userSemester: user?.semester || "-",
+				questionnaireId: questionnaire.id,
+				folderName: store.folderName,
+				answers,
+				predictionOptIn: useQuestionnaireStore.getState().predictionOptIn,
+			};
+			await submitMutation.mutateAsync({ data: finalData });
 		},
 	});
 
@@ -186,9 +176,6 @@ export function SegmentedPage() {
 
 	return (
 		<div className="min-h-screen bg-muted/40 p-4 pb-48">
-			{/* Loading overlay — sits on top while camera isn't ready yet.
-			    The CameraControlPanel below is always mounted so its video
-			    element never gets replaced and srcObject assignment persists. */}
 			{!allReady && (
 				<div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-muted/80 gap-4">
 					<div className="animate-spin">
@@ -207,13 +194,7 @@ export function SegmentedPage() {
 			</div>
 
 			<div className="max-w-3xl mx-auto mb-8 space-y-4">
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						void form.handleSubmit();
-					}}
-				>
+				<form action={() => void form.handleSubmit()}>
 					{currentQ && (
 						<Card>
 							<CardHeader>
@@ -252,7 +233,9 @@ export function SegmentedPage() {
 								disabled={!answerId || !!isSubmitting || isProcessing}
 							>
 								{isSubmitting || isProcessing
-									? "Saving & Uploading…"
+									? isLastQuestion
+										? "Finalizing uploads…"
+										: "Saving…"
 									: isLastQuestion
 										? "Finish"
 										: "Next Question"}
@@ -260,6 +243,16 @@ export function SegmentedPage() {
 						)}
 					</form.Subscribe>
 				</form>
+				{uploadQueue.isUploading && (
+					<p className="mt-2 text-center text-sm text-muted-foreground">
+						Uploading previous answer…
+					</p>
+				)}
+				{Object.keys(uploadQueue.failed).length > 0 && (
+					<p className="mt-2 text-center text-sm text-destructive">
+						Upload failed. Please retry submit.
+					</p>
+				)}
 			</div>
 
 			<CameraControlPanel
@@ -267,12 +260,12 @@ export function SegmentedPage() {
 				deviceIdMain={deviceIdMain}
 				setDeviceIdMain={setDeviceIdMain}
 				deviceIdSec={deviceIdSec}
-				setDeviceIdSec={setDeviceIdSec}
 				videoRefMain={videoRefMain}
 				videoRefSec={videoRefSec}
 				realSenseRef={realSenseRef}
 				isRecording={isRecording}
 				onSecReady={() => setSecReady(true)}
+				secondarySelect={false}
 			/>
 		</div>
 	);

@@ -57,8 +57,8 @@ def test_runtime_predict_video_with_fake_runtime(tmp_path: Path) -> None:
 
     old_extract = mod.extract_video_file
     old_predict = mod.predict_events
-    mod.extract_video_file = fake_extract
-    mod.predict_events = fake_predict
+    mod.extract_video_file = fake_extract  # type: ignore[method-assign]
+    mod.predict_events = fake_predict  # type: ignore[method-assign]
     try:
         rt = mod.PredictionRuntime(
             bundle,  # type: ignore[arg-type]
@@ -70,8 +70,8 @@ def test_runtime_predict_video_with_fake_runtime(tmp_path: Path) -> None:
             rt.predict_video(VideoRef("r1", "p1", "q1", "segmented", tmp_path / "a.webm"))
         )
     finally:
-        mod.extract_video_file = old_extract
-        mod.predict_events = old_predict
+        mod.extract_video_file = old_extract  # type: ignore[method-assign]
+        mod.predict_events = old_predict  # type: ignore[method-assign]
 
     assert result.pipeline is pipeline
     assert result.prediction.probability_anxiety_tinggi == 0.25

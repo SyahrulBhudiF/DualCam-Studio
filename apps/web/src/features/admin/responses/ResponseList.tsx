@@ -19,9 +19,11 @@ import {
 } from "@/components/data-table";
 import { Main } from "@/components/layout/Main";
 import { Button } from "@/components/ui/Button";
+import { useResponseFilterStore } from "@/libs/store/ResponseFilterStore";
 import { getResponseColumns } from "./components/Columns";
 import { ExportResponsesButton } from "./components/ResponseExport";
 import { ResponseFilters } from "./components/ResponseFilters";
+import { filterResponses } from "./filter-responses";
 import type { FilterOptions, ResponseListItem } from "./responses.types";
 
 type ResponseListProps = {
@@ -38,9 +40,6 @@ export function ResponseList({
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
 	const [globalFilter, setGlobalFilter] = useState<string>("");
-	const [filteredData, setFilteredData] = useState<ResponseListItem[] | null>(
-		null,
-	);
 
 	const queryClient = useQueryClient();
 
@@ -58,7 +57,11 @@ export function ResponseList({
 
 	const columns = useMemo(() => getResponseColumns(), []);
 
-	const tableData = filteredData ?? data ?? [];
+	const filters = useResponseFilterStore();
+	const tableData = useMemo(
+		() => filterResponses(data ?? [], filters),
+		[data, filters],
+	);
 
 	const table = useReactTable({
 		data: tableData,
@@ -73,15 +76,7 @@ export function ResponseList({
 		getPaginationRowModel: getPaginationRowModel(),
 	});
 
-	const handleFilterApply = (filtered: ResponseListItem[]) => {
-		setFilteredData(filtered);
-		setRowSelection({});
-	};
-
-	const handleFilterClear = () => {
-		setFilteredData(null);
-		setRowSelection({});
-	};
+	const handleFilterClear = () => setRowSelection({});
 
 	return (
 		<Main className="space-y-4">
@@ -97,7 +92,6 @@ export function ResponseList({
 
 			<ResponseFilters
 				filterOptions={filterOptions}
-				onFilterApply={handleFilterApply}
 				onFilterClear={handleFilterClear}
 			/>
 

@@ -8,7 +8,7 @@ from predictor.model import Bundle
 
 Array = Any
 Torch = cast(Any, torch)
-Aggregation = Literal["mean", "median", "max"]
+Aggregation = Literal["mean", "median", "max", "p90"]
 LABEL_LOW = "anxiety_rendah"
 LABEL_HIGH = "anxiety_tinggi"
 
@@ -42,20 +42,24 @@ def predict_events(bundle: Bundle, matrix: Array, threshold: float) -> list[Even
     if arr.shape[0] == 0:
         return []
 
-    with Torch.inference_mode():
-        x = Torch.as_tensor(arr, dtype=Torch.float32, device=bundle.device)
-        logits = bundle.model(
-            x_={"num": x},
-            y=None,
-            candidate_x_={"num": bundle.x_train},
-            candidate_y=bundle.y_train,
-            context_size=bundle.context_size,
-            is_train=False,
-        )
-        if logits.shape[-1] == 1:
-            probs = Torch.sigmoid(logits).reshape(-1).detach().cpu().numpy()
-        else:
-            probs = Torch.softmax(logits, dim=-1)[:, 1].detach().cpu().numpy()
+    try:
+        with Torch.inference_mode():
+            x = Torch.as_tensor(arr, dtype=Torch.float32, device=bundle.device)
+            logits = bundle.model(
+                x_={"num": x},
+                y=None,
+                candidate_x_={"num": bundle.x_train},
+                candidate_y=bundle.y_train,
+                context_size=bundle.context_size,
+                is_train=False,
+            )
+            if logits.shape[-1] == 1:
+                probs = Torch.sigmoid(logits).reshape(-1).detach().cpu().tolist()
+            else:
+                probs = Torch.softmax(logits, dim=-1)[:, 1].detach().cpu().tolist()
+    finally:
+        if Torch.cuda.is_available():
+            Torch.cuda.empty_cache()
 
     return [event_prediction(float(prob), threshold) for prob in probs]
 
@@ -74,6 +78,8 @@ def aggregate_predictions(
         prob = float(np.median(values))
     elif aggregation == "max":
         prob = float(values.max())
+    elif aggregation == "p90":
+        prob = float(np.percentile(values, 90))
     else:
         raise InferenceError(f"unsupported aggregation: {aggregation}")
     return AggregatePrediction(

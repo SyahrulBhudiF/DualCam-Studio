@@ -21,6 +21,11 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/Sheet";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/Tooltip";
 import { useDirection } from "@/libs/context/direction-provider";
 import { type Collapsible, useLayout } from "@/libs/context/layout-provider";
 import { useTheme } from "@/libs/context/theme-provider";
@@ -42,17 +47,22 @@ export function ConfigDrawer() {
 
 	return (
 		<Sheet>
-			<SheetTrigger asChild>
-				<Button
-					size="icon"
-					variant="ghost"
-					aria-label="Open theme settings"
-					aria-describedby="config-drawer-description"
-					className="rounded-full"
-				>
-					<Settings aria-hidden="true" />
-				</Button>
-			</SheetTrigger>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<SheetTrigger asChild>
+						<Button
+							size="icon"
+							variant="ghost"
+							aria-label="Open theme settings"
+							aria-describedby="config-drawer-description"
+							className="rounded-full"
+						>
+							<Settings aria-hidden="true" />
+						</Button>
+					</SheetTrigger>
+				</TooltipTrigger>
+				<TooltipContent>Open settings</TooltipContent>
+			</Tooltip>
 			<SheetContent className="flex flex-col">
 				<SheetHeader className="pb-0 text-start">
 					<SheetTitle>Theme Settings</SheetTitle>
@@ -67,13 +77,18 @@ export function ConfigDrawer() {
 					<DirConfig />
 				</div>
 				<SheetFooter className="gap-2">
-					<Button
-						variant="destructive"
-						onClick={handleReset}
-						aria-label="Reset all settings to default values"
-					>
-						Reset
-					</Button>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								variant="destructive"
+								onClick={handleReset}
+								aria-label="Reset all settings to default values"
+							>
+								Reset
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>Reset all settings</TooltipContent>
+					</Tooltip>
 				</SheetFooter>
 			</SheetContent>
 		</Sheet>
@@ -100,14 +115,19 @@ function SectionTitle({
 		>
 			{title}
 			{showReset && onReset && (
-				<Button
-					size="icon"
-					variant="secondary"
-					className="size-4 rounded-full"
-					onClick={onReset}
-				>
-					<RotateCcw className="size-3" />
-				</Button>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							size="icon"
+							variant="secondary"
+							className="size-4 rounded-full"
+							onClick={onReset}
+						>
+							<RotateCcw className="size-3" />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>Reset {title.toLowerCase()}</TooltipContent>
+				</Tooltip>
 			)}
 		</div>
 	);
@@ -137,9 +157,7 @@ function RadioGroupItem({
 					"group-data-[state=checked]:ring-primary group-data-[state=checked]:shadow-2xl",
 					"group-focus-visible:ring-2",
 				)}
-				role="img"
-				aria-hidden="false"
-				aria-label={`${item.label} option preview`}
+				aria-hidden="true"
 			>
 				<CircleCheck
 					className={cn(

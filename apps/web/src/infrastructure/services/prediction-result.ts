@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { predictionResults } from "../db/schema";
+import { predictionResults, questions, responseDetails } from "../db/schema";
 import type { NewPredictionResult, PredictionResult } from "../db/types";
 import { DatabaseError } from "../errors/database";
 import { PredictionGrpc } from "../grpc/prediction";
@@ -29,8 +29,18 @@ export class PredictionResultService extends Context.Service<PredictionResultSer
 				"PredictionResultService.getByResponseId",
 			)(function* (responseId: string) {
 				const rows = yield* db
-					.select()
+					.select({
+						predictionResult: predictionResults,
+						score: responseDetails.score,
+						questionText: questions.questionText,
+						orderNumber: questions.orderNumber,
+					})
 					.from(predictionResults)
+					.leftJoin(
+						responseDetails,
+						eq(predictionResults.responseDetailId, responseDetails.id),
+					)
+					.leftJoin(questions, eq(responseDetails.questionId, questions.id))
 					.where(eq(predictionResults.responseId, responseId))
 					.pipe(
 						Effect.mapError(
@@ -41,7 +51,12 @@ export class PredictionResultService extends Context.Service<PredictionResultSer
 								}),
 						),
 					);
-				return rows as PredictionResult[];
+				return rows.map((row) => ({
+					...(row.predictionResult as PredictionResult),
+					orderNumber: row.orderNumber,
+					questionText: row.questionText,
+					score: row.score,
+				}));
 			});
 
 			const deleteByResponseId = Effect.fn(
@@ -157,8 +172,7 @@ export class PredictionResultService extends Context.Service<PredictionResultSer
 						.where(
 							and(
 								eq(predictionResults.responseId, response.responseId),
-								eq(predictionResults.questionId, result.questionId),
-								eq(predictionResults.videoKind, result.videoKind),
+								eq(predictionResults.videoPath, result.path),
 							),
 						)
 						.returning()

@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 
 from predictor.features.extractor import ClipMeta, ExtractConfig, extract_rows_from_rois
-from predictor.features.pipeline import VideoRef, extract_from_roi_frames
+from predictor.features.pipeline import VideoRef, extract_from_roi_frames, extract_from_roi_stream
 
 
 def roi_frame(delta: int) -> dict[str, np.ndarray]:
@@ -47,3 +47,22 @@ def test_extract_from_roi_frames_meta() -> None:
     assert result.meta["frame_count"] == 3
     assert result.meta["row_count"] == 2
     assert result.meta["magnitude_count"] == 2
+
+
+def test_extract_from_roi_stream_matches_batch() -> None:
+    ref = VideoRef(
+        response_id="r1",
+        participant_id="p1",
+        question_id="q1",
+        video_kind="segmented",
+        path=Path("segmented/p1/q1/a.webm"),
+    )
+    frames = [roi_frame(0), roi_frame(2), roi_frame(4)]
+
+    batch = extract_from_roi_frames(ref, frames)
+    stream = extract_from_roi_stream(ref, iter(frames))
+
+    assert stream.table.rows == batch.table.rows
+    assert stream.meta["frame_count"] == batch.meta["frame_count"]
+    assert stream.meta["row_count"] == batch.meta["row_count"]
+    assert stream.meta["magnitude_count"] == batch.meta["magnitude_count"]

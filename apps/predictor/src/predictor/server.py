@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import signal
 from collections.abc import Sequence
 from typing import Any, cast
@@ -20,6 +21,9 @@ from predictor.generated.prediction.v1 import (  # pyright: ignore[reportMissing
 from predictor.model import Bundle, load_bundle
 from predictor.predict import PredictError, failed_video, resolve_video, validate_request
 from predictor.runtime import PredictionRuntime, RuntimeConfig, make_ref
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logger = logging.getLogger(__name__)
 
 Svc = prediction_pb2.DESCRIPTOR.services_by_name["PredictionService"]
 add_pred = cast(
@@ -45,7 +49,13 @@ class PredictionService(prediction_pb2_grpc.PredictionServiceServicer):
         self.runtime = runtime or PredictionRuntime(
             bundle,
             bundle.feat_cols,
-            RuntimeConfig(threshold=settings.threshold, aggregation=settings.aggregation),
+            RuntimeConfig(
+                threshold=settings.threshold,
+                aggregation=settings.aggregation,
+                decode_workers=settings.effective_decode_workers,
+                infer_workers=settings.infer_workers,
+                max_frames=settings.max_frames,
+            ),
         )
 
     async def HealthCheck(
@@ -65,47 +75,12 @@ class PredictionService(prediction_pb2_grpc.PredictionServiceServicer):
         except PredictError as err:
             await context.abort(grpc.StatusCode.INVALID_ARGUMENT, str(err))
 
-        results: list[Any] = []
-        for ref in request.videos:
-            if context.cancelled():
-                break
-            try:
-                video = resolve_video(self.settings.upload_root, ref)
-                pred_ref = make_ref(
-                    request.response_id,
-                    request.participant_id,
-                    video.question_id,
-                    video.kind,
-                    video.path,
-                    video.source,
-                )
-                output = await self.runtime.predict_video(pred_ref)
-                results.append(
-                    prediction_pb2.PredictionResult(
-                        question_id=video.question_id,
-                        video_kind=video.kind,
-                        label=output.prediction.label,
-                        probability_anxiety_tinggi=output.prediction.probability_anxiety_tinggi,
-                        frame_count=int(output.pipeline.meta.get("frame_count", 0)),
-                        duration_seconds=float(output.pipeline.meta.get("duration_seconds", 0.0)),
-                        status="ok",
-                        error_message="",
-                    )
-                )
-            except Exception as err:  # preserve partial failures per video
-                failed = failed_video(ref, str(err))
-                results.append(
-                    prediction_pb2.PredictionResult(
-                        question_id=failed.question_id,
-                        video_kind=failed.kind,
-                        label="",
-                        probability_anxiety_tinggi=0.0,
-                        frame_count=0,
-                        duration_seconds=0.0,
-                        status="failed",
-                        error_message=failed.message,
-                    )
-                )
+        videos = list(request.videos)
+        results = list(
+            await asyncio.gather(
+                *(self.predict_ref(request, ref, context) for ref in videos),
+            )
+        )
 
         return prediction_pb2.PredictQuizResponse(
             response_id=request.response_id,
@@ -115,6 +90,56 @@ class PredictionService(prediction_pb2_grpc.PredictionServiceServicer):
             aggregation=self.settings.aggregation,
             results=results,
         )
+
+    async def predict_ref(
+        self,
+        request: prediction_pb2.PredictQuizRequest,
+        ref: prediction_pb2.VideoRef,
+        context: grpc.aio.ServicerContext[Any, Any],
+    ) -> prediction_pb2.PredictionResult:
+        if context.cancelled():
+            return prediction_pb2.PredictionResult(
+                question_id=ref.question_id,
+                video_kind=ref.kind,
+                status="failed",
+                error_message="request cancelled",
+                path=ref.path,
+            )
+        try:
+            video = resolve_video(self.settings.upload_root, ref)
+            pred_ref = make_ref(
+                request.response_id,
+                request.participant_id,
+                video.question_id,
+                video.kind,
+                video.path,
+                video.source,
+            )
+            output = await self.runtime.predict_video(pred_ref)
+            return prediction_pb2.PredictionResult(
+                question_id=video.question_id,
+                video_kind=video.kind,
+                label=output.prediction.label,
+                probability_anxiety_tinggi=output.prediction.probability_anxiety_tinggi,
+                frame_count=int(output.pipeline.meta.get("frame_count", 0)),
+                duration_seconds=float(output.pipeline.meta.get("duration_seconds", 0.0)),
+                status="ok",
+                error_message="",
+                path=video.rel_path,
+            )
+        except Exception as err:  # preserve partial failures per video
+            failed = failed_video(ref, str(err))
+            return prediction_pb2.PredictionResult(
+                question_id=failed.question_id,
+                video_kind=failed.kind,
+                label="",
+                probability_anxiety_tinggi=0.0,
+                frame_count=0,
+                duration_seconds=0.0,
+                status="failed",
+                error_message=failed.message,
+                path=str(getattr(ref, "path", "")),
+            )
 
 
 async def serve(settings: PredictorSettings) -> None:
@@ -136,13 +161,13 @@ async def serve(settings: PredictorSettings) -> None:
     print_bundle(bundle)
     await server.start()
     await set_health(health_svc, health_pb2.HealthCheckResponse.SERVING)
-    print(f"Predictor gRPC server listening on {settings.bind_address}")
+    logger.info("Predictor gRPC server listening on %s", settings.bind_address)
 
     stop_event = asyncio.Event()
     bind_stop(stop_event, (signal.SIGINT, signal.SIGTERM))
     await stop_event.wait()
 
-    print("Stopping predictor gRPC server")
+    logger.info("Stopping predictor gRPC server")
     await set_health(health_svc, health_pb2.HealthCheckResponse.NOT_SERVING)
     await server.stop(grace=5)
 
@@ -153,18 +178,18 @@ async def set_health(health_svc: Any, status: int) -> None:
 
 
 def print_config(settings: PredictorSettings) -> None:
-    print("QUIS predictor config")
+    logger.info("QUIS predictor config")
     for key, value in settings.safe_summary().items():
-        print(f"{key}: {value}")
-    print("QUIS predictor artifacts")
+        logger.info("%s=%s", key, value)
+    logger.info("QUIS predictor artifacts")
     for key, value in resolve_artifacts(settings).as_map().items():
-        print(f"{key}: {value}")
+        logger.info("%s=%s", key, value)
 
 
 def print_bundle(bundle: Bundle) -> None:
-    print("QUIS predictor model")
+    logger.info("QUIS predictor model")
     for key, value in bundle.summary().items():
-        print(f"{key}: {value}")
+        logger.info("%s=%s", key, value)
 
 
 def bind_stop(stop_event: asyncio.Event, signals: Sequence[signal.Signals]) -> None:

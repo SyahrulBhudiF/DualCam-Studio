@@ -1,5 +1,6 @@
 import { Outlet } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { CommandMenu } from "@/components/CommandMenu";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Header } from "@/components/layout/Header";
 import { ProfileDropdown } from "@/components/ProfileDropdown";
@@ -19,6 +20,7 @@ type AuthenticatedLayoutProps = {
 export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
 	return (
 		<SearchProvider>
+			<CommandMenu />
 			<LayoutProvider>
 				<SidebarProvider defaultOpen>
 					<SkipToMain />

@@ -1,8 +1,6 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { CalendarIcon, Filter, X } from "lucide-react";
-import { useCallback, useEffect, useMemo } from "react";
-import { getResponsesFiltered } from "@/apis/admin/responses";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Calendar } from "@/components/ui/Calendar";
 import {
@@ -17,19 +15,18 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/Select";
-import { ALL_FILTER_VALUE, useFilters } from "@/libs/hooks/use-filters";
+import { ALL_FILTER_VALUE } from "@/libs/hooks/use-filters";
+import { useResponseFilterStore } from "@/libs/store/ResponseFilterStore";
 import { cn } from "@/utils/utils";
-import type { FilterOptions, ResponseListItem } from "../responses.types";
+import type { FilterOptions } from "../responses.types";
 
 type ResponseFiltersProps = {
 	filterOptions?: FilterOptions;
-	onFilterApply: (data: ResponseListItem[]) => void;
 	onFilterClear: () => void;
 };
 
 export function ResponseFilters({
 	filterOptions,
-	onFilterApply,
 	onFilterClear,
 }: ResponseFiltersProps) {
 	const {
@@ -40,54 +37,11 @@ export function ResponseFilters({
 		endDate,
 		setFilter,
 		resetFilters,
-	} = useFilters({
-		questionnaireId: ALL_FILTER_VALUE,
-		className: ALL_FILTER_VALUE,
-		name: ALL_FILTER_VALUE,
-		startDate: undefined as Date | undefined,
-		endDate: undefined as Date | undefined,
-	});
-	const queryClient = useQueryClient();
-
-	const filterMutation = useMutation({
-		mutationFn: getResponsesFiltered,
-		onSuccess: (data) => {
-			queryClient.setQueryData(["admin", "responses", "filtered"], data);
-			onFilterApply(data);
-		},
-	});
-
-	const filterPayload = useMemo(
-		() => ({
-			questionnaireId,
-			className,
-			startDate,
-			endDate,
-			name,
-		}),
-		[questionnaireId, className, startDate, endDate, name],
-	);
+	} = useResponseFilterStore();
 	const uniqueNames = useMemo(
 		() => [...new Set(filterOptions?.names ?? [])],
 		[filterOptions?.names],
 	);
-
-	const handleApplyFilters = useCallback(() => {
-		filterMutation.mutate({
-			data: {
-				questionnaireId:
-					questionnaireId !== ALL_FILTER_VALUE ? questionnaireId : undefined,
-				className: className !== ALL_FILTER_VALUE ? className : undefined,
-				startDate: startDate ? startDate.toISOString() : undefined,
-				endDate: endDate ? endDate.toISOString() : undefined,
-				name: name !== ALL_FILTER_VALUE ? name : undefined,
-			},
-		});
-	}, [filterMutation, questionnaireId, className, startDate, endDate, name]);
-
-	useEffect(() => {
-		handleApplyFilters();
-	}, [filterPayload]);
 
 	const handleClearFilters = () => {
 		resetFilters();
@@ -141,7 +95,7 @@ export function ResponseFilters({
 			</Select>
 
 			<Select value={name} onValueChange={(value) => setFilter("name", value)}>
-				<SelectTrigger className="w-[150px]" onBlur={handleApplyFilters}>
+				<SelectTrigger className="w-[150px]">
 					<SelectValue placeholder="All Profiles" />
 				</SelectTrigger>
 				<SelectContent>

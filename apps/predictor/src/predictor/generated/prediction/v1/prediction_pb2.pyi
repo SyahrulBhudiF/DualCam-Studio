@@ -65,7 +65,7 @@ class PredictQuizResponse(_message.Message):
     def __init__(self, response_id: _Optional[str] = ..., model_version: _Optional[str] = ..., exp_name: _Optional[str] = ..., threshold: _Optional[float] = ..., aggregation: _Optional[str] = ..., results: _Optional[_Iterable[_Union[PredictionResult, _Mapping]]] = ...) -> None: ...
 
 class PredictionResult(_message.Message):
-    __slots__ = ("question_id", "video_kind", "label", "probability_anxiety_tinggi", "frame_count", "duration_seconds", "status", "error_message")
+    __slots__ = ("question_id", "video_kind", "label", "probability_anxiety_tinggi", "frame_count", "duration_seconds", "status", "error_message", "path")
     QUESTION_ID_FIELD_NUMBER: _ClassVar[int]
     VIDEO_KIND_FIELD_NUMBER: _ClassVar[int]
     LABEL_FIELD_NUMBER: _ClassVar[int]
@@ -74,6 +74,7 @@ class PredictionResult(_message.Message):
     DURATION_SECONDS_FIELD_NUMBER: _ClassVar[int]
     STATUS_FIELD_NUMBER: _ClassVar[int]
     ERROR_MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    PATH_FIELD_NUMBER: _ClassVar[int]
     question_id: str
     video_kind: str
     label: str
@@ -82,4 +83,5 @@ class PredictionResult(_message.Message):
     duration_seconds: float
     status: str
     error_message: str
-    def __init__(self, question_id: _Optional[str] = ..., video_kind: _Optional[str] = ..., label: _Optional[str] = ..., probability_anxiety_tinggi: _Optional[float] = ..., frame_count: _Optional[int] = ..., duration_seconds: _Optional[float] = ..., status: _Optional[str] = ..., error_message: _Optional[str] = ...) -> None: ...
+    path: str
+    def __init__(self, question_id: _Optional[str] = ..., video_kind: _Optional[str] = ..., label: _Optional[str] = ..., probability_anxiety_tinggi: _Optional[float] = ..., frame_count: _Optional[int] = ..., duration_seconds: _Optional[float] = ..., status: _Optional[str] = ..., error_message: _Optional[str] = ..., path: _Optional[str] = ...) -> None: ...

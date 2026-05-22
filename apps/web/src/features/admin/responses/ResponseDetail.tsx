@@ -3,6 +3,11 @@ import { ArrowLeft } from "lucide-react";
 import { useMemo } from "react";
 import { Main } from "@/components/layout/Main";
 import { Button } from "@/components/ui/Button";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/Tooltip";
 import { PredictionResultsCard } from "./components/PredictionResultsCard";
 import { ProfileCard } from "./components/ProfileCard";
 import { ResponseAnswers } from "./components/ResponseAnswers";
@@ -194,12 +199,17 @@ export function ResponseDetail({ response }: ResponseDetailProps) {
 		<Main className="space-y-6">
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 				<div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-					<Link to="/admin/responses">
-						<Button variant="ghost" size="sm" className="cursor-pointer w-fit">
-							<ArrowLeft className="size-4 mr-2" />
-							Back to Responses
-						</Button>
-					</Link>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Link to="/admin/responses">
+								<Button variant="ghost" size="sm" className="cursor-pointer w-fit">
+									<ArrowLeft className="size-4 mr-2" />
+									Back to Responses
+								</Button>
+							</Link>
+						</TooltipTrigger>
+						<TooltipContent>Return to responses list</TooltipContent>
+					</Tooltip>
 					<div>
 						<h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
 							Response Detail
@@ -212,7 +222,7 @@ export function ResponseDetail({ response }: ResponseDetailProps) {
 				<ExportResponseDetailButton response={response} />
 			</div>
 
-			<div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+			<div className="space-y-6">
 				<ProfileCard
 					profile={response.profile}
 					createdAt={response.createdAt}

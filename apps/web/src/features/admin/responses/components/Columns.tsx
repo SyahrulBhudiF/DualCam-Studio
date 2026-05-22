@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
 import { ArrowUpDown, Eye, Video } from "lucide-react";
-import { ClientDate } from "@/components/ClientDate";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -143,10 +143,7 @@ export function getResponseColumns(): ColumnDef<ResponseListItem>[] {
 			),
 			cell: ({ row }) => (
 				<span className="text-muted-foreground text-sm">
-					<ClientDate
-						date={row.original.createdAt}
-						formatString="dd MMM yyyy HH:mm"
-					/>
+					{format(new Date(row.original.createdAt), "dd MMM yyyy HH:mm")}
 				</span>
 			),
 		},

@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { loginFn, signupFn } from "@/apis/user";
 import { loginSchema } from "@/libs/schemas/user";
@@ -75,6 +75,38 @@ export function Login() {
 		? loginMutation.data.message
 		: null;
 	const displayError = validationError || handlerError;
+	const afterSubmit = useMemo(
+		() => (
+			<>
+				{displayError && (
+					<p className="text-destructive text-sm">{displayError}</p>
+				)}
+
+				{(handlerError === "Invalid login credentials" ||
+					handlerError === "Invalid credentials") && (
+					<div>
+						<Button
+							variant="link"
+							className="px-0"
+							onClick={() => {
+								signupMutation.mutate({
+									data: {
+										email: form.getFieldValue("email"),
+										password: form.getFieldValue("password"),
+										redirectUrl: "/admin/dashboard",
+									},
+								});
+							}}
+							type="button"
+						>
+							Sign up instead?
+						</Button>
+					</div>
+				)}
+			</>
+		),
+		[displayError, handlerError, signupMutation, form],
+	);
 
 	return (
 		<form.Subscribe
@@ -106,35 +138,7 @@ export function Login() {
 						},
 						errors: fieldErrors.password ?? [],
 					}}
-					afterSubmit={
-						<>
-							{displayError && (
-								<p className="text-destructive text-sm">{displayError}</p>
-							)}
-
-							{(handlerError === "Invalid login credentials" ||
-								handlerError === "Invalid credentials") && (
-								<div>
-									<Button
-										variant="link"
-										className="px-0"
-										onClick={() => {
-											signupMutation.mutate({
-												data: {
-													email: form.getFieldValue("email"),
-													password: form.getFieldValue("password"),
-													redirectUrl: "/admin/dashboard",
-												},
-											});
-										}}
-										type="button"
-									>
-										Sign up instead?
-									</Button>
-								</div>
-							)}
-						</>
-					}
+					afterSubmit={afterSubmit}
 				/>
 			)}
 		</form.Subscribe>

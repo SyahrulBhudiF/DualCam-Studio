@@ -39,9 +39,8 @@ export function DashboardOverview({
 					description="Rata-rata skor semua respon"
 				/>
 			</div>
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
+			<div className="space-y-4">
 				<StatsListCard
-					className="col-span-1 lg:col-span-4"
 					title="Responses by Questionnaire"
 					description="Jumlah respon dan rata-rata skor per kuesioner"
 					items={breakdown.questionnaires.map((item) => ({
@@ -52,7 +51,6 @@ export function DashboardOverview({
 					emptyMessage="Belum ada data respon."
 				/>
 				<StatsListCard
-					className="col-span-1 lg:col-span-3"
 					title="Responses by Class"
 					description="Partisipasi dan rata-rata skor per kelas"
 					items={breakdown.classes.map((item) => ({
@@ -61,6 +59,7 @@ export function DashboardOverview({
 						meta: `${item.totalResponses} responses • avg score ${round1(item.averageScore)}`,
 					}))}
 					emptyMessage="Belum ada data kelas."
+					pageSize={10}
 				/>
 			</div>
 		</>

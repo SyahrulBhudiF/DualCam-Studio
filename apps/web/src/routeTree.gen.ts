@@ -25,6 +25,10 @@ import { Route as AdminDashboardIndexRouteImport } from './routes/admin/dashboar
 import { Route as ApiVideoSplatRouteImport } from './routes/api/video/$'
 import { Route as AdminResponsesResponseIdIndexRouteImport } from './routes/admin/responses/$responseId/index'
 import { Route as AdminQuestionnairesQuestionnaireIdIndexRouteImport } from './routes/admin/questionnaires/$questionnaireId/index'
+import { Route as ApiUploadSegmentedInitRouteImport } from './routes/api/upload/segmented/init'
+import { Route as ApiUploadSegmentedFinalizeRouteImport } from './routes/api/upload/segmented/finalize'
+import { Route as ApiUploadSegmentedChunkRouteImport } from './routes/api/upload/segmented/chunk'
+import { Route as ApiUploadSegmentedUploadIdRouteImport } from './routes/api/upload/segmented/$uploadId'
 import { Route as AdminQuestionnairesQuestionnaireIdQuestionIdIndexRouteImport } from './routes/admin/questionnaires/$questionnaireId/$questionId/index'
 
 const SignupRoute = SignupRouteImport.update({
@@ -112,6 +116,28 @@ const AdminQuestionnairesQuestionnaireIdIndexRoute =
     path: '/questionnaires/$questionnaireId/',
     getParentRoute: () => AdminRouteRoute,
   } as any)
+const ApiUploadSegmentedInitRoute = ApiUploadSegmentedInitRouteImport.update({
+  id: '/api/upload/segmented/init',
+  path: '/api/upload/segmented/init',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUploadSegmentedFinalizeRoute =
+  ApiUploadSegmentedFinalizeRouteImport.update({
+    id: '/api/upload/segmented/finalize',
+    path: '/api/upload/segmented/finalize',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiUploadSegmentedChunkRoute = ApiUploadSegmentedChunkRouteImport.update({
+  id: '/api/upload/segmented/chunk',
+  path: '/api/upload/segmented/chunk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUploadSegmentedUploadIdRoute =
+  ApiUploadSegmentedUploadIdRouteImport.update({
+    id: '/api/upload/segmented/$uploadId',
+    path: '/api/upload/segmented/$uploadId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute =
   AdminQuestionnairesQuestionnaireIdQuestionIdIndexRouteImport.update({
     id: '/questionnaires/$questionnaireId/$questionId/',
@@ -134,6 +160,10 @@ export interface FileRoutesByFullPath {
   '/admin/responses/': typeof AdminResponsesIndexRoute
   '/prediction/$responseId/': typeof PredictionResponseIdIndexRoute
   '/questionnaire/segmented/': typeof QuestionnaireSegmentedIndexRoute
+  '/api/upload/segmented/$uploadId': typeof ApiUploadSegmentedUploadIdRoute
+  '/api/upload/segmented/chunk': typeof ApiUploadSegmentedChunkRoute
+  '/api/upload/segmented/finalize': typeof ApiUploadSegmentedFinalizeRoute
+  '/api/upload/segmented/init': typeof ApiUploadSegmentedInitRoute
   '/admin/questionnaires/$questionnaireId/': typeof AdminQuestionnairesQuestionnaireIdIndexRoute
   '/admin/responses/$responseId/': typeof AdminResponsesResponseIdIndexRoute
   '/admin/questionnaires/$questionnaireId/$questionId/': typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
@@ -152,6 +182,10 @@ export interface FileRoutesByTo {
   '/admin/responses': typeof AdminResponsesIndexRoute
   '/prediction/$responseId': typeof PredictionResponseIdIndexRoute
   '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
+  '/api/upload/segmented/$uploadId': typeof ApiUploadSegmentedUploadIdRoute
+  '/api/upload/segmented/chunk': typeof ApiUploadSegmentedChunkRoute
+  '/api/upload/segmented/finalize': typeof ApiUploadSegmentedFinalizeRoute
+  '/api/upload/segmented/init': typeof ApiUploadSegmentedInitRoute
   '/admin/questionnaires/$questionnaireId': typeof AdminQuestionnairesQuestionnaireIdIndexRoute
   '/admin/responses/$responseId': typeof AdminResponsesResponseIdIndexRoute
   '/admin/questionnaires/$questionnaireId/$questionId': typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
@@ -172,6 +206,10 @@ export interface FileRoutesById {
   '/admin/responses/': typeof AdminResponsesIndexRoute
   '/prediction/$responseId/': typeof PredictionResponseIdIndexRoute
   '/questionnaire/segmented/': typeof QuestionnaireSegmentedIndexRoute
+  '/api/upload/segmented/$uploadId': typeof ApiUploadSegmentedUploadIdRoute
+  '/api/upload/segmented/chunk': typeof ApiUploadSegmentedChunkRoute
+  '/api/upload/segmented/finalize': typeof ApiUploadSegmentedFinalizeRoute
+  '/api/upload/segmented/init': typeof ApiUploadSegmentedInitRoute
   '/admin/questionnaires/$questionnaireId/': typeof AdminQuestionnairesQuestionnaireIdIndexRoute
   '/admin/responses/$responseId/': typeof AdminResponsesResponseIdIndexRoute
   '/admin/questionnaires/$questionnaireId/$questionId/': typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
@@ -193,6 +231,10 @@ export interface FileRouteTypes {
     | '/admin/responses/'
     | '/prediction/$responseId/'
     | '/questionnaire/segmented/'
+    | '/api/upload/segmented/$uploadId'
+    | '/api/upload/segmented/chunk'
+    | '/api/upload/segmented/finalize'
+    | '/api/upload/segmented/init'
     | '/admin/questionnaires/$questionnaireId/'
     | '/admin/responses/$responseId/'
     | '/admin/questionnaires/$questionnaireId/$questionId/'
@@ -211,6 +253,10 @@ export interface FileRouteTypes {
     | '/admin/responses'
     | '/prediction/$responseId'
     | '/questionnaire/segmented'
+    | '/api/upload/segmented/$uploadId'
+    | '/api/upload/segmented/chunk'
+    | '/api/upload/segmented/finalize'
+    | '/api/upload/segmented/init'
     | '/admin/questionnaires/$questionnaireId'
     | '/admin/responses/$responseId'
     | '/admin/questionnaires/$questionnaireId/$questionId'
@@ -230,6 +276,10 @@ export interface FileRouteTypes {
     | '/admin/responses/'
     | '/prediction/$responseId/'
     | '/questionnaire/segmented/'
+    | '/api/upload/segmented/$uploadId'
+    | '/api/upload/segmented/chunk'
+    | '/api/upload/segmented/finalize'
+    | '/api/upload/segmented/init'
     | '/admin/questionnaires/$questionnaireId/'
     | '/admin/responses/$responseId/'
     | '/admin/questionnaires/$questionnaireId/$questionId/'
@@ -246,6 +296,10 @@ export interface RootRouteChildren {
   ApiVideoSplatRoute: typeof ApiVideoSplatRoute
   PredictionResponseIdIndexRoute: typeof PredictionResponseIdIndexRoute
   QuestionnaireSegmentedIndexRoute: typeof QuestionnaireSegmentedIndexRoute
+  ApiUploadSegmentedUploadIdRoute: typeof ApiUploadSegmentedUploadIdRoute
+  ApiUploadSegmentedChunkRoute: typeof ApiUploadSegmentedChunkRoute
+  ApiUploadSegmentedFinalizeRoute: typeof ApiUploadSegmentedFinalizeRoute
+  ApiUploadSegmentedInitRoute: typeof ApiUploadSegmentedInitRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -362,6 +416,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminQuestionnairesQuestionnaireIdIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/api/upload/segmented/init': {
+      id: '/api/upload/segmented/init'
+      path: '/api/upload/segmented/init'
+      fullPath: '/api/upload/segmented/init'
+      preLoaderRoute: typeof ApiUploadSegmentedInitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/upload/segmented/finalize': {
+      id: '/api/upload/segmented/finalize'
+      path: '/api/upload/segmented/finalize'
+      fullPath: '/api/upload/segmented/finalize'
+      preLoaderRoute: typeof ApiUploadSegmentedFinalizeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/upload/segmented/chunk': {
+      id: '/api/upload/segmented/chunk'
+      path: '/api/upload/segmented/chunk'
+      fullPath: '/api/upload/segmented/chunk'
+      preLoaderRoute: typeof ApiUploadSegmentedChunkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/upload/segmented/$uploadId': {
+      id: '/api/upload/segmented/$uploadId'
+      path: '/api/upload/segmented/$uploadId'
+      fullPath: '/api/upload/segmented/$uploadId'
+      preLoaderRoute: typeof ApiUploadSegmentedUploadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/questionnaires/$questionnaireId/$questionId/': {
       id: '/admin/questionnaires/$questionnaireId/$questionId/'
       path: '/questionnaires/$questionnaireId/$questionId'
@@ -409,6 +491,10 @@ const rootRouteChildren: RootRouteChildren = {
   ApiVideoSplatRoute: ApiVideoSplatRoute,
   PredictionResponseIdIndexRoute: PredictionResponseIdIndexRoute,
   QuestionnaireSegmentedIndexRoute: QuestionnaireSegmentedIndexRoute,
+  ApiUploadSegmentedUploadIdRoute: ApiUploadSegmentedUploadIdRoute,
+  ApiUploadSegmentedChunkRoute: ApiUploadSegmentedChunkRoute,
+  ApiUploadSegmentedFinalizeRoute: ApiUploadSegmentedFinalizeRoute,
+  ApiUploadSegmentedInitRoute: ApiUploadSegmentedInitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

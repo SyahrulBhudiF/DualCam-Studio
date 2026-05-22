@@ -1,4 +1,7 @@
 import asyncio
+import gc
+import logging
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -12,6 +15,7 @@ from predictor.model import Bundle
 from predictor.video import DlibRoiExtractor
 
 Aggregation = Any
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -29,6 +33,18 @@ class RuntimeResult:
     prediction: AggregatePrediction
 
 
+class ThreadLocalDlibRoiExtractor:
+    def __init__(self) -> None:
+        self.local = threading.local()
+
+    def extract(self, frame: Any) -> dict[str, Any]:
+        extractor = getattr(self.local, "extractor", None)
+        if extractor is None:
+            extractor = DlibRoiExtractor()
+            self.local.extractor = extractor
+        return extractor.extract(frame)
+
+
 class PredictionRuntime:
     def __init__(
         self,
@@ -40,7 +56,7 @@ class PredictionRuntime:
         self.bundle = bundle
         self.schema = FeatureSchema(feature_cols)
         self.cfg = cfg
-        self.roi = roi or DlibRoiExtractor()
+        self.roi = roi or ThreadLocalDlibRoiExtractor()
         self.decode_gate = asyncio.Semaphore(cfg.decode_workers)
         self.infer_gate = asyncio.Semaphore(cfg.infer_workers)
 
@@ -53,18 +69,34 @@ class PredictionRuntime:
                 PipelineConfig(),
                 self.cfg.max_frames,
             )
-        matrix = self.schema.make_matrix(pipeline.table).values
-        async with self.infer_gate:
-            events = await asyncio.to_thread(
-                predict_events,
-                self.bundle,
-                np.asarray(matrix, dtype=np.float32),
+        try:
+            matrix = self.schema.make_matrix(pipeline.table).values
+            async with self.infer_gate:
+                events = await asyncio.to_thread(
+                    predict_events,
+                    self.bundle,
+                    np.asarray(matrix, dtype=np.float32),
+                    self.cfg.threshold,
+                )
+            prediction = aggregate_predictions(
+                events,
                 self.cfg.threshold,
+                self.cfg.aggregation,
             )
-        prediction = aggregate_predictions(
-            events,
-            self.cfg.threshold,
+        finally:
+            gc.collect()
+        logger.info(
+            "prediction_runtime response_id=%s question_id=%s video_kind=%s "
+            "event_count=%d aggregation=%s threshold=%.6f "
+            "probability_anxiety_tinggi=%.6f label=%s",
+            ref.response_id,
+            ref.question_id,
+            ref.video_kind,
+            len(events),
             self.cfg.aggregation,
+            self.cfg.threshold,
+            prediction.probability_anxiety_tinggi,
+            prediction.label,
         )
         return RuntimeResult(pipeline=pipeline, prediction=prediction)
 

@@ -212,13 +212,7 @@ export function QuestionnairePage() {
 					</CardContent>
 				</Card>
 
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						void form.handleSubmit();
-					}}
-				>
+				<form action={() => void form.handleSubmit()}>
 					{questions?.map((q, index) => (
 						<Card key={q.id} className="mb-6">
 							<CardHeader>

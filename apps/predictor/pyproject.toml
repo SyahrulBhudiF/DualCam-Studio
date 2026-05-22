@@ -38,6 +38,7 @@ dev = [
     "pytest>=9.0.0",
     "ruff>=0.14.0",
     "pyright>=1.1.407",
+    "psutil>=7.2.2",
 ]
 
 [tool.ruff]
@@ -48,6 +49,12 @@ exclude = ["src/predictor/generated", "vendor"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+markers = [
+    "performance: real video performance smoke tests",
+    "e2e: end-to-end tests using real model and video data",
+]
 
 [tool.pyright]
 pythonVersion = "3.11"

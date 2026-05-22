@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { type Effect as EffectType, Effect } from "effect";
+import { Effect, type Effect as EffectType } from "effect";
 import {
 	FileUploadService,
 	PredictionResultService,
@@ -8,13 +8,13 @@ import {
 	runEffect,
 } from "@/infrastructure";
 import {
+	inputValidator,
 	PredictionByResponseSchema,
 	type PredictionVideoPair,
 	type PredictionVideoRef,
 	type PredictQuizRequest,
 	PublicPredictionByResponseSchema,
 	type ResponseForPrediction,
-	inputValidator,
 } from "@/infrastructure/schemas";
 import { verifyCsrfOrigin } from "@/utils/csrf";
 import { requireAuth } from "@/utils/session";
@@ -22,6 +22,20 @@ import { requireAuth } from "@/utils/session";
 type FileUploadServiceApi = EffectType.Success<
 	ReturnType<typeof FileUploadService.asEffect>
 >;
+
+const SUPPORTED_VIDEO_EXTENSIONS = new Set([
+	"avi",
+	"flv",
+	"m4v",
+	"mkv",
+	"mov",
+	"mp4",
+	"mpeg",
+	"mpg",
+	"ogv",
+	"webm",
+	"wmv",
+]);
 
 export const getPredictionResults = createServerFn({ method: "GET" })
 	.inputValidator(inputValidator(PredictionByResponseSchema))
@@ -211,17 +225,27 @@ function addVideo(
 		const videoPath = normalizeVideoPath(input.path);
 		if (!videoPath) return;
 
-		const exists = yield* fileUploadService.existsUploadPath(videoPath);
-		if (!exists) return;
+		const resolvedPaths = isSupportedVideoPath(videoPath)
+			? [videoPath]
+			: (yield* fileUploadService.findVideosInUploadPath(videoPath))
+					.map(normalizeVideoPath)
+					.filter((path): path is string => !!path && isSupportedVideoPath(path));
 
-		videos.push({
-			format: videoPath.split(".").at(-1)?.toLowerCase(),
-			kind: input.kind,
-			path: videoPath,
-			questionId: input.questionId,
-			responseDetailId: input.responseDetailId,
-			source: "web",
-		});
+		for (const resolvedPath of resolvedPaths) {
+			const exists = yield* fileUploadService.existsUploadPath(resolvedPath);
+			if (!exists) continue;
+
+			const format = resolvedPath.split(".").at(-1)?.toLowerCase();
+			videos.push({
+				format,
+				kind: input.kind,
+				mimeType: format ? `video/${format}` : undefined,
+				path: resolvedPath,
+				questionId: input.questionId,
+				responseDetailId: input.responseDetailId,
+				source: "web",
+			});
+		}
 	});
 }
 
@@ -252,4 +276,14 @@ function normalizeVideoPath(videoPath: string): string | null {
 	const parts = cleanPath.split("/");
 	if (parts.some((part) => !part || part === "." || part === "..")) return null;
 	return cleanPath;
+}
+
+function isSupportedVideoPath(videoPath: string) {
+	const fileName = videoPath.split("/").at(-1) ?? "";
+	const extension = fileName.split(".").at(-1)?.toLowerCase();
+	return (
+		!!extension &&
+		extension !== fileName &&
+		SUPPORTED_VIDEO_EXTENSIONS.has(extension)
+	);
 }

@@ -8,6 +8,7 @@ export default defineConfig({
 	envDir: "../..",
 	envPrefix: "PUBLIC_",
 	server: {
+		allowedHosts: ["anxiety.ryuko.my.id"],
 		port: 3000,
 	},
 	optimizeDeps: {

@@ -113,14 +113,9 @@ export function DataTableBulkActions<TData>({
 	return (
 		<>
 			{/* Live region for screen reader announcements */}
-			<div
-				aria-live="polite"
-				aria-atomic="true"
-				className="sr-only"
-				role="status"
-			>
+			<output aria-live="polite" aria-atomic="true" className="sr-only">
 				{announcement}
-			</div>
+			</output>
 
 			<div
 				ref={toolbarRef}

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
+import { format } from "date-fns";
 import { Eye, Video } from "lucide-react";
-import { ClientDate } from "@/components/ClientDate";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import {
@@ -92,10 +92,7 @@ export function RecentResponsesCard({ responses }: RecentResponsesCardProps) {
 										)}
 									</TableCell>
 									<TableCell className="text-muted-foreground text-sm">
-										<ClientDate
-											date={response.createdAt}
-											formatString="dd MMM yyyy HH:mm"
-										/>
+										{format(new Date(response.createdAt), "dd MMM yyyy HH:mm")}
 									</TableCell>
 									<TableCell>
 										<Link

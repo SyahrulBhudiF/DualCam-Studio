@@ -1,23 +1,17 @@
 export { LoginSchema, SignupSchema } from "./auth";
-export {
-	PredictionByResponseSchema,
-	PredictionHealthSchema,
-	PublicPredictionByResponseSchema,
-	PredictionResultSchema,
-	PredictionVideoRefSchema,
-	PredictQuizRequestSchema,
-	PredictQuizResponseSchema,
-} from "./prediction";
 export type {
 	PredictionByResponse,
 	PredictionHealth,
-	PublicPredictionByResponse,
-	PredictionResult,
 	PredictionVideoPair,
 	PredictionVideoRef,
 	PredictQuizRequest,
 	PredictQuizResponse,
+	PublicPredictionByResponse,
 	ResponseForPrediction,
+} from "./prediction";
+export {
+	PredictionByResponseSchema,
+	PublicPredictionByResponseSchema,
 } from "./prediction";
 export {
 	BulkDeleteSchema,
@@ -30,7 +24,6 @@ export {
 	UpdateAnswerSchema,
 	UpdateQuestionnaireSchema,
 	UpdateQuestionSchema,
-	UploadChunkSchema,
 	UUID,
 } from "./questionnaire";
 export { inputValidator } from "./validator";

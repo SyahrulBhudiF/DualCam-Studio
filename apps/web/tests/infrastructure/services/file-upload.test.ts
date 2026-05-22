@@ -1,10 +1,21 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { NodeFileSystem } from "@effect/platform-node";
 import { it } from "@effect/vitest";
 import { Effect, Layer } from "effect";
-import { beforeEach, describe, expect, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, vi } from "vitest";
 import { FileUploadService } from "@/infrastructure/services/file-upload";
 
 describe("FileUploadService", () => {
+	beforeAll(() => {
+		process.env.UPLOAD_ROOT = join(
+			mkdtempSync(join(tmpdir(), "quis-upload-")),
+			"video_uploads",
+		);
+		mkdirSync(process.env.UPLOAD_ROOT);
+	});
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
@@ -15,7 +26,6 @@ describe("FileUploadService", () => {
 				const service = yield* FileUploadService.asEffect();
 				const result = yield* service.getUploadRoot();
 
-				expect(result).toBeDefined();
 				expect(result).toContain("video_uploads");
 			}).pipe(
 				Effect.provide(
@@ -70,6 +80,30 @@ describe("FileUploadService", () => {
 	});
 
 	describe("service structure", () => {
+		it.effect("should list all videos inside upload folder", () =>
+			Effect.gen(function* () {
+				const root = process.env.UPLOAD_ROOT;
+				expect(root).toBeDefined();
+				const folder = join(root as string, "segmented");
+				mkdirSync(folder);
+				writeFileSync(join(folder, "a.webm"), "x");
+				writeFileSync(join(folder, "b.avi"), "x");
+				writeFileSync(join(folder, "note.txt"), "x");
+
+				const service = yield* FileUploadService.asEffect();
+				const result = yield* service.findVideosInUploadPath("segmented");
+
+				expect(result.sort()).toEqual([
+					"/video_uploads/segmented/a.webm",
+					"/video_uploads/segmented/b.avi",
+				]);
+			}).pipe(
+				Effect.provide(
+					FileUploadService.layer.pipe(Layer.provide(NodeFileSystem.layer)),
+				),
+			),
+		);
+
 		it.effect("should have required methods", () =>
 			Effect.gen(function* () {
 				const service = yield* FileUploadService.asEffect();

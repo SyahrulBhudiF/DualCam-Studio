@@ -1,4 +1,6 @@
 import {
+	ChevronLeft,
+	ChevronRight,
 	Download,
 	FileVideo,
 	Maximize,
@@ -9,10 +11,19 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/Tooltip";
 
 type SingleVideoPlayerProps = {
 	src: string;
 	title?: string;
+	onNext?: () => void;
+	onPrevious?: () => void;
+	canNext?: boolean;
+	canPrevious?: boolean;
 };
 
 /**
@@ -40,7 +51,14 @@ function getExtension(src: string): string {
 	return parts[parts.length - 1]?.toUpperCase() || "VIDEO";
 }
 
-export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
+export function SingleVideoPlayer({
+	src,
+	title,
+	onNext,
+	onPrevious,
+	canNext = false,
+	canPrevious = false,
+}: SingleVideoPlayerProps) {
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [isMuted, setIsMuted] = useState(false);
@@ -116,6 +134,7 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 		<div className="space-y-3">
 			<div className="relative rounded-lg overflow-hidden bg-foreground aspect-video">
 				<video
+					aria-label={title ?? "Response video"}
 					ref={videoRef}
 					src={src || undefined}
 					className="w-full h-full object-contain"
@@ -129,47 +148,101 @@ export function SingleVideoPlayer({ src, title }: SingleVideoPlayerProps) {
 					<track kind="captions" />
 				</video>
 			</div>
-			<div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={handlePlayPause}
-					className="cursor-pointer"
-				>
-					{isPlaying ? (
-						<Pause className="size-4" />
-					) : (
-						<Play className="size-4" />
-					)}
-				</Button>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={handleMuteToggle}
-					className="cursor-pointer"
-				>
-					{isMuted ? (
-						<VolumeX className="size-4" />
-					) : (
-						<Volume2 className="size-4" />
-					)}
-				</Button>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={handleFullscreen}
-					className="cursor-pointer"
-				>
-					<Maximize className="size-4" />
-				</Button>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={handleDownload}
-					className="cursor-pointer"
-				>
-					<Download className="size-4" />
-				</Button>
+			<div className="flex flex-wrap items-center justify-center gap-1 sm:gap-2">
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={onPrevious}
+							disabled={!canPrevious}
+							className="cursor-pointer"
+							aria-label="Previous video"
+						>
+							<ChevronLeft className="size-4" />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>Previous video</TooltipContent>
+				</Tooltip>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={handlePlayPause}
+							className="cursor-pointer"
+							aria-label={isPlaying ? "Pause video" : "Play video"}
+						>
+							{isPlaying ? (
+								<Pause className="size-4" />
+							) : (
+								<Play className="size-4" />
+							)}
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>{isPlaying ? "Pause" : "Play"}</TooltipContent>
+				</Tooltip>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={handleMuteToggle}
+							className="cursor-pointer"
+							aria-label={isMuted ? "Unmute video" : "Mute video"}
+						>
+							{isMuted ? (
+								<VolumeX className="size-4" />
+							) : (
+								<Volume2 className="size-4" />
+							)}
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>{isMuted ? "Unmute" : "Mute"}</TooltipContent>
+				</Tooltip>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={handleFullscreen}
+							className="cursor-pointer"
+							aria-label="Open video fullscreen"
+						>
+							<Maximize className="size-4" />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>Fullscreen</TooltipContent>
+				</Tooltip>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={handleDownload}
+							className="cursor-pointer"
+							aria-label="Download video"
+						>
+							<Download className="size-4" />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>Download video</TooltipContent>
+				</Tooltip>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={onNext}
+							disabled={!canNext}
+							className="cursor-pointer"
+							aria-label="Next video"
+						>
+							<ChevronRight className="size-4" />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>Next video</TooltipContent>
+				</Tooltip>
 			</div>
 		</div>
 	);

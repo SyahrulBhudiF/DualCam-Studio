@@ -2,32 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { Effect } from "effect";
 import {
 	AnswerService,
-	FileUploadService,
 	ProfileService,
 	ResponseService,
 	ResultAccessService,
 	runEffect,
 } from "@/infrastructure";
-import { FinalSubmitSchema, UploadChunkSchema } from "@/infrastructure/schemas";
+import { FinalSubmitSchema, inputValidator } from "@/infrastructure/schemas";
 import { verifyCsrfOrigin } from "@/utils/csrf";
-import { inputValidator } from "@/infrastructure/schemas";
-
-export const uploadVideoChunk = createServerFn({ method: "POST" })
-	.inputValidator(inputValidator(UploadChunkSchema))
-	.handler(async ({ data }) => {
-		return runEffect(
-			Effect.gen(function* () {
-				yield* verifyCsrfOrigin;
-				const service = yield* FileUploadService.asEffect();
-
-				return yield* service.uploadChunk({
-					folderName: data.folderName,
-					fileName: data.fileName,
-					fileBase64: data.fileBase64,
-				});
-			}),
-		);
-	});
 
 export const submitSegmentedResponse = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(FinalSubmitSchema))

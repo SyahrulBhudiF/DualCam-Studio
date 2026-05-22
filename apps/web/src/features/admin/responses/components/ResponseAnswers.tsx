@@ -24,6 +24,11 @@ import {
 	TableRow,
 } from "@/components/ui/Table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/Tooltip";
 import type { ResponseDetailItem, VideoData } from "../responses.types";
 import type { VideoManifest } from "../video-manifest";
 import { SingleVideoPlayer } from "./SingleVideoPlayer";
@@ -146,16 +151,21 @@ export function ResponseAnswers({
 												{isSegmented && (
 													<TableCell className="text-center">
 														{hasVideo ? (
-															<Button
-																variant="ghost"
-																size="sm"
-																className="cursor-pointer"
-																onClick={() =>
-																	setSelectedQuestionId(detail.questionId)
-																}
-															>
-																<Video className="size-4" />
-															</Button>
+															<Tooltip>
+																<TooltipTrigger asChild>
+																	<Button
+																		variant="ghost"
+																		size="sm"
+																		className="cursor-pointer"
+																		onClick={() =>
+																			setSelectedQuestionId(detail.questionId)
+																		}
+																	>
+																		<Video className="size-4" />
+																	</Button>
+																</TooltipTrigger>
+																<TooltipContent>Open question video</TooltipContent>
+															</Tooltip>
 														) : (
 															<span className="text-muted-foreground text-xs">
 																-

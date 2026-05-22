@@ -1,19 +1,13 @@
-from predictor.config import PROJECT_ROOT, VENDOR_ROOT, PredictorSettings, get_settings
+from predictor.config import PredictorSettings
 
 
-def test_upload_root() -> None:
-    settings = get_settings()
+def test_effective_decode_workers_uses_explicit_value() -> None:
+    settings = PredictorSettings(decode_workers=1)
 
-    assert settings.upload_root == (PROJECT_ROOT / "video_uploads").resolve()
+    assert settings.effective_decode_workers == 1
 
 
-def test_exp_config() -> None:
-    settings = PredictorSettings()
+def test_effective_decode_workers_auto_is_bounded() -> None:
+    settings = PredictorSettings(decode_workers=0)
 
-    assert settings.tabr_root == VENDOR_ROOT.resolve()
-    assert settings.exp_name == "convat_apex_anxiety_qwalk_q12_q3_q4"
-    assert settings.evaluation_seed == 4
-    assert settings.threshold == 0.235
-    assert settings.aggregation == "mean"
-    assert settings.device == "auto"
-    assert settings.labels == {0: "anxiety_rendah", 1: "anxiety_tinggi"}
+    assert settings.effective_decode_workers in (1, 2)

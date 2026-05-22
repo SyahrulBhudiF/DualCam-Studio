@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { signupFn } from "@/apis/user";
 import { Auth } from "@/components/Auth";
 import { signupSchema } from "@/libs/schemas/user";
@@ -61,6 +61,13 @@ function SignupComp() {
 		? signupMutation.data.message
 		: null;
 	const displayError = validationError || handlerError;
+	const afterSubmit = useMemo(
+		() =>
+			displayError ? (
+				<p className="text-destructive text-sm">{displayError}</p>
+			) : null,
+		[displayError],
+	);
 
 	return (
 		<form.Subscribe
@@ -92,11 +99,7 @@ function SignupComp() {
 						},
 						errors: fieldErrors.password ?? [],
 					}}
-					afterSubmit={
-						displayError ? (
-							<p className="text-destructive text-sm">{displayError}</p>
-						) : null
-					}
+					afterSubmit={afterSubmit}
 				/>
 			)}
 		</form.Subscribe>

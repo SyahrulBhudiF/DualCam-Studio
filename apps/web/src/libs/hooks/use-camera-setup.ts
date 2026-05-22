@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+	useSyncExternalStore,
+} from "react";
 import type { RealSenseHandle } from "@/components/RealSenseCanvas";
 
 const stopRecorderSafe = (recorder: MediaRecorder | null): Promise<void> => {
@@ -18,13 +24,37 @@ export interface RecordingOptions {
 	fileName?: string;
 }
 
+let videoDevicesSnapshot: MediaDeviceInfo[] | undefined;
+const videoDevicesListeners = new Set<() => void>();
+
+const getVideoDevicesSnapshot = () => videoDevicesSnapshot;
+const getVideoDevicesServerSnapshot = () => undefined;
+const subscribeVideoDevices = (listener: () => void) => {
+	videoDevicesListeners.add(listener);
+	return () => videoDevicesListeners.delete(listener);
+};
+const loadVideoDevices = async () => {
+	await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+	const devices = await navigator.mediaDevices.enumerateDevices();
+	const cameras = devices.filter((d) => d.kind === "videoinput");
+	videoDevicesSnapshot = cameras;
+	videoDevicesListeners.forEach((listener) => listener());
+	return cameras;
+};
+
 export function useCameraSetup() {
-	const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+	const videoDevices = useSyncExternalStore(
+		subscribeVideoDevices,
+		getVideoDevicesSnapshot,
+		getVideoDevicesServerSnapshot,
+	);
 	const [isRecording, setIsRecording] = useState(false);
 	const [mainReady, setMainReady] = useState(false);
 	const [secReady, setSecReady] = useState(false);
-	const [deviceIdMain, setDeviceIdMain] = useState("");
+	const [deviceIdMain, setDeviceIdMain] = useState<string>();
 	const [deviceIdSec, setDeviceIdSec] = useState("ws-realsense");
+
+	const selectedDeviceIdMain = deviceIdMain ?? videoDevices?.[0]?.deviceId ?? "";
 
 	const isStartingRef = useRef(false);
 
@@ -43,11 +73,7 @@ export function useCameraSetup() {
 	useEffect(() => {
 		const getDevices = async () => {
 			try {
-				await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-				const devices = await navigator.mediaDevices.enumerateDevices();
-				const cameras = devices.filter((d) => d.kind === "videoinput");
-				setVideoDevices(cameras);
-				if (cameras.length > 0) setDeviceIdMain(cameras[0].deviceId);
+				await loadVideoDevices();
 			} catch (err) {
 				console.error(err);
 			}
@@ -57,20 +83,22 @@ export function useCameraSetup() {
 
 	// Main camera setup
 	useEffect(() => {
-		if (!deviceIdMain) return;
+		if (!selectedDeviceIdMain) return;
 		let cancelled = false;
+		const streams = new Set<MediaStream>();
 
 		const startMain = async () => {
 			try {
 				const stream = await navigator.mediaDevices.getUserMedia({
 					video: {
-						deviceId: { exact: deviceIdMain },
+						deviceId: { exact: selectedDeviceIdMain },
 						width: { ideal: 640 },
 						height: { ideal: 480 },
 					},
 					audio: true,
 				});
 
+				streams.add(stream);
 				if (cancelled) {
 					stream.getTracks().forEach((t) => t.stop());
 					return;
@@ -86,7 +114,7 @@ export function useCameraSetup() {
 				mediaRecorder.ondataavailable = (event) => {
 					if (event.data.size > 0) mainChunksRef.current.push(event.data);
 				};
-				mainRecorderRef.current = mediaRecorder;
+					mainRecorderRef.current = mediaRecorder;
 				setMainReady(true);
 			} catch (err) {
 				console.error(err);
@@ -96,12 +124,12 @@ export function useCameraSetup() {
 
 		return () => {
 			cancelled = true;
-			mainStreamRef.current?.getTracks().forEach((t) => t.stop());
-			mainStreamRef.current = null;
-			mainRecorderRef.current = null;
+			streams.forEach((stream) => {
+				stream.getTracks().forEach((track) => track.stop());
+			});
 			setMainReady(false);
 		};
-	}, [deviceIdMain]);
+	}, [selectedDeviceIdMain]);
 
 	// Secondary camera setup
 	useEffect(() => {
@@ -111,6 +139,7 @@ export function useCameraSetup() {
 		}
 		if (!deviceIdSec) return;
 		let cancelled = false;
+		const streams = new Set<MediaStream>();
 
 		const startSec = async () => {
 			try {
@@ -123,6 +152,7 @@ export function useCameraSetup() {
 					audio: false,
 				});
 
+				streams.add(stream);
 				if (cancelled) {
 					stream.getTracks().forEach((t) => t.stop());
 					return;
@@ -150,9 +180,9 @@ export function useCameraSetup() {
 
 		return () => {
 			cancelled = true;
-			secStreamRef.current?.getTracks().forEach((t) => t.stop());
-			secStreamRef.current = null;
-			secRecorderRef.current = null;
+			streams.forEach((stream) => {
+				stream.getTracks().forEach((track) => track.stop());
+			});
 			setSecReady(false);
 		};
 	}, [deviceIdSec]);
@@ -213,13 +243,13 @@ export function useCameraSetup() {
 	const allReady = mainReady;
 
 	return {
-		videoDevices,
+		videoDevices: videoDevices ?? [],
 		isRecording,
 		allReady,
 		startRecording,
 		stopRecording,
 
-		deviceIdMain,
+		deviceIdMain: selectedDeviceIdMain,
 		setDeviceIdMain,
 		videoRefMain,
 		streamMain: mainStreamRef.current,

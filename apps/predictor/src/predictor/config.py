@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -10,7 +11,7 @@ VENDOR_ROOT = APP_ROOT / "vendor" / "tabular-dl-tabr-official"
 PROJECT_ROOT = APP_ROOT.parents[1]
 
 DeviceMode = Literal["auto", "cpu", "cuda"]
-AggregationMode = Literal["mean", "median", "max"]
+AggregationMode = Literal["mean", "median", "max", "p90"]
 
 
 class PredictorSettings(BaseSettings):
@@ -23,9 +24,12 @@ class PredictorSettings(BaseSettings):
     tabr_root: Path = Field(default=VENDOR_ROOT)
     exp_name: str = "convat_apex_anxiety_qwalk_q12_q3_q4"
     evaluation_seed: int = 4
-    threshold: float = 0.235
-    aggregation: AggregationMode = "mean"
+    threshold: float = 0.5
+    aggregation: AggregationMode = "p90"
     device: DeviceMode = "auto"
+    decode_workers: int = 0
+    infer_workers: int = 1
+    max_frames: int | None = None
 
     @model_validator(mode="after")
     def resolve_paths(self) -> "PredictorSettings":
@@ -37,6 +41,13 @@ class PredictorSettings(BaseSettings):
     @property
     def bind_address(self) -> str:
         return f"{self.host}:{self.port}"
+
+    @property
+    def effective_decode_workers(self) -> int:
+        if self.decode_workers > 0:
+            return self.decode_workers
+        cpu_count = os.cpu_count() or 1
+        return 2 if cpu_count >= 4 else 1
 
     @property
     def labels(self) -> dict[int, str]:
@@ -63,6 +74,9 @@ class PredictorSettings(BaseSettings):
             "threshold": self.threshold,
             "aggregation": self.aggregation,
             "device": self.device,
+            "decode_workers": self.effective_decode_workers,
+            "infer_workers": self.infer_workers,
+            "max_frames": self.max_frames or 0,
         }
 
 

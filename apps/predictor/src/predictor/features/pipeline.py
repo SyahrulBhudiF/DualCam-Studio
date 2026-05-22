@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -7,7 +8,9 @@ from predictor.features.extractor import (
     ClipMeta,
     ExtractConfig,
     FeatureTable,
+    extract_row,
     extract_rows_from_rois,
+    to_gray,
 )
 
 Array = Any
@@ -65,13 +68,8 @@ def build_magnitude_signal(roi_frames: list[dict[str, Array]]) -> list[float]:
     return [compute_frame_magnitude(frame, baseline) for frame in roi_frames[1:]]
 
 
-def extract_from_roi_frames(
-    ref: VideoRef,
-    roi_frames: list[dict[str, Array]],
-    cfg: PipelineConfig | None = None,
-) -> PipelineResult:
-    cfg = cfg or PipelineConfig()
-    meta = ClipMeta(
+def make_clip_meta(ref: VideoRef) -> ClipMeta:
+    return ClipMeta(
         response_id=ref.response_id,
         participant_id=ref.participant_id,
         question_id=ref.question_id,
@@ -79,8 +77,15 @@ def extract_from_roi_frames(
         video_path=ref.path.as_posix(),
         source=ref.source,
     )
-    table = extract_rows_from_rois(meta, roi_frames, cfg.extract)
-    magnitudes = build_magnitude_signal(roi_frames)
+
+
+def build_pipeline_result(
+    ref: VideoRef,
+    table: FeatureTable,
+    magnitudes: list[float],
+    frame_count: int,
+    cfg: PipelineConfig,
+) -> PipelineResult:
     spot = detect_events(magnitudes, cfg.spot) if len(magnitudes) >= 6 else None
     return PipelineResult(
         table=table,
@@ -91,11 +96,47 @@ def extract_from_roi_frames(
             "question_id": ref.question_id,
             "video_kind": ref.video_kind,
             "video_path": ref.path.as_posix(),
-            "frame_count": len(roi_frames),
+            "frame_count": frame_count,
             "row_count": len(table.rows),
             "magnitude_count": len(magnitudes),
         },
     )
+
+
+def extract_from_roi_frames(
+    ref: VideoRef,
+    roi_frames: list[dict[str, Array]],
+    cfg: PipelineConfig | None = None,
+) -> PipelineResult:
+    cfg = cfg or PipelineConfig()
+    table = extract_rows_from_rois(make_clip_meta(ref), roi_frames, cfg.extract)
+    magnitudes = build_magnitude_signal(roi_frames)
+    return build_pipeline_result(ref, table, magnitudes, len(roi_frames), cfg)
+
+
+def extract_from_roi_stream(
+    ref: VideoRef,
+    roi_frames: Iterator[dict[str, Array]],
+    cfg: PipelineConfig | None = None,
+) -> PipelineResult:
+    cfg = cfg or PipelineConfig()
+    meta = make_clip_meta(ref)
+    baseline = next(roi_frames, None)
+    if baseline is None:
+        raise ValueError("Need >= 2 ROI frames")
+
+    baseline_gray = {name: to_gray(img) for name, img in baseline.items()}
+    rows: list[dict[str, Any]] = []
+    magnitudes: list[float] = []
+    frame_count = 1
+
+    for frame_count, rois in enumerate(roi_frames, start=2):
+        rows.append(extract_row(meta, frame_count, rois, baseline_gray, cfg.extract))
+        magnitudes.append(compute_frame_magnitude(rois, baseline))
+
+    if not rows:
+        raise ValueError("Need >= 2 ROI frames")
+    return build_pipeline_result(ref, FeatureTable(rows), magnitudes, frame_count, cfg)
 
 
 def extract_video(
@@ -114,10 +155,10 @@ def extract_video_file(
     cfg: PipelineConfig | None = None,
     max_frames: int | None = None,
 ) -> PipelineResult:
-    from predictor.video import extract_video_rois
+    from predictor.video import stream_video_rois
 
-    roi_frames, info = extract_video_rois(ref.path, roi, max_frames=max_frames)
-    result = extract_from_roi_frames(ref, roi_frames, cfg)
+    roi_frames, info = stream_video_rois(ref.path, roi, max_frames=max_frames)
+    result = extract_from_roi_stream(ref, roi_frames, cfg)
     result.meta["fps"] = info.fps
     result.meta["duration_seconds"] = info.duration_seconds
     result.meta["source_frame_count"] = info.frame_count

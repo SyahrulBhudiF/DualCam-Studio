@@ -27,5 +27,5 @@ export const useQuestionnaireStore = create<QuestionnaireState>((set) => ({
 		set((state) => ({
 			answers: { ...state.answers, [qId]: data },
 		})),
-	reset: () => set({ answers: {}, folderName: "", predictionOptIn: false }),
+	reset: () => set({ answers: {}, folderName: "" }),
 }));

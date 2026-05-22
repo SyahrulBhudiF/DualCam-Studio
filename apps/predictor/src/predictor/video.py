@@ -8,11 +8,12 @@ os.environ.setdefault("OPENCV_FFMPEG_LOGLEVEL", "-8")
 os.environ.setdefault("OPENCV_LOG_LEVEL", "SILENT")
 
 import cv2  # type: ignore[reportMissingTypeStubs]
-
-if hasattr(cv2, "setLogLevel"):
-    cv2.setLogLevel(0)
 import dlib as dlib_raw  # type: ignore[reportMissingTypeStubs]
 import numpy as np
+
+set_log_level = getattr(cv2, "setLogLevel", None)
+if set_log_level is not None:
+    set_log_level(0)
 
 REGIONS = {
     "mulut": list(range(48, 68)),
@@ -133,6 +134,39 @@ def extract_video_rois(
     extractor: RoiExtractor,
     max_frames: int | None = None,
 ) -> tuple[list[dict[str, Array]], VideoInfo]:
-    frames, info = read_video(path, max_frames=max_frames)
-    rois = [extractor.extract(frame) for frame in frames]
-    return rois, info
+    stream, info = stream_video_rois(path, extractor, max_frames=max_frames)
+    return list(stream), info
+
+
+def stream_video_rois(
+    path: Path,
+    extractor: RoiExtractor,
+    max_frames: int | None = None,
+) -> tuple[Iterator[dict[str, Array]], VideoInfo]:
+    cap = cv2.VideoCapture(str(path))
+    if not cap.isOpened():
+        raise VideoError(f"cannot open video: {path}")
+    fps = float(cap.get(cv2.CAP_PROP_FPS) or 0.0)
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+    limit = min(total, max_frames) if max_frames is not None and total > 0 else max_frames
+    count = limit or total
+    info = VideoInfo(
+        fps=fps,
+        frame_count=count,
+        duration_seconds=(count / fps if fps > 0 and count > 0 else 0.0),
+    )
+
+    def rois() -> Iterator[dict[str, Array]]:
+        emitted = 0
+        try:
+            for frame in iter_frames(cap):
+                yield extractor.extract(frame)
+                emitted += 1
+                if max_frames is not None and emitted >= max_frames:
+                    break
+            if emitted == 0:
+                raise VideoError(f"video has no readable frames: {path}")
+        finally:
+            cap.release()
+
+    return rois(), info

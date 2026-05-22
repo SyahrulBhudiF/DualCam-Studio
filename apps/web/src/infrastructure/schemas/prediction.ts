@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 
-export const PredictionHealthSchema = Schema.Struct({
+const PredictionHealthSchema = Schema.Struct({
 	status: Schema.String,
 	version: Schema.String,
 });
@@ -30,7 +30,7 @@ export type PredictionVideoPair = {
 	secondary?: unknown;
 };
 
-export const PredictionVideoRefSchema = Schema.Struct({
+const PredictionVideoRefSchema = Schema.Struct({
 	questionId: Schema.String,
 	kind: Schema.String,
 	path: Schema.String,
@@ -41,24 +41,26 @@ export const PredictionVideoRefSchema = Schema.Struct({
 	createdAt: Schema.optional(Schema.String),
 });
 
-export const PredictQuizRequestSchema = Schema.Struct({
+const PredictQuizRequestSchema = Schema.Struct({
 	responseId: Schema.String,
 	participantId: Schema.String,
 	videos: Schema.Array(PredictionVideoRefSchema),
 });
 
-export const PredictionResultSchema = Schema.Struct({
+const PredictionResultSchema = Schema.Struct({
 	questionId: Schema.String,
 	videoKind: Schema.String,
 	label: Schema.String,
 	probabilityAnxietyTinggi: Schema.Number,
+	threshold: Schema.Number,
 	frameCount: Schema.Number,
 	durationSeconds: Schema.Number,
 	status: Schema.String,
 	errorMessage: Schema.String,
+	path: Schema.String,
 });
 
-export const PredictQuizResponseSchema = Schema.Struct({
+const PredictQuizResponseSchema = Schema.Struct({
 	responseId: Schema.String,
 	modelVersion: Schema.String,
 	expName: Schema.String,

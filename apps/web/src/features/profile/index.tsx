@@ -196,11 +196,9 @@ function ProfileFormFields({ form }: { form: ProfileForm }) {
 					const checked = field.state.value;
 
 					return (
-						<button
-							type="button"
-							className="flex w-full cursor-pointer items-start gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted/60 data-[checked=true]:border-primary data-[checked=true]:bg-primary/5"
+						<div
+							className="flex w-full items-start gap-3 rounded-lg border p-3 transition-colors data-[checked=true]:border-primary data-[checked=true]:bg-primary/5"
 							data-checked={checked}
-							onClick={() => field.handleChange(!checked)}
 						>
 							<Checkbox
 								id="prediction-opt-in"
@@ -208,7 +206,6 @@ function ProfileFormFields({ form }: { form: ProfileForm }) {
 								onCheckedChange={(nextChecked) =>
 									field.handleChange(nextChecked === true)
 								}
-								onClick={(event) => event.stopPropagation()}
 							/>
 							<div className="space-y-1 leading-none">
 								<Label htmlFor="prediction-opt-in" className="cursor-pointer">
@@ -218,7 +215,7 @@ function ProfileFormFields({ form }: { form: ProfileForm }) {
 									Jika dicentang, kamu akan diarahkan ke halaman hasil prediksi.
 								</p>
 							</div>
-						</button>
+						</div>
 					);
 				}}
 			</form.Field>

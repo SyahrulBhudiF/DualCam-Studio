@@ -51,8 +51,13 @@ export function SegmentedVideoPlayer({
 		);
 	}
 
-	const selectedVideo = videos.find((v) => v.questionId === selectedQuestion);
+	const selectedIndex = videos.findIndex(
+		(v) => v.questionId === selectedQuestion,
+	);
+	const selectedVideo = videos[selectedIndex];
 	const selectedDetail = details.find((d) => d.questionId === selectedQuestion);
+	const goPrevious = () => setSelectedQuestion(videos[selectedIndex - 1].questionId);
+	const goNext = () => setSelectedQuestion(videos[selectedIndex + 1].questionId);
 
 	const getQuestionLabel = (video: SegmentedVideoPath) => {
 		const detail = details.find((d) => d.questionId === video.questionId);
@@ -79,7 +84,7 @@ export function SegmentedVideoPlayer({
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<Select value={selectedQuestion} onValueChange={setSelectedQuestion}>
-					<SelectTrigger className="w-full">
+					<SelectTrigger className="w-full" title="Select question video">
 						<SelectValue placeholder="Select a question" />
 					</SelectTrigger>
 					<SelectContent>
@@ -121,6 +126,10 @@ export function SegmentedVideoPlayer({
 									<SingleVideoPlayer
 										src={selectedVideo.main}
 										title={`Q${selectedVideo.questionNumber} Main`}
+										onPrevious={goPrevious}
+										onNext={goNext}
+										canPrevious={selectedIndex > 0}
+										canNext={selectedIndex >= 0 && selectedIndex < videos.length - 1}
 									/>
 								) : (
 									<div className="flex items-center justify-center h-48 bg-muted rounded-lg">
@@ -135,6 +144,10 @@ export function SegmentedVideoPlayer({
 									<SingleVideoPlayer
 										src={selectedVideo.secondary}
 										title={`Q${selectedVideo.questionNumber} Secondary`}
+										onPrevious={goPrevious}
+										onNext={goNext}
+										canPrevious={selectedIndex > 0}
+										canNext={selectedIndex >= 0 && selectedIndex < videos.length - 1}
 									/>
 								) : (
 									<div className="flex items-center justify-center h-48 bg-muted rounded-lg">

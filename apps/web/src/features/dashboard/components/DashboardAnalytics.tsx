@@ -49,6 +49,7 @@ export function DashboardAnalytics({ analytics }: DashboardAnalyticsProps) {
 						meta: `${item.totalResponses} responses • avg ${round1(item.averageScore)}`,
 					}))}
 					emptyMessage="Belum ada data timeline."
+					pageSize={10}
 				/>
 				<StatsListCard
 					className="col-span-1 lg:col-span-3"
@@ -60,6 +61,7 @@ export function DashboardAnalytics({ analytics }: DashboardAnalyticsProps) {
 						meta: `${item.totalResponses} responses • avg ${round1(item.averageScore)}`,
 					}))}
 					emptyMessage="Belum ada data jawaban."
+					pageSize={10}
 				/>
 			</div>
 		</>

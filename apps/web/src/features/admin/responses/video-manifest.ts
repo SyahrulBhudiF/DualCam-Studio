@@ -62,7 +62,7 @@ export function normalizeVideoPath(videoPath: string | null): string | null {
 	return cleanPath;
 }
 
-export function isValidVideoPath(videoPath: string): boolean {
+function isValidVideoPath(videoPath: string): boolean {
 	if (!videoPath || videoPath.startsWith("/") || videoPath.includes("\\")) {
 		return false;
 	}

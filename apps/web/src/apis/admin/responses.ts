@@ -143,7 +143,7 @@ export const deleteResponses = createServerFn({ method: "POST" })
 		);
 	});
 
-export const getResponsesFiltered = createServerFn({ method: "POST" })
+const getResponsesFiltered = createServerFn({ method: "POST" })
 	.inputValidator(inputValidator(ResponseFilterSchema))
 	.handler(async ({ data: filters }) => {
 		return runEffect(

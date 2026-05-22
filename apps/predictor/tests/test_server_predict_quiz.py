@@ -58,6 +58,7 @@ def test_predict_quiz_returns_real_runtime_result(tmp_path: Path) -> None:
     assert response.results[0].probability_anxiety_tinggi == 0.75
     assert response.results[0].frame_count == 12
     assert response.results[0].duration_seconds == 1.2
+    assert response.results[0].path == "segmented/q1/a.webm"
 
 
 def test_predict_quiz_preserves_failed_video(tmp_path: Path) -> None:
@@ -76,3 +77,4 @@ def test_predict_quiz_preserves_failed_video(tmp_path: Path) -> None:
 
     assert response.results[0].status == "failed"
     assert "unsafe video path" in response.results[0].error_message
+    assert response.results[0].path == "../bad.webm"

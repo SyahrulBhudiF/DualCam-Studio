@@ -30,6 +30,11 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/Table";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/Tooltip";
 
 type ResultPageProps = {
 	responseId: string;
@@ -75,6 +80,7 @@ export function PredictionResultPage({ responseId, token }: ResultPageProps) {
 
 	const rows = (resultQuery.data ?? []).filter(isVisiblePredictionRow);
 	const summary = useMemo(() => summarizeRows(rows), [rows]);
+	const totalScore = useMemo(() => sumQuestionnaireScore(rows), [rows]);
 	const canRun =
 		!summary.isRunning &&
 		(rows.length === 0 || rows.some((row) => row.status === "failed"));
@@ -110,28 +116,33 @@ export function PredictionResultPage({ responseId, token }: ResultPageProps) {
 
 	return (
 		<ResultShell>
-			<Card className="shadow-lg">
-				<CardHeader className="space-y-4">
-					<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-						<div>
-							<CardTitle className="text-2xl font-bold">
+			<Card className="overflow-hidden shadow-lg">
+				<CardHeader className="border-b bg-card px-6 py-5">
+					<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+						<div className="space-y-1">
+							<CardTitle className="text-2xl font-bold tracking-tight">
 								Hasil Analisis
 							</CardTitle>
 							<CardDescription>
-								Simpan link ini untuk melihat hasil lagi nanti.
+								Ringkasan prediksi video dan skor kuesioner.
 							</CardDescription>
 						</div>
-						<Button
-							variant="outline"
-							onClick={copyLink}
-							className="cursor-pointer"
-						>
-							<Clipboard className="mr-2 size-4" />
-							Salin Link Hasil
-						</Button>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button
+									variant="outline"
+									onClick={copyLink}
+									className="h-9 cursor-pointer"
+								>
+									<Clipboard className="mr-2 size-4" />
+									Salin Link
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent>Copy result link</TooltipContent>
+						</Tooltip>
 					</div>
 				</CardHeader>
-				<CardContent className="space-y-6">
+				<CardContent className="space-y-5 p-6">
 					{isBusy && (
 						<div className="flex items-center gap-3 rounded-lg border bg-muted/40 p-4">
 							<Loader2 className="size-5 animate-spin" />
@@ -145,7 +156,7 @@ export function PredictionResultPage({ responseId, token }: ResultPageProps) {
 					)}
 
 					{summary.completedCount > 0 ? (
-						<PredictionSummary summary={summary} />
+						<PredictionSummary summary={summary} totalScore={totalScore} />
 					) : (
 						<div className="rounded-lg border border-dashed p-6 text-center">
 							<div className="font-medium">Hasil prediksi belum tersedia</div>
@@ -156,31 +167,41 @@ export function PredictionResultPage({ responseId, token }: ResultPageProps) {
 						</div>
 					)}
 
-					<div className="flex flex-col gap-2 sm:flex-row">
-						{canRun && (
-							<Button
-								onClick={() => runMutation.mutate()}
-								disabled={isBusy}
-								className="cursor-pointer"
-							>
-								{runMutation.isPending ? (
-									<Loader2 className="mr-2 size-4 animate-spin" />
-								) : (
-									<RefreshCcw className="mr-2 size-4" />
-								)}
-								{rows.length === 0 ? "Jalankan Analisis" : "Coba Lagi"}
-							</Button>
-						)}
-						<Button
-							variant="secondary"
-							onClick={() => navigate({ to: "/" })}
-							className="cursor-pointer"
-						>
-							Kembali ke Beranda
-						</Button>
-					</div>
-
 					{rows.length > 0 && <PredictionTable rows={rows} />}
+
+					<div className="flex flex-col gap-2 border-t pt-5 sm:flex-row sm:justify-end">
+						{canRun && (
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Button
+										onClick={() => runMutation.mutate()}
+										disabled={isBusy}
+										className="cursor-pointer"
+									>
+										{runMutation.isPending ? (
+											<Loader2 className="mr-2 size-4 animate-spin" />
+										) : (
+											<RefreshCcw className="mr-2 size-4" />
+										)}
+										{rows.length === 0 ? "Jalankan Analisis" : "Coba Lagi"}
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent>Run video analysis</TooltipContent>
+							</Tooltip>
+						)}
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button
+									variant="secondary"
+									onClick={() => navigate({ to: "/" })}
+									className="cursor-pointer"
+								>
+									Kembali ke Beranda
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent>Return to home page</TooltipContent>
+						</Tooltip>
+					</div>
 				</CardContent>
 			</Card>
 		</ResultShell>
@@ -190,7 +211,7 @@ export function PredictionResultPage({ responseId, token }: ResultPageProps) {
 function ResultShell({ children }: { children: React.ReactNode }) {
 	return (
 		<div className="min-h-screen bg-muted/40 p-4">
-			<div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-4xl items-center justify-center">
+			<div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-5xl items-center justify-center">
 				<div className="w-full">{children}</div>
 			</div>
 		</div>
@@ -217,23 +238,53 @@ function ResultError({
 	);
 }
 
-function PredictionSummary({ summary }: { summary: PredictionSummaryData }) {
+function PredictionSummary({
+	summary,
+	totalScore,
+}: {
+	summary: PredictionSummaryData;
+	totalScore: number | null;
+}) {
 	return (
-		<div className="grid gap-4 sm:grid-cols-3">
-			<div className="rounded-lg border bg-background p-4 sm:col-span-2">
-				<div className="text-sm text-muted-foreground">Tingkat Kecemasan</div>
-				<div className="mt-2 flex items-center gap-2">
-					<CheckCircle2 className="size-5 text-primary" />
-					<div className="text-2xl font-bold capitalize">
+		<div className="grid grid-cols-4 gap-3">
+			<div className="col-span-2 rounded-lg border bg-background p-5">
+				<div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+					Tingkat Kecemasan
+				</div>
+				<div className="mt-3 flex items-center gap-3">
+					<span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+						<CheckCircle2 className="size-4" />
+					</span>
+					<div className="text-3xl font-bold capitalize tracking-tight">
 						{formatLabel(summary.label)}
 					</div>
 				</div>
 			</div>
-			<div className="rounded-lg border bg-background p-4">
-				<div className="text-sm text-muted-foreground">Confidence</div>
-				<div className="mt-2 text-2xl font-bold">
-					{formatConfidence(summary.probability, summary.label)}
+			<div className="rounded-lg border bg-background p-5">
+				<div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+					High Anxiety Probability
 				</div>
+				<div className="mt-3 flex items-baseline gap-2">
+					<div className="text-3xl font-bold tracking-tight">
+						{summary.probability == null
+							? "-"
+							: `${(summary.probability * 100).toFixed(1)}%`}
+					</div>
+				</div>
+				<div className="mt-2 text-xs text-muted-foreground">
+					Threshold: {summary.threshold == null
+						? "-"
+						: `${(summary.threshold * 100).toFixed(1)}%`}
+				</div>
+			</div>
+			<div className="rounded-lg border bg-background p-5">
+				<div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+					Questionnaire Score
+				</div>
+				<div className="mt-3 text-3xl font-bold tracking-tight">
+					{totalScore ?? "-"}
+				</div>
+				<div className="mt-2 text-xs text-muted-foreground">Total answers</div>
 			</div>
 		</div>
 	);
@@ -241,39 +292,57 @@ function PredictionSummary({ summary }: { summary: PredictionSummaryData }) {
 
 function PredictionTable({ rows }: { rows: PredictionRow[] }) {
 	return (
-		<div className="rounded-lg border">
+		<div className="overflow-hidden rounded-lg border">
 			<Table>
 				<TableHeader>
 					<TableRow>
-						<TableHead>Video</TableHead>
+						<TableHead className="w-[34%]">Video</TableHead>
 						<TableHead>Status</TableHead>
 						<TableHead>Label</TableHead>
-						<TableHead className="text-right">Confidence</TableHead>
+						<TableHead className="text-right">High Anxiety Probability</TableHead>
+						<TableHead className="text-right">Threshold</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{rows.map((row) => (
-						<TableRow key={row.id}>
-							<TableCell>
-								<div className="font-medium">{row.videoKind}</div>
-								<div className="text-xs text-muted-foreground">
-									{row.questionId}
-								</div>
-							</TableCell>
-							<TableCell>
-								<StatusBadge status={row.status} />
-								{row.errorMessage && (
-									<div className="mt-1 max-w-xs text-xs text-destructive">
-										{row.errorMessage}
+					{rows.map((row, index) => {
+						const parts = row.videoPath?.split("/").filter(Boolean) ?? [];
+						const folder = parts.at(-2);
+						const videoName = parts.at(-1) ?? `${row.videoKind} ${index + 1}`;
+						const questionNumber = folder?.match(/^q(\d+)$/i)?.[1];
+
+						return (
+							<TableRow key={row.id}>
+								<TableCell>
+									<div className="font-medium">{videoName}</div>
+									<div className="max-w-80 truncate text-xs text-muted-foreground">
+										{row.questionText ??
+										(questionNumber ? `Question ${questionNumber}` : `Question ${index + 1}`)}
 									</div>
-								)}
-							</TableCell>
-							<TableCell>{formatLabel(row.label)}</TableCell>
-							<TableCell className="text-right">
-								{formatConfidence(row.probabilityAnxietyTinggi, row.label)}
-							</TableCell>
-						</TableRow>
-					))}
+								</TableCell>
+								<TableCell>
+									<StatusBadge status={row.status} />
+									{row.errorMessage && (
+										<div className="mt-1 max-w-xs text-xs text-destructive">
+											{row.errorMessage}
+										</div>
+									)}
+								</TableCell>
+								<TableCell className="font-medium capitalize">
+									{formatLabel(row.label)}
+								</TableCell>
+								<TableCell className="text-right font-medium tabular-nums">
+									{row.probabilityAnxietyTinggi == null
+										? "-"
+										: `${(row.probabilityAnxietyTinggi * 100).toFixed(1)}%`}
+								</TableCell>
+								<TableCell className="text-right tabular-nums text-muted-foreground">
+									{row.threshold == null
+										? "-"
+										: `${(row.threshold * 100).toFixed(1)}%`}
+								</TableCell>
+							</TableRow>
+						);
+					})}
 				</TableBody>
 			</Table>
 		</div>
@@ -303,17 +372,33 @@ type PredictionSummaryData = {
 	isRunning: boolean;
 	label: string | null;
 	probability: number | null;
+	threshold: number | null;
 };
 
 function summarizeRows(rows: PredictionRow[]): PredictionSummaryData {
 	const completed = rows.filter(
 		(row) => row.status === "completed" && row.probabilityAnxietyTinggi != null,
 	);
-	const probability = completed.length
-		? completed.reduce(
-				(acc, row) => acc + (row.probabilityAnxietyTinggi ?? 0),
-				0,
-			) / completed.length
+	const probabilities = completed
+		.map((row) => row.probabilityAnxietyTinggi)
+		.filter((value): value is number => value != null)
+		.sort((a, b) => a - b);
+	const probability = probabilities.length
+		? (() => {
+				const index = (probabilities.length - 1) * 0.9;
+				const lower = Math.floor(index);
+				const upper = Math.ceil(index);
+				const weight = index - lower;
+				return (
+					(probabilities[lower] ?? 0) * (1 - weight) +
+					(probabilities[upper] ?? probabilities[lower] ?? 0) * weight
+				);
+			})()
+		: null;
+
+	const threshold = completed.length
+		? completed.reduce((acc, row) => acc + (row.threshold ?? 0), 0) /
+			completed.length
 		: null;
 
 	return {
@@ -321,13 +406,14 @@ function summarizeRows(rows: PredictionRow[]): PredictionSummaryData {
 		isRunning: rows.some(
 			(row) => row.status === "pending" || row.status === "running",
 		),
-		label:
-			probability == null
+			label:
+			probability == null || threshold == null
 				? null
-				: probability >= 0.5
+				: probability >= threshold
 					? "anxiety_tinggi"
 					: "anxiety_rendah",
 		probability,
+		threshold,
 	};
 }
 
@@ -336,13 +422,17 @@ function formatLabel(label: string | null) {
 	return label.replaceAll("_", " ");
 }
 
-function formatConfidence(
-	probabilityHigh: number | null,
-	label: string | null,
-) {
-	if (probabilityHigh == null || !label) return "-";
-	const confidence = label.includes("tinggi")
-		? probabilityHigh
-		: 1 - probabilityHigh;
-	return `${(confidence * 100).toFixed(1)}%`;
+
+function sumQuestionnaireScore(rows: PredictionRow[]) {
+	const scoresByQuestion = new Map<string, number>();
+
+	for (const row of rows) {
+		if (row.score == null) continue;
+		scoresByQuestion.set(row.questionId, row.score);
+	}
+
+	return scoresByQuestion.size
+		? [...scoresByQuestion.values()].reduce((acc, score) => acc + score, 0)
+		: null;
 }
+

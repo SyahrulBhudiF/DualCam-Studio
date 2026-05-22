@@ -26,7 +26,7 @@ function createFilterReducer<TFilters extends Record<string, FilterValue>>(
 	};
 }
 
-export function useFilters<TFilters extends Record<string, FilterValue>>(
+function useFilters<TFilters extends Record<string, FilterValue>>(
 	initialState: TFilters,
 ) {
 	const [state, dispatch] = useReducer(

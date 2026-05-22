@@ -80,12 +80,6 @@ export const SubmissionSchema = Schema.Struct({
 // Segmented Upload Schemas
 // ============================================
 
-export const UploadChunkSchema = Schema.Struct({
-	folderName: Schema.String,
-	fileName: Schema.String,
-	fileBase64: Schema.String,
-});
-
 const AnswerSubmissionSchema = Schema.Struct({
 	questionId: UUID,
 	answerId: UUID,
