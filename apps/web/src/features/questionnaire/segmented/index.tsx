@@ -78,7 +78,7 @@ export function SegmentedPage() {
 
 			setIsProcessing(true);
 			const currentQ = questions[currentIndex];
-			const { blobMain } = await stopRecording();
+			const { blobMain, secondaryPath } = await stopRecording();
 			const subFolder = `q${currentIndex + 1}`;
 			const mainFileName = `${subFolder}/${user?.name ?? "Anon"}_${currentIndex + 1}_${currentQ.id}_main.webm`;
 
@@ -91,13 +91,11 @@ export function SegmentedPage() {
 				});
 			}
 
-			const secFileName = `${subFolder}/answer_${currentIndex + 1}_${currentQ.id}_sec.avi`;
-
 			store.addAnswer(currentQ.id, {
 				questionId: currentQ.id,
 				answerId: value.answerId,
 				videoMainPath: "",
-				videoSecPath: `/video_uploads/${store.folderName}/${secFileName}`,
+				videoSecPath: secondaryPath ?? "",
 			});
 
 			form.reset();
@@ -147,14 +145,14 @@ export function SegmentedPage() {
 	}, [user, store.folderName, store.setFolderName]);
 
 	useEffect(() => {
-		if (!allReady || isProcessing || !questions) return;
+		if (!allReady || isProcessing || !questions || !store.folderName) return;
 
 		const timer = setTimeout(() => {
 			const currentQ = questions[currentIndex];
 			const subFolder = `q${currentIndex + 1}`;
 			const secFileName = `${subFolder}/answer_${currentIndex + 1}_${currentQ.id}_sec.avi`;
 
-			startRecording({
+			void startRecording({
 				mode: "SEGMENT",
 				folderName: store.folderName,
 				fileName: secFileName,

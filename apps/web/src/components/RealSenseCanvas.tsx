@@ -6,8 +6,8 @@ export interface RealSenseHandle {
 		mode: string;
 		folderName: string;
 		fileName?: string;
-	}) => void;
-	stopRecording: () => void;
+	}) => Promise<string | null>;
+	stopRecording: () => Promise<string | null>;
 }
 
 interface RealSenseCanvasProps {
@@ -18,24 +18,32 @@ interface RealSenseCanvasProps {
 export function RealSenseCanvas({ onReady, ref }: RealSenseCanvasProps) {
 	const localCanvasRef = useRef<HTMLCanvasElement>(null);
 	const wsRef = useRef<WebSocket | null>(null);
-	const msgQueue = useRef<string[]>([]);
+	const pendingRef = useRef(new Map<string, (result: string | null) => void>());
+	const activePathRef = useRef<string | null>(null);
 
-	const sendMessage = (msg: string) => {
-		if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-			wsRef.current.send(msg);
-		} else {
-			msgQueue.current.push(msg);
+	const sendCommand = (payload: Record<string, unknown>) => {
+		if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+			return Promise.resolve(null);
 		}
+
+		const requestId = crypto.randomUUID();
+		return new Promise<string | null>((resolve) => {
+			pendingRef.current.set(requestId, resolve);
+			wsRef.current?.send(JSON.stringify({ ...payload, requestId }));
+		});
 	};
 
 	useImperativeHandle(ref, () => ({
-		startRecording: (options) => {
-			const payload = JSON.stringify({ action: "START", ...options });
-			sendMessage(payload);
+		startRecording: async (options) => {
+			const path = await sendCommand({ action: "START", ...options });
+			activePathRef.current = path;
+			return path;
 		},
-		stopRecording: () => {
-			const payload = JSON.stringify({ action: "STOP" });
-			sendMessage(payload);
+		stopRecording: async () => {
+			if (!activePathRef.current) return null;
+			const path = await sendCommand({ action: "STOP" });
+			activePathRef.current = null;
+			return path;
 		},
 	}));
 
@@ -52,14 +60,24 @@ export function RealSenseCanvas({ onReady, ref }: RealSenseCanvasProps) {
 		const img = new Image();
 
 		wsRef.current.onopen = () => {
-			while (msgQueue.current.length > 0) {
-				const msg = msgQueue.current.shift();
-				if (msg) wsRef.current?.send(msg);
-			}
 			if (onReady) onReady();
 		};
 
 		wsRef.current.onmessage = (event) => {
+			if (typeof event.data === "string") {
+				const message = JSON.parse(event.data) as {
+					requestId?: string;
+					type?: string;
+					path?: string;
+				};
+				if (message.requestId) {
+					const resolve = pendingRef.current.get(message.requestId);
+					pendingRef.current.delete(message.requestId);
+					resolve?.(message.type === "ERROR" ? null : (message.path ?? null));
+				}
+				return;
+			}
+
 			const blob = event.data;
 			const url = URL.createObjectURL(blob);
 			img.onload = () => {
@@ -70,6 +88,9 @@ export function RealSenseCanvas({ onReady, ref }: RealSenseCanvasProps) {
 		};
 
 		return () => {
+			pendingRef.current.forEach((resolve) => resolve(null));
+			pendingRef.current.clear();
+			activePathRef.current = null;
 			if (wsRef.current) {
 				wsRef.current.close();
 			}

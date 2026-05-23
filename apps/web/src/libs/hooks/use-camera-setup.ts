@@ -7,6 +7,16 @@ import {
 } from "react";
 import type { RealSenseHandle } from "@/components/RealSenseCanvas";
 
+type RecordingStartResult = {
+	secondaryPath: string | null;
+};
+
+type RecordingStopResult = {
+	blobMain: Blob;
+	blobSec: Blob | null;
+	secondaryPath: string | null;
+};
+
 const stopRecorderSafe = (recorder: MediaRecorder | null): Promise<void> => {
 	return new Promise((resolve) => {
 		if (!recorder || recorder.state === "inactive") {
@@ -54,7 +64,8 @@ export function useCameraSetup() {
 	const [deviceIdMain, setDeviceIdMain] = useState<string>();
 	const [deviceIdSec, setDeviceIdSec] = useState("ws-realsense");
 
-	const selectedDeviceIdMain = deviceIdMain ?? videoDevices?.[0]?.deviceId ?? "";
+	const selectedDeviceIdMain =
+		deviceIdMain ?? videoDevices?.[0]?.deviceId ?? "";
 
 	const isStartingRef = useRef(false);
 
@@ -68,6 +79,7 @@ export function useCameraSetup() {
 	const secRecorderRef = useRef<MediaRecorder | null>(null);
 	const mainChunksRef = useRef<Blob[]>([]);
 	const secChunksRef = useRef<Blob[]>([]);
+	const secondaryPathRef = useRef<string | null>(null);
 
 	// Enumerate devices once
 	useEffect(() => {
@@ -114,7 +126,7 @@ export function useCameraSetup() {
 				mediaRecorder.ondataavailable = (event) => {
 					if (event.data.size > 0) mainChunksRef.current.push(event.data);
 				};
-					mainRecorderRef.current = mediaRecorder;
+				mainRecorderRef.current = mediaRecorder;
 				setMainReady(true);
 			} catch (err) {
 				console.error(err);
@@ -188,9 +200,10 @@ export function useCameraSetup() {
 	}, [deviceIdSec]);
 
 	const startRecording = useCallback(
-		(options: RecordingOptions) => {
-			if (isStartingRef.current) return;
+		async (options: RecordingOptions): Promise<RecordingStartResult | null> => {
+			if (isStartingRef.current) return null;
 			isStartingRef.current = true;
+			secondaryPathRef.current = null;
 
 			if (
 				mainRecorderRef.current &&
@@ -200,8 +213,10 @@ export function useCameraSetup() {
 				mainRecorderRef.current.start(1000);
 			}
 
-			if (deviceIdSec === "ws-realsense") {
-				realSenseRef.current?.startRecording(options);
+			let secondaryPath: string | null = null;
+			if (deviceIdSec === "ws-realsense" && secReady) {
+				secondaryPath =
+					(await realSenseRef.current?.startRecording(options)) ?? null;
 			} else if (
 				secRecorderRef.current &&
 				secRecorderRef.current.state === "inactive"
@@ -209,27 +224,35 @@ export function useCameraSetup() {
 				secChunksRef.current = [];
 				secRecorderRef.current.start(1000);
 			}
+			secondaryPathRef.current = secondaryPath;
 
 			setIsRecording(true);
 
 			setTimeout(() => {
 				isStartingRef.current = false;
 			}, 500);
+
+			return { secondaryPath };
 		},
-		[deviceIdSec],
+		[deviceIdSec, secReady],
 	);
 
-	const stopRecording = useCallback(async () => {
-		await stopRecorderSafe(mainRecorderRef.current);
+	const stopRecording = useCallback(async (): Promise<RecordingStopResult> => {
+		const stopMain = stopRecorderSafe(mainRecorderRef.current);
+		const stopSecondary =
+			deviceIdSec === "ws-realsense"
+				? (realSenseRef.current?.stopRecording() ?? Promise.resolve(null))
+				: stopRecorderSafe(secRecorderRef.current).then(() => null);
 
-		if (deviceIdSec === "ws-realsense") {
-			realSenseRef.current?.stopRecording();
-		} else {
-			await stopRecorderSafe(secRecorderRef.current);
-		}
+		const [, stoppedSecondaryPath] = await Promise.all([
+			stopMain,
+			stopSecondary,
+		]);
+		const secondaryPath = stoppedSecondaryPath ?? secondaryPathRef.current;
 
 		setIsRecording(false);
 		isStartingRef.current = false;
+		secondaryPathRef.current = null;
 
 		return {
 			blobMain: new Blob(mainChunksRef.current, { type: "video/webm" }),
@@ -237,6 +260,7 @@ export function useCameraSetup() {
 				deviceIdSec !== "ws-realsense"
 					? new Blob(secChunksRef.current, { type: "video/webm" })
 					: null,
+			secondaryPath,
 		};
 	}, [deviceIdSec]);
 

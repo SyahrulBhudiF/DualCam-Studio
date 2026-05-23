@@ -11,6 +11,13 @@ tasks:
       cache: false
       persistent: true
 
+  camera:
+    command: uv run python -m predictor.camera.server
+    options:
+      cache: false
+      envFile: /.env
+      persistent: true
+
   test:
     command: uv run pytest
 

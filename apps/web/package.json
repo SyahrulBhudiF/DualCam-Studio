@@ -21,8 +21,7 @@
 		"test": "vitest",
 		"test:run": "vitest run",
 		"test:coverage": "vitest run --coverage",
-		"test:perf": "vitest run tests/performance --reporter=verbose",
-		"camera": "uv run server-camera.py"
+		"test:perf": "vitest run tests/performance --reporter=verbose"
 	},
 	"keywords": [],
 	"author": "SyahrulBhudiF",

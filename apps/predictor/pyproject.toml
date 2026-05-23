@@ -24,6 +24,8 @@ dependencies = [
     "tqdm>=4.67.0",
     "opencv-python-headless>=4.13.0.92",
     "dlib>=20.0.1",
+    "pyrealsense2>=2.56.5.9235",
+    "websockets>=15.0.1",
 ]
 
 [build-system]

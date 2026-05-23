@@ -9,6 +9,22 @@ uv sync
 uv run python -m predictor.main
 ```
 
+## RealSense camera server
+
+```bash
+uv run python -m predictor.camera.server
+```
+
+Config:
+
+```txt
+CAMERA_HOST=localhost
+CAMERA_PORT=8080
+PROJECT_ROOT=<QUIS workspace root>
+PREDICTOR_UPLOAD_ROOT=<QUIS workspace root>/video_uploads
+# UPLOAD_ROOT overrides PREDICTOR_UPLOAD_ROOT when set
+```
+
 ## Bundled TABR
 
 TABR code/artifacts are vendored under:
