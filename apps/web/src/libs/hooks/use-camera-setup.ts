@@ -35,7 +35,35 @@ export interface RecordingOptions {
 }
 
 let videoDevicesSnapshot: MediaDeviceInfo[] | undefined;
+let sharedMainStream: MediaStream | null = null;
+let sharedMainStreamPromise: Promise<MediaStream> | null = null;
 const videoDevicesListeners = new Set<() => void>();
+
+export const resetCameraSetupForTest = () => {
+	videoDevicesSnapshot = undefined;
+	sharedMainStream = null;
+	sharedMainStreamPromise = null;
+};
+
+export const getMainCameraStream = (deviceId: string) => {
+	const existingStream = sharedMainStream?.active ? sharedMainStream : null;
+	if (existingStream) return Promise.resolve(existingStream);
+
+	sharedMainStreamPromise ??= navigator.mediaDevices
+		.getUserMedia({
+			video: deviceId ? { deviceId: { ideal: deviceId } } : true,
+			audio: false,
+		})
+		.then((stream) => {
+			sharedMainStream = stream;
+			return stream;
+		})
+		.finally(() => {
+			sharedMainStreamPromise = null;
+		});
+
+	return sharedMainStreamPromise;
+};
 
 const getVideoDevicesSnapshot = () => videoDevicesSnapshot;
 const getVideoDevicesServerSnapshot = () => undefined;
@@ -44,7 +72,6 @@ const subscribeVideoDevices = (listener: () => void) => {
 	return () => videoDevicesListeners.delete(listener);
 };
 const loadVideoDevices = async () => {
-	await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 	const devices = await navigator.mediaDevices.enumerateDevices();
 	const cameras = devices.filter((d) => d.kind === "videoinput");
 	videoDevicesSnapshot = cameras;
@@ -64,13 +91,20 @@ export function useCameraSetup() {
 	const [deviceIdMain, setDeviceIdMain] = useState<string>();
 	const [deviceIdSec, setDeviceIdSec] = useState("ws-realsense");
 
-	const selectedDeviceIdMain =
-		deviceIdMain ?? videoDevices?.[0]?.deviceId ?? "";
+	const selectedDeviceIdMain = deviceIdMain ?? "";
 
 	const isStartingRef = useRef(false);
 
-	const videoRefMain = useRef<HTMLVideoElement | null>(null);
-	const videoRefSec = useRef<HTMLVideoElement | null>(null);
+	const videoElementMainRef = useRef<HTMLVideoElement | null>(null);
+	const videoElementSecRef = useRef<HTMLVideoElement | null>(null);
+	const videoRefMain = useCallback((element: HTMLVideoElement | null) => {
+		videoElementMainRef.current = element;
+		if (element) element.srcObject = mainStreamRef.current;
+	}, []);
+	const videoRefSec = useCallback((element: HTMLVideoElement | null) => {
+		videoElementSecRef.current = element;
+		if (element) element.srcObject = secStreamRef.current;
+	}, []);
 	const realSenseRef = useRef<RealSenseHandle | null>(null);
 
 	const mainStreamRef = useRef<MediaStream | null>(null);
@@ -95,31 +129,27 @@ export function useCameraSetup() {
 
 	// Main camera setup
 	useEffect(() => {
-		if (!selectedDeviceIdMain) return;
 		let cancelled = false;
 		const streams = new Set<MediaStream>();
 
 		const startMain = async () => {
 			try {
-				const stream = await navigator.mediaDevices.getUserMedia({
-					video: {
-						deviceId: { exact: selectedDeviceIdMain },
-						width: { ideal: 640 },
-						height: { ideal: 480 },
-					},
-					audio: true,
-				});
+				mainRecorderRef.current = null;
+				setMainReady(false);
+
+				const stream = await getMainCameraStream(selectedDeviceIdMain);
 
 				streams.add(stream);
-				if (cancelled) {
-					stream.getTracks().forEach((t) => t.stop());
-					return;
-				}
+				if (cancelled) return;
 
 				mainStreamRef.current = stream;
-				if (videoRefMain.current) {
-					videoRefMain.current.srcObject = stream;
+				if (videoElementMainRef.current) {
+					videoElementMainRef.current.srcObject = stream;
 				}
+
+				const devices = await navigator.mediaDevices.enumerateDevices();
+				videoDevicesSnapshot = devices.filter((d) => d.kind === "videoinput");
+				videoDevicesListeners.forEach((listener) => listener());
 
 				const mediaRecorder = new MediaRecorder(stream);
 				mainChunksRef.current = [];
@@ -129,16 +159,14 @@ export function useCameraSetup() {
 				mainRecorderRef.current = mediaRecorder;
 				setMainReady(true);
 			} catch (err) {
-				console.error(err);
+				console.error("Main camera failed", err);
 			}
 		};
-		startMain();
+		void startMain();
 
 		return () => {
 			cancelled = true;
-			streams.forEach((stream) => {
-				stream.getTracks().forEach((track) => track.stop());
-			});
+			if (videoElementMainRef.current) videoElementMainRef.current.srcObject = null;
 			setMainReady(false);
 		};
 	}, [selectedDeviceIdMain]);
@@ -171,8 +199,8 @@ export function useCameraSetup() {
 				}
 
 				secStreamRef.current = stream;
-				if (videoRefSec.current) {
-					videoRefSec.current.srcObject = stream;
+				if (videoElementSecRef.current) {
+					videoElementSecRef.current.srcObject = stream;
 				}
 
 				const mediaRecorder = new MediaRecorder(stream, {

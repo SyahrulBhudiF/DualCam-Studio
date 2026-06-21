@@ -10,8 +10,8 @@ interface CameraControlPanelProps {
 	setDeviceIdMain: (id: string) => void;
 	deviceIdSec: string;
 	setDeviceIdSec?: (id: string) => void;
-	videoRefMain: React.RefObject<HTMLVideoElement | null>;
-	videoRefSec: React.RefObject<HTMLVideoElement | null>;
+	videoRefMain: React.Ref<HTMLVideoElement>;
+	videoRefSec: React.Ref<HTMLVideoElement>;
 	realSenseRef: React.RefObject<RealSenseHandle | null>;
 	isRecording: boolean;
 	onSecReady: () => void;
@@ -35,7 +35,7 @@ export function CameraControlPanel({
 		<div className="fixed bottom-4 right-4 flex flex-row gap-4 z-50 items-end">
 			<div className="flex flex-col gap-2">
 				<div className="bg-card/90 backdrop-blur px-2 py-1 rounded shadow text-[10px] font-bold text-center border border-border text-card-foreground">
-					Main Cam (Audio ON)
+					Main Cam
 				</div>
 				<label htmlFor="main-camera-select" className="sr-only">
 					Main camera
