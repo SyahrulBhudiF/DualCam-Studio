@@ -1,25 +1,10 @@
 import { Card, CardContent } from "@/components/ui/Card";
+import type { FullEvent } from "../types";
 
-type VideoPredictionEvent = {
-	eventNo: number;
-	onsetFrame: number;
-	apexFrame: number;
-	offsetFrame: number;
-	onsetTimeSeconds: number | null;
-	apexTimeSeconds: number | null;
-	offsetTimeSeconds: number | null;
-	durationFrames: number;
-	durationSeconds: number | null;
-	id: string;
-	predictionId: string;
-	probabilityAnxietyTinggi: number;
-	label: string;
-};
-
-type VideoPredictionResultSidebarProps = {
-	activeEvent: VideoPredictionEvent | null;
+type ResultPanelProps = {
+	activeEvent: FullEvent | null;
 	currentTime: number;
-	onSelectEvent: (event: VideoPredictionEvent) => void;
+	onSelectEvent: (event: FullEvent) => void;
 	prediction: {
 		status: string;
 		label: string | null;
@@ -28,7 +13,7 @@ type VideoPredictionResultSidebarProps = {
 		frameCount: number | null;
 		eventCount: number | null;
 		errorMessage: string | null;
-		events: VideoPredictionEvent[];
+		events: FullEvent[];
 	};
 };
 
@@ -44,12 +29,12 @@ const anxietyLabels: Record<string, string> = {
 	anxiety_tinggi: "Kecemasan Tinggi",
 };
 
-export function VideoPredictionResultSidebar({
+export function ResultPanel({
 	activeEvent,
 	currentTime,
 	onSelectEvent,
 	prediction,
-}: VideoPredictionResultSidebarProps) {
+}: ResultPanelProps) {
 	const finalProbability =
 		typeof prediction.probabilityAnxietyTinggi === "number"
 			? `${(prediction.probabilityAnxietyTinggi * 100).toFixed(1)}%`
@@ -84,7 +69,7 @@ export function VideoPredictionResultSidebar({
 					</div>
 
 					<div className="mt-5 grid grid-cols-3 gap-2">
-						<Metric label="Ambang" value={prediction.threshold?.toFixed(2) ?? "-"} />
+						<Metric label="Threshold" value={formatPercent(prediction.threshold)} />
 						<Metric label="Frame" value={prediction.frameCount ?? "-"} />
 						<Metric label="Event" value={prediction.eventCount ?? prediction.events.length} />
 					</div>

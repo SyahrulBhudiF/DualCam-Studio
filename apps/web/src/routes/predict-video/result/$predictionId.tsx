@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { VideoPredictionViewer } from "@/features/video-prediction/components/VideoPredictionViewer";
+import { Viewer } from "@/features/video-prediction/components/Viewer";
 
 export const Route = createFileRoute("/predict-video/result/$predictionId")({
 	validateSearch: (search) => ({
@@ -12,6 +12,6 @@ function RouteComponent() {
 	const { predictionId } = Route.useParams();
 	const { token } = Route.useSearch();
 	return (
-		<VideoPredictionViewer mode={{ kind: "public", predictionId, token }} />
+		<Viewer mode={{ kind: "public", predictionId, token }} />
 	);
 }

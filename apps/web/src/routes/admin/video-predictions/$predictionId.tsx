@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { VideoPredictionViewer } from "@/features/video-prediction/components/VideoPredictionViewer";
+import { Viewer } from "@/features/video-prediction/components/Viewer";
 
 export const Route = createFileRoute("/admin/video-predictions/$predictionId")({
 	component: RouteComponent,
@@ -7,5 +7,5 @@ export const Route = createFileRoute("/admin/video-predictions/$predictionId")({
 
 function RouteComponent() {
 	const { predictionId } = Route.useParams();
-	return <VideoPredictionViewer mode={{ kind: "admin", predictionId }} />;
+	return <Viewer mode={{ kind: "admin", predictionId }} />;
 }
