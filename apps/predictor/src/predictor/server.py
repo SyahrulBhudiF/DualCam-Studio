@@ -91,6 +91,97 @@ class PredictionService(prediction_pb2_grpc.PredictionServiceServicer):
             results=results,
         )
 
+    async def PredictVideo(
+        self,
+        request: prediction_pb2.PredictVideoRequest,
+        context: grpc.aio.ServicerContext[Any, Any],
+    ) -> prediction_pb2.PredictVideoResponse:
+        if not request.prediction_id:
+            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "prediction_id is required")
+        if not request.video.path:
+            await context.abort(grpc.StatusCode.INVALID_ARGUMENT, "video.path is required")
+
+        try:
+            video = resolve_video(self.settings.upload_root, request.video)
+            pred_ref = make_ref(
+                request.prediction_id,
+                "anonymous",
+                video.question_id or "single",
+                video.kind or "main",
+                video.path,
+                video.source,
+            )
+            output = await self.runtime.predict_video_detail(pred_ref)
+            final_prediction = prediction_pb2.VideoPredictionFinal(
+                label=output.prediction.label,
+                probability_anxiety_tinggi=output.prediction.probability_anxiety_tinggi,
+                frame_count=int(output.pipeline.meta.get("frame_count", 0)),
+                duration_seconds=float(output.pipeline.meta.get("duration_seconds", 0.0)),
+                fps=float(output.pipeline.meta.get("fps", 0.0)),
+                status="ok",
+                error_message="",
+                path=video.rel_path,
+            )
+            return prediction_pb2.PredictVideoResponse(
+                prediction_id=request.prediction_id,
+                model_version=f"tabr:{self.settings.exp_name}:{self.settings.evaluation_seed}",
+                exp_name=self.settings.exp_name,
+                threshold=self.settings.threshold,
+                aggregation=self.settings.aggregation,
+                final_prediction=final_prediction,
+                frames=[],
+                events=[
+                    prediction_pb2.EventPredictionDetail(
+                        event_no=event.event_no,
+                        onset_frame=event.onset_frame,
+                        apex_frame=event.apex_frame,
+                        offset_frame=event.offset_frame,
+                        onset_time_seconds=event.onset_time_seconds,
+                        apex_time_seconds=event.apex_time_seconds,
+                        offset_time_seconds=event.offset_time_seconds,
+                        duration_frames=event.duration_frames,
+                        duration_seconds=event.duration_seconds,
+                        probability_anxiety_tinggi=event.probability_anxiety_tinggi,
+                        label=event.label,
+                    )
+                    for event in output.events
+                ],
+                spotting_signal=prediction_pb2.SpottingSignal(
+                    fps=float(output.pipeline.meta.get("fps", 0.0)),
+                    height_threshold=float(output.pipeline.meta.get("height_threshold") or 0.0),
+                    points=[
+                        prediction_pb2.SpottingSignalPoint(
+                            frame_index=point.frame_index,
+                            signal_index=point.signal_index,
+                            time_seconds=point.time_seconds,
+                            raw_magnitude=point.raw_magnitude,
+                            smoothed_magnitude=point.smoothed_magnitude,
+                            event_no=point.event_no,
+                            event_marker=point.event_marker,
+                        )
+                        for point in output.spotting_signal
+                    ],
+                ),
+            )
+        except Exception as err:
+            return prediction_pb2.PredictVideoResponse(
+                prediction_id=request.prediction_id,
+                model_version=f"tabr:{self.settings.exp_name}:{self.settings.evaluation_seed}",
+                exp_name=self.settings.exp_name,
+                threshold=self.settings.threshold,
+                aggregation=self.settings.aggregation,
+                final_prediction=prediction_pb2.VideoPredictionFinal(
+                    label="",
+                    probability_anxiety_tinggi=0.0,
+                    frame_count=0,
+                    duration_seconds=0.0,
+                    fps=0.0,
+                    status="failed",
+                    error_message=str(err),
+                    path=str(getattr(request.video, "path", "")),
+                ),
+            )
+
     async def predict_ref(
         self,
         request: prediction_pb2.PredictQuizRequest,

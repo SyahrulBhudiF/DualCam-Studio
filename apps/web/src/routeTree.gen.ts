@@ -16,13 +16,17 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuccessIndexRouteImport } from './routes/success/index'
 import { Route as QuestionnaireIndexRouteImport } from './routes/questionnaire/index'
+import { Route as PredictVideoIndexRouteImport } from './routes/predict-video/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as QuestionnaireSegmentedIndexRouteImport } from './routes/questionnaire/segmented/index'
 import { Route as PredictionResponseIdIndexRouteImport } from './routes/prediction/$responseId/index'
+import { Route as AdminVideoPredictionsIndexRouteImport } from './routes/admin/video-predictions/index'
 import { Route as AdminResponsesIndexRouteImport } from './routes/admin/responses/index'
 import { Route as AdminQuestionnairesIndexRouteImport } from './routes/admin/questionnaires/index'
 import { Route as AdminDashboardIndexRouteImport } from './routes/admin/dashboard/index'
+import { Route as PredictVideoResultPredictionIdRouteImport } from './routes/predict-video/result/$predictionId'
 import { Route as ApiVideoSplatRouteImport } from './routes/api/video/$'
+import { Route as AdminVideoPredictionsPredictionIdRouteImport } from './routes/admin/video-predictions/$predictionId'
 import { Route as AdminResponsesResponseIdIndexRouteImport } from './routes/admin/responses/$responseId/index'
 import { Route as AdminQuestionnairesQuestionnaireIdIndexRouteImport } from './routes/admin/questionnaires/$questionnaireId/index'
 import { Route as ApiUploadSegmentedInitRouteImport } from './routes/api/upload/segmented/init'
@@ -66,6 +70,11 @@ const QuestionnaireIndexRoute = QuestionnaireIndexRouteImport.update({
   path: '/questionnaire/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PredictVideoIndexRoute = PredictVideoIndexRouteImport.update({
+  id: '/predict-video/',
+  path: '/predict-video/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -83,6 +92,12 @@ const PredictionResponseIdIndexRoute =
     path: '/prediction/$responseId/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AdminVideoPredictionsIndexRoute =
+  AdminVideoPredictionsIndexRouteImport.update({
+    id: '/video-predictions/',
+    path: '/video-predictions/',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 const AdminResponsesIndexRoute = AdminResponsesIndexRouteImport.update({
   id: '/responses/',
   path: '/responses/',
@@ -99,11 +114,23 @@ const AdminDashboardIndexRoute = AdminDashboardIndexRouteImport.update({
   path: '/dashboard/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const PredictVideoResultPredictionIdRoute =
+  PredictVideoResultPredictionIdRouteImport.update({
+    id: '/predict-video/result/$predictionId',
+    path: '/predict-video/result/$predictionId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiVideoSplatRoute = ApiVideoSplatRouteImport.update({
   id: '/api/video/$',
   path: '/api/video/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminVideoPredictionsPredictionIdRoute =
+  AdminVideoPredictionsPredictionIdRouteImport.update({
+    id: '/video-predictions/$predictionId',
+    path: '/video-predictions/$predictionId',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 const AdminResponsesResponseIdIndexRoute =
   AdminResponsesResponseIdIndexRouteImport.update({
     id: '/responses/$responseId/',
@@ -152,12 +179,16 @@ export interface FileRoutesByFullPath {
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
   '/admin/': typeof AdminIndexRoute
+  '/predict-video/': typeof PredictVideoIndexRoute
   '/questionnaire/': typeof QuestionnaireIndexRoute
   '/success/': typeof SuccessIndexRoute
+  '/admin/video-predictions/$predictionId': typeof AdminVideoPredictionsPredictionIdRoute
   '/api/video/$': typeof ApiVideoSplatRoute
+  '/predict-video/result/$predictionId': typeof PredictVideoResultPredictionIdRoute
   '/admin/dashboard/': typeof AdminDashboardIndexRoute
   '/admin/questionnaires/': typeof AdminQuestionnairesIndexRoute
   '/admin/responses/': typeof AdminResponsesIndexRoute
+  '/admin/video-predictions/': typeof AdminVideoPredictionsIndexRoute
   '/prediction/$responseId/': typeof PredictionResponseIdIndexRoute
   '/questionnaire/segmented/': typeof QuestionnaireSegmentedIndexRoute
   '/api/upload/segmented/$uploadId': typeof ApiUploadSegmentedUploadIdRoute
@@ -174,12 +205,16 @@ export interface FileRoutesByTo {
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
   '/admin': typeof AdminIndexRoute
+  '/predict-video': typeof PredictVideoIndexRoute
   '/questionnaire': typeof QuestionnaireIndexRoute
   '/success': typeof SuccessIndexRoute
+  '/admin/video-predictions/$predictionId': typeof AdminVideoPredictionsPredictionIdRoute
   '/api/video/$': typeof ApiVideoSplatRoute
+  '/predict-video/result/$predictionId': typeof PredictVideoResultPredictionIdRoute
   '/admin/dashboard': typeof AdminDashboardIndexRoute
   '/admin/questionnaires': typeof AdminQuestionnairesIndexRoute
   '/admin/responses': typeof AdminResponsesIndexRoute
+  '/admin/video-predictions': typeof AdminVideoPredictionsIndexRoute
   '/prediction/$responseId': typeof PredictionResponseIdIndexRoute
   '/questionnaire/segmented': typeof QuestionnaireSegmentedIndexRoute
   '/api/upload/segmented/$uploadId': typeof ApiUploadSegmentedUploadIdRoute
@@ -198,12 +233,16 @@ export interface FileRoutesById {
   '/logout': typeof LogoutRoute
   '/signup': typeof SignupRoute
   '/admin/': typeof AdminIndexRoute
+  '/predict-video/': typeof PredictVideoIndexRoute
   '/questionnaire/': typeof QuestionnaireIndexRoute
   '/success/': typeof SuccessIndexRoute
+  '/admin/video-predictions/$predictionId': typeof AdminVideoPredictionsPredictionIdRoute
   '/api/video/$': typeof ApiVideoSplatRoute
+  '/predict-video/result/$predictionId': typeof PredictVideoResultPredictionIdRoute
   '/admin/dashboard/': typeof AdminDashboardIndexRoute
   '/admin/questionnaires/': typeof AdminQuestionnairesIndexRoute
   '/admin/responses/': typeof AdminResponsesIndexRoute
+  '/admin/video-predictions/': typeof AdminVideoPredictionsIndexRoute
   '/prediction/$responseId/': typeof PredictionResponseIdIndexRoute
   '/questionnaire/segmented/': typeof QuestionnaireSegmentedIndexRoute
   '/api/upload/segmented/$uploadId': typeof ApiUploadSegmentedUploadIdRoute
@@ -223,12 +262,16 @@ export interface FileRouteTypes {
     | '/logout'
     | '/signup'
     | '/admin/'
+    | '/predict-video/'
     | '/questionnaire/'
     | '/success/'
+    | '/admin/video-predictions/$predictionId'
     | '/api/video/$'
+    | '/predict-video/result/$predictionId'
     | '/admin/dashboard/'
     | '/admin/questionnaires/'
     | '/admin/responses/'
+    | '/admin/video-predictions/'
     | '/prediction/$responseId/'
     | '/questionnaire/segmented/'
     | '/api/upload/segmented/$uploadId'
@@ -245,12 +288,16 @@ export interface FileRouteTypes {
     | '/logout'
     | '/signup'
     | '/admin'
+    | '/predict-video'
     | '/questionnaire'
     | '/success'
+    | '/admin/video-predictions/$predictionId'
     | '/api/video/$'
+    | '/predict-video/result/$predictionId'
     | '/admin/dashboard'
     | '/admin/questionnaires'
     | '/admin/responses'
+    | '/admin/video-predictions'
     | '/prediction/$responseId'
     | '/questionnaire/segmented'
     | '/api/upload/segmented/$uploadId'
@@ -268,12 +315,16 @@ export interface FileRouteTypes {
     | '/logout'
     | '/signup'
     | '/admin/'
+    | '/predict-video/'
     | '/questionnaire/'
     | '/success/'
+    | '/admin/video-predictions/$predictionId'
     | '/api/video/$'
+    | '/predict-video/result/$predictionId'
     | '/admin/dashboard/'
     | '/admin/questionnaires/'
     | '/admin/responses/'
+    | '/admin/video-predictions/'
     | '/prediction/$responseId/'
     | '/questionnaire/segmented/'
     | '/api/upload/segmented/$uploadId'
@@ -291,9 +342,11 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
   SignupRoute: typeof SignupRoute
+  PredictVideoIndexRoute: typeof PredictVideoIndexRoute
   QuestionnaireIndexRoute: typeof QuestionnaireIndexRoute
   SuccessIndexRoute: typeof SuccessIndexRoute
   ApiVideoSplatRoute: typeof ApiVideoSplatRoute
+  PredictVideoResultPredictionIdRoute: typeof PredictVideoResultPredictionIdRoute
   PredictionResponseIdIndexRoute: typeof PredictionResponseIdIndexRoute
   QuestionnaireSegmentedIndexRoute: typeof QuestionnaireSegmentedIndexRoute
   ApiUploadSegmentedUploadIdRoute: typeof ApiUploadSegmentedUploadIdRoute
@@ -353,6 +406,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuestionnaireIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/predict-video/': {
+      id: '/predict-video/'
+      path: '/predict-video'
+      fullPath: '/predict-video/'
+      preLoaderRoute: typeof PredictVideoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
@@ -373,6 +433,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/prediction/$responseId/'
       preLoaderRoute: typeof PredictionResponseIdIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/video-predictions/': {
+      id: '/admin/video-predictions/'
+      path: '/video-predictions'
+      fullPath: '/admin/video-predictions/'
+      preLoaderRoute: typeof AdminVideoPredictionsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/admin/responses/': {
       id: '/admin/responses/'
@@ -395,12 +462,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/predict-video/result/$predictionId': {
+      id: '/predict-video/result/$predictionId'
+      path: '/predict-video/result/$predictionId'
+      fullPath: '/predict-video/result/$predictionId'
+      preLoaderRoute: typeof PredictVideoResultPredictionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/video/$': {
       id: '/api/video/$'
       path: '/api/video/$'
       fullPath: '/api/video/$'
       preLoaderRoute: typeof ApiVideoSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/video-predictions/$predictionId': {
+      id: '/admin/video-predictions/$predictionId'
+      path: '/video-predictions/$predictionId'
+      fullPath: '/admin/video-predictions/$predictionId'
+      preLoaderRoute: typeof AdminVideoPredictionsPredictionIdRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/admin/responses/$responseId/': {
       id: '/admin/responses/$responseId/'
@@ -456,9 +537,11 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminVideoPredictionsPredictionIdRoute: typeof AdminVideoPredictionsPredictionIdRoute
   AdminDashboardIndexRoute: typeof AdminDashboardIndexRoute
   AdminQuestionnairesIndexRoute: typeof AdminQuestionnairesIndexRoute
   AdminResponsesIndexRoute: typeof AdminResponsesIndexRoute
+  AdminVideoPredictionsIndexRoute: typeof AdminVideoPredictionsIndexRoute
   AdminQuestionnairesQuestionnaireIdIndexRoute: typeof AdminQuestionnairesQuestionnaireIdIndexRoute
   AdminResponsesResponseIdIndexRoute: typeof AdminResponsesResponseIdIndexRoute
   AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute: typeof AdminQuestionnairesQuestionnaireIdQuestionIdIndexRoute
@@ -466,9 +549,12 @@ interface AdminRouteRouteChildren {
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
+  AdminVideoPredictionsPredictionIdRoute:
+    AdminVideoPredictionsPredictionIdRoute,
   AdminDashboardIndexRoute: AdminDashboardIndexRoute,
   AdminQuestionnairesIndexRoute: AdminQuestionnairesIndexRoute,
   AdminResponsesIndexRoute: AdminResponsesIndexRoute,
+  AdminVideoPredictionsIndexRoute: AdminVideoPredictionsIndexRoute,
   AdminQuestionnairesQuestionnaireIdIndexRoute:
     AdminQuestionnairesQuestionnaireIdIndexRoute,
   AdminResponsesResponseIdIndexRoute: AdminResponsesResponseIdIndexRoute,
@@ -486,9 +572,11 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
   SignupRoute: SignupRoute,
+  PredictVideoIndexRoute: PredictVideoIndexRoute,
   QuestionnaireIndexRoute: QuestionnaireIndexRoute,
   SuccessIndexRoute: SuccessIndexRoute,
   ApiVideoSplatRoute: ApiVideoSplatRoute,
+  PredictVideoResultPredictionIdRoute: PredictVideoResultPredictionIdRoute,
   PredictionResponseIdIndexRoute: PredictionResponseIdIndexRoute,
   QuestionnaireSegmentedIndexRoute: QuestionnaireSegmentedIndexRoute,
   ApiUploadSegmentedUploadIdRoute: ApiUploadSegmentedUploadIdRoute,

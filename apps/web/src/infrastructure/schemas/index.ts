@@ -1,17 +1,27 @@
 export { LoginSchema, SignupSchema } from "./auth";
 export type {
 	PredictionByResponse,
+	CreateVideoPrediction,
 	PredictionHealth,
 	PredictionVideoPair,
 	PredictionVideoRef,
 	PredictQuizRequest,
 	PredictQuizResponse,
+	PredictVideoRequest,
+	PredictVideoResponse,
+	PublicVideoPredictionAccess,
+	VideoPredictionById,
+	VideoPredictionEvent,
+	VideoPredictionFinal,
 	PublicPredictionByResponse,
 	ResponseForPrediction,
 } from "./prediction";
 export {
+	CreateVideoPredictionSchema,
 	PredictionByResponseSchema,
 	PublicPredictionByResponseSchema,
+	PublicVideoPredictionAccessSchema,
+	VideoPredictionByIdSchema,
 } from "./prediction";
 export {
 	BulkDeleteSchema,

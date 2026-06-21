@@ -5,6 +5,7 @@ package prediction.v1;
 service PredictionService {
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
   rpc PredictQuiz(PredictQuizRequest) returns (PredictQuizResponse);
+  rpc PredictVideo(PredictVideoRequest) returns (PredictVideoResponse);
 }
 
 message HealthCheckRequest {}
@@ -38,6 +39,77 @@ message PredictQuizResponse {
   double threshold = 4;
   string aggregation = 5;
   repeated PredictionResult results = 6;
+}
+
+message PredictVideoRequest {
+  string prediction_id = 1;
+  VideoRef video = 2;
+}
+
+message PredictVideoResponse {
+  string prediction_id = 1;
+  string model_version = 2;
+  string exp_name = 3;
+  double threshold = 4;
+  string aggregation = 5;
+  VideoPredictionFinal final_prediction = 6;
+  repeated FramePrediction frames = 7;
+  repeated EventPredictionDetail events = 8;
+  SpottingSignal spotting_signal = 9;
+}
+
+message VideoPredictionFinal {
+  string label = 1;
+  double probability_anxiety_tinggi = 2;
+  int64 frame_count = 3;
+  double duration_seconds = 4;
+  double fps = 5;
+  string status = 6;
+  string error_message = 7;
+  string path = 8;
+}
+
+message FramePrediction {
+  int64 frame_index = 1;
+  int64 signal_index = 2;
+  double time_seconds = 3;
+  double probability_anxiety_tinggi = 4;
+  string label = 5;
+  double raw_magnitude = 6;
+  double smoothed_magnitude = 7;
+  double height_threshold = 8;
+  int64 event_no = 9;
+  string event_marker = 10;
+}
+
+message SpottingSignalPoint {
+  int64 frame_index = 1;
+  int64 signal_index = 2;
+  double time_seconds = 3;
+  double raw_magnitude = 4;
+  double smoothed_magnitude = 5;
+  int64 event_no = 6;
+  string event_marker = 7;
+}
+
+message SpottingSignal {
+  double fps = 1;
+  double height_threshold = 2;
+  repeated SpottingSignalPoint points = 3;
+}
+
+message EventPredictionDetail {
+  int64 event_no = 1;
+  int64 onset_frame = 2;
+  int64 apex_frame = 3;
+  int64 offset_frame = 4;
+  double onset_time_seconds = 5;
+  double apex_time_seconds = 6;
+  double offset_time_seconds = 7;
+  int64 duration_frames = 8;
+  double duration_seconds = 9;
+  double probability_anxiety_tinggi = 10;
+  string label = 11;
 }
 
 message PredictionResult {

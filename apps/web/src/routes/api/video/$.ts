@@ -71,7 +71,7 @@ export const Route = createFileRoute("/api/video/$")({
 
 					const chunkSize = end - start + 1;
 					const stream = fs.createReadStream(filePath, { start, end });
-					const readable = Readable.toWeb(stream) as ReadableStream;
+					const readable = Readable.toWeb(stream) as unknown as ReadableStream;
 
 					return new Response(readable, {
 						status: 206,
@@ -87,7 +87,7 @@ export const Route = createFileRoute("/api/video/$")({
 
 				// Full file response — still streamed
 				const stream = fs.createReadStream(filePath);
-				const readable = Readable.toWeb(stream) as ReadableStream;
+				const readable = Readable.toWeb(stream) as unknown as ReadableStream;
 
 				return new Response(readable, {
 					status: 200,

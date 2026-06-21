@@ -2,8 +2,15 @@ from pathlib import Path
 
 import numpy as np
 
+from predictor.core.spotting import signal_index_to_frame_index
 from predictor.features.extractor import ClipMeta, ExtractConfig, extract_rows_from_rois
-from predictor.features.pipeline import VideoRef, extract_from_roi_frames, extract_from_roi_stream
+from predictor.features.pipeline import (
+    PipelineConfig,
+    VideoRef,
+    build_pipeline_result,
+    extract_from_roi_frames,
+    extract_from_roi_stream,
+)
 
 
 def roi_frame(delta: int) -> dict[str, np.ndarray]:
@@ -41,12 +48,26 @@ def test_extract_from_roi_frames_meta() -> None:
         video_kind="segmented",
         path=Path("segmented/p1/q1/a.webm"),
     )
-    result = extract_from_roi_frames(ref, [roi_frame(0), roi_frame(2), roi_frame(4)])
+    frames = [roi_frame(0), roi_frame(2), roi_frame(4)]
+    result = build_pipeline_result(
+        ref,
+        frames,
+        magnitudes=[0.0, 1.0],
+        cfg=PipelineConfig(),
+        events=[
+            {"event_no": 1, "onset_signal": 0, "apex_signal": 1, "offset_signal": 1, "duration": 1}
+        ],
+    )
 
     assert len(result.table.rows) == 2
+    assert result.table.rows[0]["event_no"] == 1
+    assert result.table.rows[0]["frame"] == signal_index_to_frame_index(0)
     assert result.meta["frame_count"] == 3
     assert result.meta["row_count"] == 2
     assert result.meta["magnitude_count"] == 2
+    assert result.meta["raw_magnitudes"] == [0.0, 1.0]
+    assert result.meta["smoothed_magnitudes"] == []
+    assert result.meta["height_threshold"] is None
 
 
 def test_extract_from_roi_stream_matches_batch() -> None:

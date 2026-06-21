@@ -44,6 +44,11 @@ class PredictionServiceStub(object):
                 request_serializer=prediction_dot_v1_dot_prediction__pb2.PredictQuizRequest.SerializeToString,
                 response_deserializer=prediction_dot_v1_dot_prediction__pb2.PredictQuizResponse.FromString,
                 _registered_method=True)
+        self.PredictVideo = channel.unary_unary(
+                '/prediction.v1.PredictionService/PredictVideo',
+                request_serializer=prediction_dot_v1_dot_prediction__pb2.PredictVideoRequest.SerializeToString,
+                response_deserializer=prediction_dot_v1_dot_prediction__pb2.PredictVideoResponse.FromString,
+                _registered_method=True)
 
 
 class PredictionServiceServicer(object):
@@ -61,6 +66,12 @@ class PredictionServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def PredictVideo(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_PredictionServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -73,6 +84,11 @@ def add_PredictionServiceServicer_to_server(servicer, server):
                     servicer.PredictQuiz,
                     request_deserializer=prediction_dot_v1_dot_prediction__pb2.PredictQuizRequest.FromString,
                     response_serializer=prediction_dot_v1_dot_prediction__pb2.PredictQuizResponse.SerializeToString,
+            ),
+            'PredictVideo': grpc.unary_unary_rpc_method_handler(
+                    servicer.PredictVideo,
+                    request_deserializer=prediction_dot_v1_dot_prediction__pb2.PredictVideoRequest.FromString,
+                    response_serializer=prediction_dot_v1_dot_prediction__pb2.PredictVideoResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -129,6 +145,33 @@ class PredictionService(object):
             '/prediction.v1.PredictionService/PredictQuiz',
             prediction_dot_v1_dot_prediction__pb2.PredictQuizRequest.SerializeToString,
             prediction_dot_v1_dot_prediction__pb2.PredictQuizResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def PredictVideo(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/prediction.v1.PredictionService/PredictVideo',
+            prediction_dot_v1_dot_prediction__pb2.PredictVideoRequest.SerializeToString,
+            prediction_dot_v1_dot_prediction__pb2.PredictVideoResponse.FromString,
             options,
             channel_credentials,
             insecure,

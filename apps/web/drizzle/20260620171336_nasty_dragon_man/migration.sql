@@ -1,0 +1,1 @@
+ALTER TABLE "video_predictions" ADD COLUMN "playback_video_path" text;

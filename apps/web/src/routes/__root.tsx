@@ -96,6 +96,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en">
 			<head>
+				{import.meta.env.DEV ? (
+					<script src="https://unpkg.com/react-scan/dist/auto.global.js" />
+				) : null}
 				<HeadContent />
 				<title></title>
 			</head>

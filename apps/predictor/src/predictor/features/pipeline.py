@@ -3,13 +3,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
-from predictor.core.spotting import SpotConfig, detect_events
+from predictor.core.spotting import SpotConfig, detect_events, signal_index_to_frame_index
 from predictor.features.extractor import (
     ClipMeta,
     ExtractConfig,
     FeatureTable,
     extract_row,
-    extract_rows_from_rois,
     to_gray,
 )
 
@@ -47,58 +46,119 @@ class PipelineResult:
     meta: dict[str, Any]
 
 
-def compute_frame_magnitude(rois: dict[str, Array], baseline: dict[str, Array]) -> float:
+def compute_frame_magnitude(
+    prev_rois: dict[str, Array],
+    curr_rois: dict[str, Array],
+    cfg: PipelineConfig,
+) -> float:
     import numpy as np
 
-    values: list[float] = []
-    for name, image in rois.items():
-        if name not in baseline:
+    from predictor.core.poc import compute_poc
+    from predictor.core.quadran import compute_quadrants_from_vectors
+    from predictor.core.vector import compute_vectors
+
+    roi_magnitudes: list[float] = []
+    for region_name in cfg.extract.regions:
+        if region_name not in prev_rois or region_name not in curr_rois:
             continue
-        image_arr = np.asarray(image, dtype=float)
-        base_arr = np.asarray(baseline[name], dtype=float)
-        diff = image_arr - base_arr
-        values.append(float(np.mean(np.abs(diff))))
-    return float(np.mean(values)) if values else 0.0
+        try:
+            roi_prev = to_gray(prev_rois[region_name])
+            roi_curr = to_gray(curr_rois[region_name])
+            if roi_prev.size == 0 or roi_curr.size == 0:
+                return 0.0
+            poc = compute_poc(roi_prev, roi_curr, cfg.extract.block_size)
+            vec = compute_vectors(poc.poc, poc.origins, cfg.extract.block_size)
+            quad = compute_quadrants_from_vectors(vec.vectors).quadrants
+            magnitudes = [float(block[4]) for block in quad]
+            roi_magnitudes.append(float(np.mean(magnitudes)) if magnitudes else 0.0)
+        except Exception:
+            return 0.0
+    return float(np.mean(roi_magnitudes)) if roi_magnitudes else 0.0
 
 
-def build_magnitude_signal(roi_frames: list[dict[str, Array]]) -> list[float]:
-    if len(roi_frames) < 2:
+def build_magnitude_signal(
+    roi_frames: list[dict[str, Array]],
+    cfg: PipelineConfig | None = None,
+) -> list[float]:
+    cfg = cfg or PipelineConfig()
+    if len(roi_frames) < 3:
         return []
-    baseline = roi_frames[0]
-    return [compute_frame_magnitude(frame, baseline) for frame in roi_frames[1:]]
+    magnitudes: list[float] = []
+    prev_rois = roi_frames[0]
+    for curr_rois in roi_frames[1:]:
+        magnitudes.append(compute_frame_magnitude(prev_rois, curr_rois, cfg))
+        prev_rois = curr_rois
+    return magnitudes
 
 
-def make_clip_meta(ref: VideoRef) -> ClipMeta:
+def make_clip_meta(ref: VideoRef, event_no: int = 0) -> ClipMeta:
     return ClipMeta(
         response_id=ref.response_id,
         participant_id=ref.participant_id,
         question_id=ref.question_id,
         video_kind=ref.video_kind,
         video_path=ref.path.as_posix(),
+        event_no=event_no,
         source=ref.source,
     )
 
 
+def build_event_feature_table(
+    ref: VideoRef,
+    roi_frames: list[dict[str, Array]],
+    events: list[dict[str, int]],
+    cfg: PipelineConfig,
+) -> FeatureTable:
+    rows: list[dict[str, Any]] = []
+    for event in events:
+        event_no = int(event.get("event_no", 0))
+        onset_frame = min(
+            signal_index_to_frame_index(int(event.get("onset_signal", 0))), len(roi_frames)
+        )
+        offset_frame = min(
+            signal_index_to_frame_index(int(event.get("offset_signal", 0))), len(roi_frames)
+        )
+        if onset_frame < 1 or offset_frame < onset_frame:
+            continue
+        baseline = roi_frames[onset_frame - 1]
+        baseline_gray = {name: to_gray(img) for name, img in baseline.items()}
+        meta = make_clip_meta(ref, event_no)
+        for frame_no in range(onset_frame, offset_frame + 1):
+            rows.append(
+                extract_row(meta, frame_no, roi_frames[frame_no - 1], baseline_gray, cfg.extract)
+            )
+    return FeatureTable(rows)
+
+
 def build_pipeline_result(
     ref: VideoRef,
-    table: FeatureTable,
+    roi_frames: list[dict[str, Array]],
     magnitudes: list[float],
-    frame_count: int,
     cfg: PipelineConfig,
+    events: list[dict[str, int]] | None = None,
 ) -> PipelineResult:
-    spot = detect_events(magnitudes, cfg.spot) if len(magnitudes) >= 6 else None
+    spot = detect_events(magnitudes, cfg.spot) if events is None and len(magnitudes) >= 6 else None
+    detected_events = [] if spot is None else [event.as_dict() for event in spot.events]
+    events = detected_events if events is None else events
+    table = build_event_feature_table(ref, roi_frames, events, cfg)
+    smoothed_magnitudes = [] if spot is None else spot.smoothed
+    spot_meta = {} if spot is None else spot.meta
     return PipelineResult(
         table=table,
-        events=[] if spot is None else [event.as_dict() for event in spot.events],
+        events=events,
         meta={
             "response_id": ref.response_id,
             "participant_id": ref.participant_id,
             "question_id": ref.question_id,
             "video_kind": ref.video_kind,
             "video_path": ref.path.as_posix(),
-            "frame_count": frame_count,
+            "frame_count": len(roi_frames),
             "row_count": len(table.rows),
             "magnitude_count": len(magnitudes),
+            "raw_magnitudes": magnitudes,
+            "smoothed_magnitudes": smoothed_magnitudes,
+            "height_threshold": spot_meta.get("height_threshold"),
+            "event_signal_frame_offset": signal_index_to_frame_index(0),
         },
     )
 
@@ -109,9 +169,8 @@ def extract_from_roi_frames(
     cfg: PipelineConfig | None = None,
 ) -> PipelineResult:
     cfg = cfg or PipelineConfig()
-    table = extract_rows_from_rois(make_clip_meta(ref), roi_frames, cfg.extract)
-    magnitudes = build_magnitude_signal(roi_frames)
-    return build_pipeline_result(ref, table, magnitudes, len(roi_frames), cfg)
+    magnitudes = build_magnitude_signal(roi_frames, cfg)
+    return build_pipeline_result(ref, roi_frames, magnitudes, cfg)
 
 
 def extract_from_roi_stream(
@@ -120,23 +179,11 @@ def extract_from_roi_stream(
     cfg: PipelineConfig | None = None,
 ) -> PipelineResult:
     cfg = cfg or PipelineConfig()
-    meta = make_clip_meta(ref)
-    baseline = next(roi_frames, None)
-    if baseline is None:
+    frames = list(roi_frames)
+    if len(frames) < 2:
         raise ValueError("Need >= 2 ROI frames")
-
-    baseline_gray = {name: to_gray(img) for name, img in baseline.items()}
-    rows: list[dict[str, Any]] = []
-    magnitudes: list[float] = []
-    frame_count = 1
-
-    for frame_count, rois in enumerate(roi_frames, start=2):
-        rows.append(extract_row(meta, frame_count, rois, baseline_gray, cfg.extract))
-        magnitudes.append(compute_frame_magnitude(rois, baseline))
-
-    if not rows:
-        raise ValueError("Need >= 2 ROI frames")
-    return build_pipeline_result(ref, FeatureTable(rows), magnitudes, frame_count, cfg)
+    magnitudes = build_magnitude_signal(frames, cfg)
+    return build_pipeline_result(ref, frames, magnitudes, cfg)
 
 
 def extract_video(

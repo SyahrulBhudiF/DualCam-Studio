@@ -9,6 +9,7 @@ import {
 	timestamp,
 	uuid,
 } from "drizzle-orm/pg-core";
+import type { SpottingSignal } from "../schemas/prediction";
 
 export const questionnaires = pgTable("questionnaires", {
 	id: uuid("id").primaryKey().defaultRandom(),
@@ -122,6 +123,65 @@ export const responseResultAccess = pgTable(
 	},
 	(table) => [
 		index("idx_response_result_access_response_id").on(table.responseId),
+	],
+);
+
+export const videoPredictions = pgTable(
+	"video_predictions",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		videoPath: text("video_path").notNull(),
+		playbackVideoPath: text("playback_video_path"),
+		videoFormat: text("video_format"),
+		videoMimeType: text("video_mime_type"),
+		videoSizeBytes: integer("video_size_bytes"),
+		accessTokenHash: text("access_token_hash").notNull(),
+		accessTokenExpiresAt: timestamp("access_token_expires_at"),
+		status: text("status").default("pending").notNull(),
+		label: text("label"),
+		probabilityAnxietyTinggi: doublePrecision("probability_anxiety_tinggi"),
+		threshold: doublePrecision("threshold"),
+		aggregation: text("aggregation"),
+		modelExpName: text("model_exp_name"),
+		modelVersion: text("model_version"),
+		frameCount: integer("frame_count"),
+		durationSeconds: doublePrecision("duration_seconds"),
+		fps: doublePrecision("fps"),
+		eventCount: integer("event_count"),
+		spottingSignal: jsonb("spotting_signal").$type<SpottingSignal | null>(),
+		errorMessage: text("error_message"),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at").defaultNow().notNull(),
+	},
+	(table) => [
+		index("idx_video_predictions_status").on(table.status),
+		index("idx_video_predictions_created_at").on(table.createdAt),
+	],
+);
+
+export const videoPredictionEvents = pgTable(
+	"video_prediction_events",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		predictionId: uuid("prediction_id")
+			.references(() => videoPredictions.id, { onDelete: "cascade" })
+			.notNull(),
+		eventNo: integer("event_no").notNull(),
+		onsetFrame: integer("onset_frame").notNull(),
+		apexFrame: integer("apex_frame").notNull(),
+		offsetFrame: integer("offset_frame").notNull(),
+		onsetTimeSeconds: doublePrecision("onset_time_seconds"),
+		apexTimeSeconds: doublePrecision("apex_time_seconds"),
+		offsetTimeSeconds: doublePrecision("offset_time_seconds"),
+		durationFrames: integer("duration_frames").notNull(),
+		durationSeconds: doublePrecision("duration_seconds"),
+		probabilityAnxietyTinggi: doublePrecision(
+			"probability_anxiety_tinggi",
+		).notNull(),
+		label: text("label").notNull(),
+	},
+	(table) => [
+		index("idx_video_prediction_events_prediction_id").on(table.predictionId),
 	],
 );
 

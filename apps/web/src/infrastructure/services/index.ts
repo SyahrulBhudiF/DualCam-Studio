@@ -11,6 +11,7 @@ import { QuestionnaireService } from "./questionnaire";
 import { RateLimitService } from "./rate-limit";
 import { ResponseService } from "./response";
 import { ResultAccessService } from "./result-access";
+import { VideoPredictionService } from "./video-prediction";
 
 export { AnswerService } from "./answer";
 export { AuthService } from "./auth";
@@ -23,6 +24,7 @@ export { QuestionnaireService } from "./questionnaire";
 export { RateLimitService } from "./rate-limit";
 export { ResponseService } from "./response";
 export { ResultAccessService } from "./result-access";
+export { VideoPredictionService } from "./video-prediction";
 
 export const AllServicesLive = Layer.mergeAll(
 	QuestionnaireService.layer,
@@ -34,6 +36,7 @@ export const AllServicesLive = Layer.mergeAll(
 	DashboardService.layer,
 	FileUploadService.layer.pipe(Layer.provide(NodeFileSystem.layer)),
 	PredictionResultService.layer,
+	VideoPredictionService.layer,
 	AuthService.layer,
 	RateLimitService.layer,
 );

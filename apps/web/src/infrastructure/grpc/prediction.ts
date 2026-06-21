@@ -8,6 +8,8 @@ import type {
 	PredictionHealth,
 	PredictQuizRequest,
 	PredictQuizResponse,
+	PredictVideoRequest,
+	PredictVideoResponse,
 } from "../schemas/prediction";
 
 type PredictionGrpcError = PredictionRequestError | PredictionUnavailableError;
@@ -30,6 +32,15 @@ export const PredictionGrpc = {
 		GrpcClientLayer.asEffect().pipe(
 			Effect.flatMap((client) =>
 				client.call<PredictQuizResponse>("predictQuiz", request),
+			),
+		),
+
+	predictVideo: (
+		request: PredictVideoRequest,
+	): Effect.Effect<PredictVideoResponse, PredictionGrpcError, GrpcClientLayer> =>
+		GrpcClientLayer.asEffect().pipe(
+			Effect.flatMap((client) =>
+				client.call<PredictVideoResponse>("predictVideo", request),
 			),
 		),
 };
