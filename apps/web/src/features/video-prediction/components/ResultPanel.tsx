@@ -44,7 +44,7 @@ export function ResultPanel({
 		: "-";
 
 	return (
-		<aside className="h-screen w-[380px] shrink-0 overflow-y-auto border-l bg-zinc-950 p-4 text-zinc-50">
+		<aside className="h-full w-[380px] shrink-0 overflow-y-auto border-l bg-zinc-950 p-4 text-zinc-50">
 			<div className="space-y-4">
 				<section className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/25">
 					<div className="flex items-start justify-between gap-3">

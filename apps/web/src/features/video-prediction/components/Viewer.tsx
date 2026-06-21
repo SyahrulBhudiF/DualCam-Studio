@@ -23,6 +23,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/Card";
+import { cn } from "@/utils/utils";
 import { useViewerState } from "../hooks/useViewerState";
 import type { ClipEvent, Prediction, ViewerMode } from "../types";
 import {
@@ -132,7 +133,14 @@ export function Viewer({ mode }: { mode: ViewerMode }) {
 	}
 
 	return (
-		<main className="fixed inset-0 flex overflow-hidden bg-muted/40">
+		<main
+			className={cn(
+				"flex overflow-hidden bg-muted/40",
+				mode.kind === "public"
+					? "fixed inset-0"
+					: "h-[calc(100svh-4rem)] border-t",
+			)}
+		>
 			<section className="h-full min-w-0 flex-1 overflow-y-auto p-4 lg:p-5">
 				<div className="space-y-4">
 					<header className="flex items-end justify-between gap-4">

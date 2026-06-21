@@ -2,6 +2,7 @@ import {
 	ClipboardList,
 	Command,
 	FileText,
+	FileVideo,
 	LayoutDashboard,
 	LogOut,
 } from "lucide-react";
@@ -38,6 +39,11 @@ export const sidebarData: SidebarData = {
 					title: "Responses",
 					url: "/admin/responses",
 					icon: FileText,
+				},
+				{
+					title: "Video Predictions",
+					url: "/admin/video-predictions",
+					icon: FileVideo,
 				},
 			],
 		},
