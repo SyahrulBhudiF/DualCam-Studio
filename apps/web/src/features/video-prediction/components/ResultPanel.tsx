@@ -1,10 +1,12 @@
 import { Card, CardContent } from "@/components/ui/Card";
+import type { Phase } from "../hooks/useReplay";
 import type { FullEvent } from "../types";
 
 type ResultPanelProps = {
 	activeEvent: FullEvent | null;
 	currentTime: number;
 	onSelectEvent: (event: FullEvent) => void;
+	phase: Phase;
 	prediction: {
 		status: string;
 		label: string | null;
@@ -15,13 +17,24 @@ type ResultPanelProps = {
 		errorMessage: string | null;
 		events: FullEvent[];
 	};
+	showFinal: boolean;
 };
 
 const statusLabels: Record<string, string> = {
-	completed: "Selesai",
+	completed: "Siap",
 	failed: "Gagal",
 	pending: "Menunggu",
-	running: "Dianalisis",
+	running: "Disiapkan",
+};
+
+const phaseLabels: Record<Phase, string> = {
+	done: "Selesai",
+	fail: "Gagal",
+	pause: "Dijeda",
+	play: "Menampilkan",
+	ready: "Siap",
+	view: "Meninjau",
+	wait: "Menunggu",
 };
 
 const anxietyLabels: Record<string, string> = {
@@ -33,15 +46,19 @@ export function ResultPanel({
 	activeEvent,
 	currentTime,
 	onSelectEvent,
+	phase,
 	prediction,
+	showFinal,
 }: ResultPanelProps) {
 	const finalProbability =
-		typeof prediction.probabilityAnxietyTinggi === "number"
+		showFinal && typeof prediction.probabilityAnxietyTinggi === "number"
 			? `${(prediction.probabilityAnxietyTinggi * 100).toFixed(1)}%`
 			: "-";
-	const finalLabel = prediction.label
+	const finalLabel = showFinal && prediction.label
 		? (anxietyLabels[prediction.label] ?? prediction.label)
-		: "-";
+		: showFinal
+			? "-"
+			: "Menyiapkan…";
 
 	return (
 		<aside className="h-full w-[380px] shrink-0 overflow-y-auto border-l bg-zinc-950 p-4 text-zinc-50">
@@ -55,7 +72,7 @@ export function ResultPanel({
 							</h2>
 						</div>
 						<span className="rounded-full bg-white/10 px-3 py-1 text-xs text-zinc-300">
-							{statusLabels[prediction.status] ?? prediction.status}
+							{phaseLabel(phase, prediction.status)}
 						</span>
 					</div>
 
@@ -69,10 +86,11 @@ export function ResultPanel({
 					</div>
 
 					<div className="mt-5 grid grid-cols-3 gap-2">
-						<Metric label="Threshold" value={formatPercent(prediction.threshold)} />
-						<Metric label="Frame" value={prediction.frameCount ?? "-"} />
-						<Metric label="Event" value={prediction.eventCount ?? prediction.events.length} />
+						<Metric label="Threshold" value={showFinal ? formatPercent(prediction.threshold) : "-"} />
+						<Metric label="Frame" value={showFinal ? (prediction.frameCount ?? "-") : "-"} />
+						<Metric label="Event" value={prediction.events.length} />
 					</div>
+
 				</section>
 
 				<section className="rounded-3xl border border-white/10 bg-zinc-900 p-4">
@@ -180,6 +198,10 @@ function Marker({
 			<p className={accent ? "text-zinc-700 text-xs" : "text-zinc-400 text-xs"}>{formatTime(time)}</p>
 		</div>
 	);
+}
+
+function phaseLabel(phase: Phase, status: string) {
+	return phaseLabels[phase] ?? statusLabels[status] ?? status;
 }
 
 function formatPercent(value?: number | null) {

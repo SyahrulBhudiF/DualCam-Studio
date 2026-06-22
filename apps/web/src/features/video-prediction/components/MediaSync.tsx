@@ -36,19 +36,29 @@ function activeEventNo(events: ReadonlyArray<ClipEvent>, timeSeconds: number) {
 
 export function VidstackSync({
 	events,
+	onDurationChange,
 	onEventTimeChange,
+	onTimeChange,
 	timeStore,
 }: {
 	events: ClipEvent[];
+	onDurationChange?: (duration: number) => void;
 	onEventTimeChange: (timeSeconds: number) => void;
+	onTimeChange?: (timeSeconds: number) => void;
 	timeStore: MediaTimeStore;
 }) {
 	const currentTime = useMediaState("currentTime");
+	const duration = useMediaState("duration");
 	const lastEventNoRef = useRef<number | null>(null);
 
 	useEffect(() => {
 		timeStore.setCurrentTime(currentTime);
-	}, [currentTime, timeStore]);
+		onTimeChange?.(currentTime);
+	}, [currentTime, onTimeChange, timeStore]);
+
+	useEffect(() => {
+		if (Number.isFinite(duration) && duration > 0) onDurationChange?.(duration);
+	}, [duration, onDurationChange]);
 
 	useEffect(() => {
 		const eventNo = activeEventNo(events, currentTime);

@@ -1,3 +1,5 @@
+import { Effect, Ref } from "effect";
+
 const CHUNK_SIZE = 4 * 1024 * 1024;
 
 export type UploadInitInput = {
@@ -61,6 +63,43 @@ export async function finalizeUpload(uploadId: string, signal?: AbortSignal) {
 		signal,
 	});
 	return parseJson<UploadResult>(response);
+}
+
+export async function uploadChunks({
+	concurrency,
+	file,
+	onProgress,
+	session,
+}: {
+	concurrency: number;
+	file: File;
+	onProgress: (progress: number) => void;
+	session: UploadSession;
+}) {
+	return Effect.runPromise(
+		Effect.gen(function* () {
+			const done = yield* Ref.make(0);
+			yield* Effect.forEach(
+				Array.from({ length: session.totalChunks }, (_, index) => index),
+				(index) =>
+					Effect.gen(function* () {
+						const start = index * session.chunkSize;
+						const end = Math.min(start + session.chunkSize, file.size);
+						yield* Effect.promise(() =>
+							uploadChunk({
+								chunk: file.slice(start, end),
+								index,
+								totalChunks: session.totalChunks,
+								uploadId: session.uploadId,
+							}),
+						);
+						const count = yield* Ref.updateAndGet(done, (value) => value + 1);
+						onProgress(Math.round((count / session.totalChunks) * 100));
+					}),
+				{ concurrency },
+			);
+		}),
+	);
 }
 
 export async function cancelUpload(uploadId: string, signal?: AbortSignal) {

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as QuizRouteImport } from './routes/quiz'
 import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteRouteImport } from './routes/admin/route'
@@ -38,6 +39,11 @@ import { Route as AdminQuestionnairesQuestionnaireIdQuestionIdIndexRouteImport }
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuizRoute = QuizRouteImport.update({
+  id: '/quiz',
+  path: '/quiz',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LogoutRoute = LogoutRouteImport.update({
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/quiz': typeof QuizRoute
   '/signup': typeof SignupRoute
   '/admin/': typeof AdminIndexRoute
   '/predict-video/': typeof PredictVideoIndexRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/quiz': typeof QuizRoute
   '/signup': typeof SignupRoute
   '/admin': typeof AdminIndexRoute
   '/predict-video': typeof PredictVideoIndexRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/logout': typeof LogoutRoute
+  '/quiz': typeof QuizRoute
   '/signup': typeof SignupRoute
   '/admin/': typeof AdminIndexRoute
   '/predict-video/': typeof PredictVideoIndexRoute
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/logout'
+    | '/quiz'
     | '/signup'
     | '/admin/'
     | '/predict-video/'
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/logout'
+    | '/quiz'
     | '/signup'
     | '/admin'
     | '/predict-video'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/logout'
+    | '/quiz'
     | '/signup'
     | '/admin/'
     | '/predict-video/'
@@ -341,6 +353,7 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   LogoutRoute: typeof LogoutRoute
+  QuizRoute: typeof QuizRoute
   SignupRoute: typeof SignupRoute
   PredictVideoIndexRoute: typeof PredictVideoIndexRoute
   QuestionnaireIndexRoute: typeof QuestionnaireIndexRoute
@@ -362,6 +375,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quiz': {
+      id: '/quiz'
+      path: '/quiz'
+      fullPath: '/quiz'
+      preLoaderRoute: typeof QuizRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/logout': {
@@ -571,6 +591,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRouteRoute: AdminRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   LogoutRoute: LogoutRoute,
+  QuizRoute: QuizRoute,
   SignupRoute: SignupRoute,
   PredictVideoIndexRoute: PredictVideoIndexRoute,
   QuestionnaireIndexRoute: QuestionnaireIndexRoute,

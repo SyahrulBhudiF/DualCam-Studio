@@ -25,7 +25,7 @@ function SuccessPage() {
 						have been recorded securely.
 					</p>
 					<Button asChild className="w-full">
-						<Link to="/">Back to Home</Link>
+						<Link to="/quiz">Back to Quiz</Link>
 					</Button>
 				</CardContent>
 			</Card>

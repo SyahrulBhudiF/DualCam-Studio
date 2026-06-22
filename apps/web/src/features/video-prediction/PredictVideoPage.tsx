@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Loader2, Upload, Video } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { finalizeUpload, initUpload, uploadChunk } from "@/apis/upload";
+import { finalizeUpload, initUpload, uploadChunks } from "@/apis/upload";
 import {
 	createVideoPrediction,
 	runVideoPrediction,
@@ -29,10 +29,11 @@ export function PredictVideoPage() {
 
 	const updateSelectedFile = (file: File | null) => {
 		setPreviewUrl(file ? URL.createObjectURL(file) : null);
+		const video = document.createElement("video");
 		setCanPreview(
 			!!file &&
 				file.type.startsWith("video/") &&
-				document.createElement("video").canPlayType(file.type) !== "",
+				video.canPlayType(file.type) !== "",
 		);
 	};
 
@@ -63,24 +64,12 @@ export function PredictVideoPage() {
 					size: value.video.size,
 				});
 
-				for (let index = 0; index < uploadSession.totalChunks; index++) {
-					const start = index * uploadSession.chunkSize;
-					const end = Math.min(
-						start + uploadSession.chunkSize,
-						value.video.size,
-					);
-
-					await uploadChunk({
-						chunk: value.video.slice(start, end),
-						index,
-						totalChunks: uploadSession.totalChunks,
-						uploadId: uploadSession.uploadId,
-					});
-
-					setUploadProgress(
-						Math.round(((index + 1) / uploadSession.totalChunks) * 100),
-					);
-				}
+				await uploadChunks({
+					concurrency: 6,
+					file: value.video,
+					onProgress: setUploadProgress,
+					session: uploadSession,
+				});
 
 				const finalized = await finalizeUpload(uploadSession.uploadId);
 				const created = await createVideoPrediction({
@@ -95,7 +84,7 @@ export function PredictVideoPage() {
 				void runVideoPrediction({
 					data: { predictionId: created.prediction.id },
 				});
-				toast.success("Prediksi video dimulai", { id: "predict-video-upload" });
+				toast.success("Video berhasil diupload", { id: "predict-video-upload" });
 
 				await navigate({
 					params: { predictionId: created.prediction.id },
@@ -117,7 +106,7 @@ export function PredictVideoPage() {
 					Prediksi Kecemasan dari Video
 				</h1>
 				<p className="text-muted-foreground">
-					Unggah satu video wajah. Hasil final, frame, dan event akan disimpan.
+					Upload satu video wajah. Sistem akan memproses hasil, frame, dan event.
 				</p>
 			</div>
 
@@ -125,10 +114,10 @@ export function PredictVideoPage() {
 				<form action={() => void form.handleSubmit()}>
 					<Card>
 						<CardHeader>
-							<CardTitle>Unggah video lokal</CardTitle>
+							<CardTitle>Pilih video wajah</CardTitle>
 							<CardDescription>
-								Tarik video ke area ini atau klik untuk memilih file. Format
-								umum: mp4, webm, mov, avi.
+								Tarik video ke area ini atau klik untuk memilih file. Jika pratinjau
+								tidak tampil, video tetap bisa dilihat di halaman analisis.
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-4">
@@ -166,8 +155,7 @@ export function PredictVideoPage() {
 												: "Pilih atau tarik video ke sini"}
 										</div>
 										<p className="mt-1 text-muted-foreground text-sm">
-											Satu video saja. File akan diunggah lalu dianalisis
-											otomatis.
+											Satu video saja. File akan diupload dan diproses otomatis.
 										</p>
 										<Input
 											accept="video/*"
@@ -205,8 +193,8 @@ export function PredictVideoPage() {
 												Pratinjau tidak tersedia
 											</div>
 											<p className="max-w-md text-muted-foreground text-sm">
-												Browser tidak dapat memutar format video ini, tetapi
-												file tetap bisa diunggah dan diproses oleh predictor.
+												Browser tidak dapat memutar pratinjau ini. Video tetap bisa
+												diupload dan dilihat di halaman analisis.
 											</p>
 										</div>
 									)}
@@ -218,7 +206,7 @@ export function PredictVideoPage() {
 									<div className="flex items-center justify-between text-muted-foreground text-sm">
 										<span className="flex items-center gap-2">
 											<Loader2 className="size-4 animate-spin" />
-											Mengunggah dan memulai prediksi…
+											Mengupload video…
 										</span>
 										<span>{uploadProgress}%</span>
 									</div>
@@ -245,7 +233,7 @@ export function PredictVideoPage() {
 										size="lg"
 										type="submit"
 									>
-										{isSubmitting ? "Memproses…" : "Mulai prediksi"}
+										{isSubmitting ? "Mengupload…" : "Upload video"}
 									</Button>
 								)}
 							</form.Subscribe>
@@ -256,3 +244,4 @@ export function PredictVideoPage() {
 		</div>
 	);
 }
+

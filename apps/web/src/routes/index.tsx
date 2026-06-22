@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Profile } from "@/features/profile";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
-	component: Profile,
+	beforeLoad: () => {
+		throw redirect({ to: "/predict-video" });
+	},
 });
