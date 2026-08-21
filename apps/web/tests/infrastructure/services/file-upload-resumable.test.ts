@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NodeFileSystem } from "@effect/platform-node";
@@ -62,6 +62,40 @@ describe("FileUploadService resumable upload", () => {
 					),
 				),
 			).toBe(false);
+		}).pipe(Effect.provide(serviceLayer)),
+	);
+
+	it.effect("finalizes a 50MB upload without loading all chunks into one buffer", () =>
+		Effect.gen(function* () {
+			const service = yield* FileUploadService.asEffect();
+			const size = 50 * 1024 * 1024;
+			const session = yield* service.initSegmentedUpload({
+				folderName: "segmented/large",
+				fileName: "big.avi",
+				size,
+				contentType: "video/avi",
+			});
+
+			for (let index = 0; index < session.totalChunks; index++) {
+				const start = index * session.chunkSize;
+				const end = Math.min(start + session.chunkSize, size);
+				yield* service.uploadSegmentedPart({
+					uploadId: session.uploadId,
+					index,
+					totalChunks: session.totalChunks,
+					chunk: new Uint8Array(end - start).fill(index),
+				});
+			}
+
+			const started = performance.now();
+			const result = yield* service.finalizeSegmentedUpload(session.uploadId);
+			const elapsed = performance.now() - started;
+			const uploadRoot = yield* service.getUploadRoot();
+			const filePath = join(uploadRoot, "segmented/large/big.avi");
+
+			expect(result.path).toBe("/video_uploads/segmented/large/big.avi");
+			expect(statSync(filePath).size).toBe(size);
+			expect(elapsed).toBeLessThan(5_000);
 		}).pipe(Effect.provide(serviceLayer)),
 	);
 

@@ -2,7 +2,7 @@
 
 ## Project
 
-- **Project**: QUIS (DualCam Studio) — TanStack Start / React app for dual-camera questionnaire workflows with recording, analytics, and admin management.
+- **Project**: Anxiety-Classification (QUIS) — TanStack Start / React app for dual-camera questionnaire workflows with recording, analytics, and admin management.
 - **Package manager**: Bun (`bun install`, `bun run ...`).
 - **Primary stack**: TypeScript (strict), React 19, TanStack Start.
 - **Non-standard dependency**: Python camera bridge (`server-camera.py`) via `uv`.

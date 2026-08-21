@@ -287,37 +287,41 @@ export class FileUploadService extends Context.Service<FileUploadService>()(
 						meta.fileName,
 					);
 					yield* ensureDirectory(path.dirname(filePath));
-					const chunks = yield* Effect.all(
-						Array.from({ length: meta.totalChunks }, (_, index) =>
-							fs.readFile(path.join(sessionPath, `${index}.part`)).pipe(
-								Effect.mapError(
-									(error) =>
-										new FileError({
-											message: `Missing upload chunk: ${index}`,
-											cause: error,
-										}),
-								),
-							),
-						),
-					);
-					const totalSize = chunks.reduce(
-						(size, chunk) => size + chunk.length,
-						0,
-					);
-					const file = new Uint8Array(totalSize);
-					let offset = 0;
-					for (const chunk of chunks) {
-						file.set(chunk, offset);
-						offset += chunk.length;
-					}
-					yield* fs.writeFile(filePath, file).pipe(
+					yield* fs.writeFile(filePath, new Uint8Array(), { flag: "w" }).pipe(
 						Effect.mapError(
 							(error) =>
 								new FileError({
-									message: "Failed to finalize upload",
+									message: "Failed to create finalized upload",
 									cause: error,
 								}),
 						),
+					);
+					yield* Effect.forEach(
+						Array.from({ length: meta.totalChunks }, (_, index) => index),
+						(index) =>
+							Effect.gen(function* () {
+								const chunk = yield* fs
+									.readFile(path.join(sessionPath, `${index}.part`))
+									.pipe(
+										Effect.mapError(
+											(error) =>
+												new FileError({
+													message: `Missing upload chunk: ${index}`,
+													cause: error,
+												}),
+										),
+									);
+								yield* fs.writeFile(filePath, chunk, { flag: "a" }).pipe(
+									Effect.mapError(
+										(error) =>
+											new FileError({
+												message: "Failed to finalize upload",
+												cause: error,
+											}),
+									),
+								);
+							}),
+						{ concurrency: 1, discard: true },
 					);
 					yield* fs
 						.remove(sessionPath, { recursive: true })

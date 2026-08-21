@@ -1,6 +1,6 @@
 {
-  "name": "DualCam Studio",
-  "short_name": "DualCam",
+  "name": "Anxiety-Classification",
+  "short_name": "Anxiety",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

@@ -42,8 +42,8 @@ export const Route = createRootRouteWithContext<{
 				content: "width=device-width, initial-scale=1",
 			},
 			...seo({
-				title: "DualCam Studio",
-				description: `DualCam Studio is a general‑purpose, dataset‑oriented platform for dual‑camera microexpression recording and questionnaire management, suitable both for research and for more traditional online exam and survey use cases.`,
+				title: "Anxiety-Classification",
+				description: `Anxiety-Classification is a general-purpose, dataset-oriented platform for dual-camera microexpression recording and questionnaire management, suitable for research, online exams, and surveys.`,
 			}),
 		],
 		links: [
@@ -96,9 +96,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en">
 			<head>
-				{import.meta.env.DEV ? (
+				{/* {import.meta.env.DEV ? (
 					<script src="https://unpkg.com/react-scan/dist/auto.global.js" />
-				) : null}
+				) : null} */}
 				<HeadContent />
 				<title></title>
 			</head>
@@ -111,7 +111,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					rel="noopener noreferrer"
 					className="fixed bottom-3 right-3 z-40 flex items-center gap-1.5 rounded-md bg-background/50 px-2.5 py-1.5 text-xs text-muted-foreground opacity-80 shadow-sm backdrop-blur-sm transition-opacity hover:opacity-100"
 				>
-					<img src="/logo.svg" alt="DualCam Studio" className="size-4" />
+					<img src="/logo.svg" alt="Anxiety-Classification" className="size-4" />
 					<span>by SyahrulBhudiF</span>
 				</a>
 				{/*<TanStackRouterDevtools position="bottom-left" />*/}

@@ -1,6 +1,6 @@
-# DualCam Studio
+# Anxiety-Classification
 
-DualCam Studio is a TanStack Start / React app for dual-camera questionnaire workflows. It combines webcam / Intel RealSense recording, an admin-managed questionnaire CMS, PostgreSQL persistence, and analytics/export tooling.
+Anxiety-Classification is a TanStack Start / React app for dual-camera questionnaire workflows. It combines webcam / Intel RealSense recording, an admin-managed questionnaire CMS, PostgreSQL persistence, and analytics/export tooling.
 
 ## Core features
 

@@ -24,6 +24,7 @@ export function PredictVideoPage() {
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [canPreview, setCanPreview] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
+	const [stage, setStage] = useState<UploadStage>("idle");
 	const [error, setError] = useState<string | null>(null);
 	const [isDragging, setIsDragging] = useState(false);
 
@@ -52,6 +53,7 @@ export function PredictVideoPage() {
 			if (!value.video) return;
 
 			setError(null);
+			setStage("uploading");
 			setUploadProgress(0);
 
 			try {
@@ -71,7 +73,9 @@ export function PredictVideoPage() {
 					session: uploadSession,
 				});
 
+				setStage("saving");
 				const finalized = await finalizeUpload(uploadSession.uploadId);
+				setStage("preparing");
 				const created = await createVideoPrediction({
 					data: {
 						format: safeName.split(".").at(-1)?.toLowerCase(),
@@ -93,6 +97,7 @@ export function PredictVideoPage() {
 				});
 			} catch (error) {
 				const message = error instanceof Error ? error.message : "Upload gagal";
+				setStage("idle");
 				setError(message);
 				toast.error(message, { id: "predict-video-upload" });
 			}
@@ -202,21 +207,7 @@ export function PredictVideoPage() {
 							) : null}
 
 							{form.state.isSubmitting ? (
-								<div className="space-y-2">
-									<div className="flex items-center justify-between text-muted-foreground text-sm">
-										<span className="flex items-center gap-2">
-											<Loader2 className="size-4 animate-spin" />
-											Mengupload video…
-										</span>
-										<span>{uploadProgress}%</span>
-									</div>
-									<div className="h-2 overflow-hidden rounded-full bg-muted">
-										<div
-											className="h-full rounded-full bg-primary transition-all"
-											style={{ width: `${uploadProgress}%` }}
-										/>
-									</div>
-								</div>
+								<UploadProgress stage={stage} uploadProgress={uploadProgress} />
 							) : null}
 
 							{error ? (
@@ -233,7 +224,7 @@ export function PredictVideoPage() {
 										size="lg"
 										type="submit"
 									>
-										{isSubmitting ? "Mengupload…" : "Upload video"}
+										{isSubmitting ? stageLabel(stage) : "Upload video"}
 									</Button>
 								)}
 							</form.Subscribe>
@@ -241,6 +232,66 @@ export function PredictVideoPage() {
 					</Card>
 				</form>
 			</div>
+		</div>
+	);
+}
+
+type UploadStage = "idle" | "uploading" | "saving" | "preparing";
+
+function stageLabel(stage: UploadStage) {
+	if (stage === "saving") return "Menyimpan video…";
+	if (stage === "preparing") return "Menyiapkan analisis…";
+	return "Mengupload…";
+}
+
+function stageProgress(stage: UploadStage, uploadProgress: number) {
+	if (stage === "saving") return 96;
+	if (stage === "preparing") return 100;
+	return Math.min(uploadProgress, 95);
+}
+
+function UploadProgress({
+	stage,
+	uploadProgress,
+}: {
+	stage: UploadStage;
+	uploadProgress: number;
+}) {
+	const progress = stageProgress(stage, uploadProgress);
+	return (
+		<div className="rounded-2xl border bg-muted/30 p-4">
+			<div className="flex items-center justify-between text-sm">
+				<span className="flex items-center gap-2 font-medium">
+					<Loader2 className="size-4 animate-spin text-primary" />
+					{stageLabel(stage)}
+				</span>
+				<span className="text-muted-foreground tabular-nums">{progress}%</span>
+			</div>
+			<div className="mt-3 h-2 overflow-hidden rounded-full bg-background">
+				<div
+					className="h-full rounded-full bg-primary transition-all duration-300"
+					style={{ width: `${progress}%` }}
+				/>
+			</div>
+			<div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+				<Step active={stage === "uploading"} done={progress > 95} label="Upload" />
+				<Step active={stage === "saving"} done={stage === "preparing"} label="Simpan" />
+				<Step active={stage === "preparing"} done={false} label="Siapkan" />
+			</div>
+		</div>
+	);
+}
+
+function Step({ active, done, label }: { active: boolean; done: boolean; label: string }) {
+	return (
+		<div
+			className={`rounded-full px-3 py-1 text-center ${
+				active || done
+					? "bg-primary/10 font-medium text-primary"
+					: "bg-background text-muted-foreground"
+			}`}
+		>
+			{label}
 		</div>
 	);
 }
