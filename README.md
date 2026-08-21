@@ -192,9 +192,3 @@ video_uploads/
 ├── segmented/{participant}_{timestamp}/q{n}/
 └── predict-video/{prediction-id}/
 ```
-
-## Repository
-
-```text
-git@github.com:SyahrulBhudiF/Anxiety-Classification.git
-```
